@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/popover"
 import {
   MoreHorizontal,
-  Eye,
   Trash2,
   ChevronsUpDown,
   ChevronUp,
@@ -216,7 +215,6 @@ function DataTableColumnHeader({
 // 列创建函数的参数类型
 interface CreateColumnsProps {
   formatDate: (dateString: string) => string
-  handleView: (scan: ScheduledScan) => void
   handleEdit: (scan: ScheduledScan) => void
   handleDelete: (scan: ScheduledScan) => void
   handleToggleStatus: (scan: ScheduledScan, enabled: boolean) => void
@@ -227,12 +225,10 @@ interface CreateColumnsProps {
  */
 function ScheduledScanRowActions({
   scan,
-  onView,
   onEdit,
   onDelete,
 }: {
   scan: ScheduledScan
-  onView: () => void
   onEdit: () => void
   onDelete: () => void
 }) {
@@ -248,10 +244,6 @@ function ScheduledScanRowActions({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={onView}>
-          <Eye />
-          查看详情
-        </DropdownMenuItem>
         <DropdownMenuItem onClick={onEdit}>
           <Edit />
           编辑任务
@@ -274,7 +266,6 @@ function ScheduledScanRowActions({
  */
 export const createScheduledScanColumns = ({
   formatDate,
-  handleView,
   handleEdit,
   handleDelete,
   handleToggleStatus,
@@ -464,7 +455,6 @@ export const createScheduledScanColumns = ({
     cell: ({ row }) => (
       <ScheduledScanRowActions
         scan={row.original}
-        onView={() => handleView(row.original)}
         onEdit={() => handleEdit(row.original)}
         onDelete={() => handleDelete(row.original)}
       />

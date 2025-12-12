@@ -76,11 +76,6 @@ export default function ScheduledScanPage() {
     })
   }, [])
 
-  // 查看任务详情
-  const handleView = React.useCallback((scan: ScheduledScan) => {
-    // TODO: 导航到详情页
-  }, [])
-
   // 编辑任务
   const handleEdit = React.useCallback((scan: ScheduledScan) => {
     setEditingScheduledScan(scan)
@@ -128,12 +123,11 @@ export default function ScheduledScanPage() {
     () =>
       createScheduledScanColumns({
         formatDate,
-        handleView,
         handleEdit,
         handleDelete,
         handleToggleStatus,
       }),
-    [formatDate, handleView, handleEdit, handleDelete, handleToggleStatus]
+    [formatDate, handleEdit, handleDelete, handleToggleStatus]
   )
 
   if (isLoading) {

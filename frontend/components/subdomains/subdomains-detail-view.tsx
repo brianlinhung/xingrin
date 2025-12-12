@@ -99,23 +99,9 @@ export function SubdomainsDetailView({
     router.push(path)
   }
 
-  // 处理查看详细
-  const handleViewDetail = (subdomain: Subdomain) => {
-    // TODO: 实现查看子域名详细功能
-    console.log('查看子域名详细:', subdomain)
-    // 可以跳转到详情页或打开对话框
-  }
-
   // 处理分页变化
   const handlePaginationChange = (newPagination: { pageIndex: number; pageSize: number }) => {
     setPagination(newPagination)
-  }
-
-  // 处理标记重要子域名
-  const handleMarkImportant = (domain: Subdomain) => {
-    // TODO: 实现标记重要子域名功能
-    console.log('标记重要子域名:', domain)
-    // 可以在这里调用 API 更新域名的 isImportant 状态
   }
 
   // 处理下载所有子域名
@@ -170,31 +156,12 @@ export function SubdomainsDetailView({
     URL.revokeObjectURL(url)
   }
 
-  // 处理下载有趣的子域名
-  const handleDownloadInteresting = () => {
-    // TODO: 实现下载有趣的子域名功能
-    console.log('下载有趣的子域名')
-    // 可以根据某些规则筛选有趣的子域名并下载
-  }
-
-  // 处理下载重要的子域名
-  const handleDownloadImportant = () => {
-    // TODO: 实现下载重要的子域名功能
-    console.log('下载重要的子域名')
-    // const a = document.createElement('a')
-    // a.href = url
-    // a.download = `selected-subdomains-${Date.now()}.txt`
-    // a.click()
-    // URL.revokeObjectURL(url)
-  }
-
   // 创建列定义
   const subdomainColumns = useMemo(
     () =>
       createSubdomainColumns({
         formatDate,
         navigate,
-        onViewDetail: handleViewDetail,
       }),
     [formatDate, navigate]
   )
@@ -255,7 +222,6 @@ export function SubdomainsDetailView({
         isSearching={isSearching}
         onDownloadAll={handleDownloadAll}
         onDownloadSelected={handleDownloadSelected}
-        onDownloadInteresting={handleDownloadInteresting}
         pagination={pagination}
         setPagination={setPagination}
         paginationInfo={{

@@ -18,21 +18,24 @@ export function useRoutePrefetch(currentPath?: string) {
       const routes = [
         // 仪表盘
         '/dashboard/',
-        // 资产管理
-        '/assets/organization/',
-        '/assets/domain/',
-        '/assets/endpoint/',
-        '/assets/website/',
-        // 扫描
-        '/scan/tools/',
-        '/scan/history/',
+        // 组织
+        '/organization/',
         // 目标
-        '/targets/',
+        '/target/',
         // 漏洞
         '/vulnerabilities/',
+        // 扫描
+        '/scan/history/',
+        '/scan/scheduled/',
+        '/scan/engine/',
+        // 工具
+        '/tools/',
+        '/tools/config/',
+        '/tools/nuclei/',
+        '/tools/wordlists/',
         // 设置
         '/settings/workers/',
-        '/settings/notification/',
+        '/settings/notifications/',
       ]
 
       routes.forEach((route) => {
@@ -42,12 +45,26 @@ export function useRoutePrefetch(currentPath?: string) {
 
       // 如果提供了当前路径，智能预加载相关动态路由
       if (currentPath) {
-        // 如果是域名详情页（如 /assets/domain/146），预加载子路由
-        const domainIdMatch = currentPath.match(/\/assets\/domain\/(\d+)/)
-        if (domainIdMatch) {
-          const domainId = domainIdMatch[1]
-          router.prefetch(`/assets/domain/${domainId}/endpoints`)
-          console.log(`  -> 智能预加载域名子路由: /assets/domain/${domainId}/endpoints`)
+        // 如果是目标详情页（如 /target/146），预加载子路由
+        const targetIdMatch = currentPath.match(/\/target\/(\d+)$/)
+        if (targetIdMatch) {
+          const targetId = targetIdMatch[1]
+          const subRoutes = ['subdomain', 'endpoints', 'websites', 'vulnerabilities', 'directories', 'ip-addresses']
+          subRoutes.forEach(sub => {
+            router.prefetch(`/target/${targetId}/${sub}`)
+          })
+          console.log(`  -> 智能预加载目标子路由: /target/${targetId}/*`)
+        }
+        
+        // 如果是扫描历史详情页（如 /scan/history/146），预加载子路由
+        const scanIdMatch = currentPath.match(/\/scan\/history\/(\d+)$/)
+        if (scanIdMatch) {
+          const scanId = scanIdMatch[1]
+          const subRoutes = ['subdomain', 'endpoints', 'websites', 'vulnerabilities', 'directories', 'ip-addresses']
+          subRoutes.forEach(sub => {
+            router.prefetch(`/scan/history/${scanId}/${sub}`)
+          })
+          console.log(`  -> 智能预加载扫描子路由: /scan/history/${scanId}/*`)
         }
       }
 
@@ -75,28 +92,32 @@ export function useSmartRoutePrefetch(currentPath: string) {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (currentPath.includes('/assets/organization')) {
-        // 在组织页面，预加载域名页面
-        router.prefetch('/assets/domain')
-      } else if (currentPath.includes('/assets/domain')) {
-        // 在域名页面，预加载端点页面
-        router.prefetch('/assets/endpoint')
+      if (currentPath.includes('/organization')) {
+        // 在组织页面，预加载目标页面
+        router.prefetch('/target/')
+      } else if (currentPath.includes('/target')) {
+        // 在目标页面，预加载扫描和漏洞页面
+        router.prefetch('/scan/history/')
+        router.prefetch('/vulnerabilities/')
 
-        // 如果是域名详情页（如 /assets/domain/146），预加载子路由
-        const domainIdMatch = currentPath.match(/\/assets\/domain\/(\d+)$/)
-        if (domainIdMatch) {
-          const domainId = domainIdMatch[1]
-          router.prefetch(`/assets/domain/${domainId}/endpoints`)
-          console.log(`  -> 预加载域名子路由: /assets/domain/${domainId}/endpoints`)
+        // 如果是目标详情页（如 /target/146），预加载子路由
+        const targetIdMatch = currentPath.match(/\/target\/(\d+)$/)
+        if (targetIdMatch) {
+          const targetId = targetIdMatch[1]
+          const subRoutes = ['subdomain', 'endpoints', 'websites', 'vulnerabilities']
+          subRoutes.forEach(sub => {
+            router.prefetch(`/target/${targetId}/${sub}`)
+          })
+          console.log(`  -> 预加载目标子路由: /target/${targetId}/*`)
         }
-      } else if (currentPath.includes('/assets/scan')) {
-        // 在扫描页面，预加载资产页面
-        router.prefetch('/assets/organization')
-        router.prefetch('/assets/domain')
+      } else if (currentPath.includes('/scan/history')) {
+        // 在扫描历史页面，预加载目标页面
+        router.prefetch('/target/')
+        router.prefetch('/vulnerabilities/')
       } else if (currentPath === '/') {
         // 在首页，预加载主要页面
-        router.prefetch('/dashboard')
-        router.prefetch('/assets/organization')
+        router.prefetch('/dashboard/')
+        router.prefetch('/organization/')
       }
     }, 1500) // 1.5 秒后预加载
 
