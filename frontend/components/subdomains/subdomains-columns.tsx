@@ -21,7 +21,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { MoreHorizontal, Eye, ChevronsUpDown, ChevronUp, ChevronDown, Copy, Check } from "lucide-react"
+import { ChevronsUpDown, ChevronUp, ChevronDown, Copy, Check } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import type { Subdomain } from "@/types/subdomain.types"
 import { toast } from "sonner"
@@ -122,38 +122,6 @@ function CopyableCell({
 interface CreateColumnsProps {
   formatDate: (dateString: string) => string
   navigate: (path: string) => void
-  onViewDetail: (subdomain: Subdomain) => void
-}
-
-/**
- * 域名行操作组件
- */
-function SubdomainRowActions({
-  subdomain,
-  onViewDetail,
-}: {
-  subdomain: Subdomain
-  onViewDetail: () => void
-}) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          className="flex h-8 w-8 p-0 data-[state=open]:bg-muted"
-        >
-          <MoreHorizontal />
-          <span className="sr-only">打开菜单</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-52">
-        <DropdownMenuItem onClick={onViewDetail}>
-          <Eye className="mr-2 h-4 w-4" />
-          查看详细
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
 }
 
 /**
@@ -196,7 +164,6 @@ function DataTableColumnHeader({
 export const createSubdomainColumns = ({
   formatDate,
   navigate,
-  onViewDetail,
 }: CreateColumnsProps): ColumnDef<Subdomain>[] => [
   // 选择列
   {

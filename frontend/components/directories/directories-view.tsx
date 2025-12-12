@@ -74,16 +74,10 @@ export function DirectoriesView({
     })
   }, [])
 
-  const handleViewDetail = (directory: Directory) => {
-    // TODO: 实现查看目录详细功能
-    console.log('查看目录详细:', directory)
-  }
-
   const columns = useMemo(
     () =>
       createDirectoryColumns({
         formatDate,
-        onViewDetail: handleViewDetail,
       }),
     [formatDate]
   )

@@ -413,11 +413,6 @@ export function createDirectoryColumns({
               >
                 复制 URL
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onViewDetail?.(directory)}>
-                <IconEye className="mr-2 h-4 w-4" />
-                查看详细
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )

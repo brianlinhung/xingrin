@@ -75,16 +75,10 @@ export function WebSitesView({
     })
   }, [])
 
-  const handleViewDetail = (website: WebSite) => {
-    // TODO: 实现查看网站详细功能
-    console.log('查看网站详细:', website)
-  }
-
   const columns = useMemo(
     () =>
       createWebSiteColumns({
         formatDate,
-        onViewDetail: handleViewDetail,
       }),
     [formatDate]
   )
