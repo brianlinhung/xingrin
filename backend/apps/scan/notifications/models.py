@@ -113,10 +113,11 @@ class Notification(models.Model):
         Returns:
             int: 删除的通知数量
         """
-        from datetime import datetime, timedelta
+        from datetime import timedelta
+        from django.utils import timezone
         
         # 硬编码：只保留最近15天的通知
-        cutoff_date = datetime.now() - timedelta(days=15)
+        cutoff_date = timezone.now() - timedelta(days=15)
         delete_result = cls.objects.filter(created_at__lt=cutoff_date).delete()
         
         return delete_result[0] if delete_result[0] else 0
