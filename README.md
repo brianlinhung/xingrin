@@ -70,8 +70,6 @@ sudo ./install.sh --dev
 ### 访问服务
 
 - **Web 界面**: `https://localhost` 或 `http://localhost`
-- **API 接口**: `http://localhost:8888/api/`
-- **API 文档**: `http://localhost:8888/swagger/`
 
 ### 常用命令
 
