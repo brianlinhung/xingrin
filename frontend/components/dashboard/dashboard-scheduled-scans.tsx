@@ -32,7 +32,6 @@ export function DashboardScheduledScans() {
   }, [isFetching, isSearching])
 
   const formatDate = (dateString: string) => new Date(dateString).toLocaleString("zh-CN", { hour12: false })
-  const handleView = () => router.push(`/scan/scheduled/`)
   const handleEdit = () => router.push(`/scan/scheduled/`)
   const handleDelete = () => {}
   const handleToggleStatus = () => {}
@@ -41,12 +40,11 @@ export function DashboardScheduledScans() {
     () =>
       createScheduledScanColumns({
         formatDate,
-        handleView,
         handleEdit,
         handleDelete,
         handleToggleStatus,
       }),
-    [formatDate, handleView, handleEdit]
+    [formatDate, handleEdit]
   )
 
   if (isLoading && !data) {

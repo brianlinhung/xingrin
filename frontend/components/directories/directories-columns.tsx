@@ -10,7 +10,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
@@ -24,7 +23,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { IconDots, IconEye } from "@tabler/icons-react"
+import { IconDots } from "@tabler/icons-react"
 import { Copy, Check, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react"
 import { toast } from "sonner"
 import type { Directory } from "@/types/directory.types"
@@ -136,10 +135,8 @@ function formatDuration(nanoseconds: number | null): string {
  */
 export function createDirectoryColumns({
   formatDate,
-  onViewDetail,
 }: {
   formatDate: (date: string) => string
-  onViewDetail?: (directory: Directory) => void
 }): ColumnDef<Directory>[] {
   return [
     // 选择列

@@ -6,13 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -23,7 +16,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { MoreHorizontal, Eye, Trash2, ChevronsUpDown, ChevronUp, ChevronDown, Copy, Check } from "lucide-react"
+import { ChevronsUpDown, ChevronUp, ChevronDown, Copy, Check } from "lucide-react"
 import type { Endpoint } from "@/types/endpoint.types"
 import { toast } from "sonner"
 
@@ -108,44 +101,6 @@ function CopyableCell({
 
 interface CreateColumnsProps {
   formatDate: (dateString: string) => string
-  navigate: (path: string) => void
-  handleDelete: (endpoint: Endpoint) => void
-}
-
-function EndpointRowActions({
-  onView,
-  onDelete,
-}: {
-  onView: () => void
-  onDelete: () => void
-}) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          className="flex h-8 w-8 p-0 data-[state=open]:bg-muted"
-        >
-          <MoreHorizontal />
-          <span className="sr-only">打开菜单</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={onView}>
-          <Eye />
-          查看详情
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={onDelete}
-          className="text-destructive focus:text-destructive"
-        >
-          <Trash2 />
-          删除
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
 }
 
 function DataTableColumnHeader({
@@ -213,8 +168,6 @@ function HttpStatusBadge({ statusCode }: { statusCode: number | null | undefined
 
 export function createEndpointColumns({
   formatDate,
-  navigate,
-  handleDelete,
 }: CreateColumnsProps): ColumnDef<Endpoint>[] {
   return [
     {

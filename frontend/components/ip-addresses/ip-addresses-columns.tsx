@@ -2,16 +2,10 @@
 
 import React from "react"
 import { Column, ColumnDef } from "@tanstack/react-table"
-import { ChevronUp, ChevronDown, ChevronsUpDown, Copy, Check, MoreHorizontal, Trash2 } from "lucide-react"
+import { ChevronUp, ChevronDown, ChevronsUpDown, Copy, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import {
   Popover,
   PopoverContent,

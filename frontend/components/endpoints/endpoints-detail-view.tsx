@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo } from "react"
 import { AlertTriangle } from "lucide-react"
-import { useRouter } from "next/navigation"
 import { useTargetEndpoints } from "@/hooks/use-targets"
 import { useDeleteEndpoint, useScanEndpoints } from "@/hooks/use-endpoints"
 import { EndpointsDataTable } from "./endpoints-data-table"
@@ -96,17 +95,6 @@ export function EndpointsDetailView({
     })
   }, [])
 
-  // 导航函数
-  const router = useRouter()
-  const navigate = React.useCallback((path: string) => {
-    router.push(path)
-  }, [router])
-
-  // 处理删除端点
-  const handleDeleteEndpoint = React.useCallback((endpoint: Endpoint) => {
-    setEndpointToDelete(endpoint)
-    setDeleteDialogOpen(true)
-  }, [])
 
   // 确认删除端点
   const confirmDelete = async () => {
@@ -132,10 +120,8 @@ export function EndpointsDetailView({
     () =>
       createEndpointColumns({
         formatDate,
-        navigate,
-        handleDelete: handleDeleteEndpoint,
       }),
-    [formatDate, navigate, handleDeleteEndpoint]
+    [formatDate]
   )
 
   // 下载所有端点 URL
