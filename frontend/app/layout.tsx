@@ -4,6 +4,10 @@ import type { Metadata } from "next"
 
 // 导入全局样式文件
 import "./globals.css"
+// 导入思源黑体（Noto Sans SC）本地字体
+import "@fontsource/noto-sans-sc/400.css"
+import "@fontsource/noto-sans-sc/500.css"
+import "@fontsource/noto-sans-sc/700.css"
 // 导入颜色主题
 import "@/styles/themes/bubblegum.css"
 import "@/styles/themes/quantum-rose.css"
@@ -30,11 +34,11 @@ export const metadata: Metadata = {
   generator: "XingRin", // 生成器标识
 }
 
-// 使用原有的 fallback 字体栈，不依赖 Google Fonts
+// 使用思源黑体 + 系统字体回退，完全本地加载
 const fontConfig = {
   className: "font-sans",
   style: {
-    fontFamily: "system-ui, -apple-system, PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif"
+    fontFamily: "'Noto Sans SC', system-ui, -apple-system, PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif"
   }
 }
 
