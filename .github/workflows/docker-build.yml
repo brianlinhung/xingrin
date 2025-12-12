@@ -58,6 +58,16 @@ jobs:
           echo "=== After cleanup ==="
           df -h
 
+      - name: Generate SSL certificates for nginx build
+        if: matrix.image == 'xingrin-nginx'
+        run: |
+          mkdir -p docker/nginx/ssl
+          openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+            -keyout docker/nginx/ssl/privkey.pem \
+            -out docker/nginx/ssl/fullchain.pem \
+            -subj "/CN=localhost"
+          echo "SSL certificates generated for CI build"
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
