@@ -76,6 +76,7 @@ class WebSiteSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'url',
+            'host',
             'location', 
             'title',
             'webserver',

@@ -4,124 +4,22 @@ import React from "react"
 import { ColumnDef } from "@tanstack/react-table"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+
+
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { ChevronsUpDown, ChevronUp, ChevronDown, Copy, Check } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import type { Subdomain } from "@/types/subdomain.types"
-import { toast } from "sonner"
+import { ChevronsUpDown, ChevronUp, ChevronDown, MoreHorizontal } from "lucide-react"
 
-/**
- * 可复制单元格组件
- */
-function CopyableCell({ 
-  value, 
-  maxWidth = "400px", 
-  truncateLength = 50,
-  successMessage = "已复制",
-  className = "font-medium"
-}: { 
-  value: string
-  maxWidth?: string
-  truncateLength?: number
-  successMessage?: string
-  className?: string
-}) {
-  const [copied, setCopied] = React.useState(false)
-  const isLong = value.length > truncateLength
-  
-  const handleCopy = async () => {
-    try {
-      // 优先使用 Clipboard API，不支持时用 fallback
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(value)
-      } else {
-        // Fallback: 使用临时 textarea
-        const textArea = document.createElement('textarea')
-        textArea.value = value
-        textArea.style.position = 'fixed'
-        textArea.style.left = '-9999px'
-        textArea.style.top = '-9999px'
-        document.body.appendChild(textArea)
-        textArea.focus()
-        textArea.select()
-        document.execCommand('copy')
-        document.body.removeChild(textArea)
-      }
-      setCopied(true)
-      toast.success(successMessage)
-      setTimeout(() => setCopied(false), 2000)
-    } catch {
-      toast.error('复制失败')
-    }
-  }
-  
-  return (
-    <div className="group inline-flex items-center gap-1" style={{ maxWidth }}>
-      <TooltipProvider delayDuration={500} skipDelayDuration={0}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className={`text-sm truncate cursor-default ${className}`}>
-              {value}
-            </div>
-          </TooltipTrigger>
-          <TooltipContent 
-            side="top" 
-            align="start"
-            sideOffset={5}
-            className={`text-xs ${isLong ? 'max-w-[500px] break-all' : 'whitespace-nowrap'}`}
-          >
-            {value}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      
-      <TooltipProvider delayDuration={500} skipDelayDuration={0}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`h-6 w-6 flex-shrink-0 hover:bg-accent transition-opacity ${
-                copied ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-              }`}
-              onClick={handleCopy}
-            >
-              {copied ? (
-                <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
-              ) : (
-                <Copy className="h-3.5 w-3.5 text-muted-foreground" />
-              )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="top">
-            <p className="text-xs">{copied ? '已复制!' : '点击复制'}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    </div>
-  )
-}
+import type { Subdomain } from "@/types/subdomain.types"
+
+import { CopyablePopoverContent } from "@/components/ui/copyable-popover-content"
 
 // 列创建函数的参数类型
 interface CreateColumnsProps {
   formatDate: (dateString: string) => string
-  navigate: (path: string) => void
 }
 
 /**
@@ -163,7 +61,6 @@ function DataTableColumnHeader({
  */
 export const createSubdomainColumns = ({
   formatDate,
-  navigate,
 }: CreateColumnsProps): ColumnDef<Subdomain>[] => [
   // 选择列
   {
@@ -211,17 +108,12 @@ export const createSubdomainColumns = ({
           {isLong && (
             <Popover>
               <PopoverTrigger asChild>
-                <span className="inline-flex items-center rounded border bg-muted px-1.5 text-[10px] text-muted-foreground cursor-pointer hover:bg-accent hover:text-foreground flex-shrink-0 transition-colors">
-                  ···
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded text-muted-foreground cursor-pointer hover:bg-accent hover:text-foreground flex-shrink-0 transition-colors">
+                  <MoreHorizontal className="h-3.5 w-3.5" />
                 </span>
               </PopoverTrigger>
               <PopoverContent className="w-96 p-3">
-                <div className="space-y-2">
-                  <h4 className="font-medium text-sm">完整子域名</h4>
-                  <div className="text-xs break-all bg-muted p-2 rounded max-h-48 overflow-y-auto font-mono">
-                    {name}
-                  </div>
-                </div>
+                <CopyablePopoverContent value={name} className="font-mono text-xs" />
               </PopoverContent>
             </Popover>
           )}

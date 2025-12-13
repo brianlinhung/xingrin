@@ -12,88 +12,17 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { IconDots } from "@tabler/icons-react"
-import { Copy, Check, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react"
+import { ChevronUp, ChevronDown, ChevronsUpDown, MoreHorizontal } from "lucide-react"
 import { toast } from "sonner"
 import type { Directory } from "@/types/directory.types"
-
-/**
- * 可复制单元格组件
- */
-function CopyableCell({ 
-  value, 
-  maxWidth = "400px", 
-  truncateLength = 50,
-  successMessage = "已复制",
-  className = "font-medium"
-}: { 
-  value: string
-  maxWidth?: string
-  truncateLength?: number
-  successMessage?: string
-  className?: string
-}) {
-  const [copied, setCopied] = React.useState(false)
-  const isLong = value.length > truncateLength
-  
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(value)
-      setCopied(true)
-      toast.success(successMessage)
-      setTimeout(() => setCopied(false), 2000)
-    } catch (err) {
-      toast.error("复制失败")
-    }
-  }
-
-  const displayValue = isLong ? `${value.substring(0, truncateLength)}...` : value
-
-  return (
-    <TooltipProvider>
-      <div className="flex items-center gap-2 group">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div 
-              className={`truncate ${className}`}
-              style={{ maxWidth }}
-            >
-              {displayValue}
-            </div>
-          </TooltipTrigger>
-          {isLong && (
-            <TooltipContent side="bottom" className="max-w-md break-all">
-              <p>{value}</p>
-            </TooltipContent>
-          )}
-        </Tooltip>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-          onClick={handleCopy}
-        >
-          {copied ? (
-            <Check className="h-3 w-3 text-green-500" />
-          ) : (
-            <Copy className="h-3 w-3" />
-          )}
-        </Button>
-      </div>
-    </TooltipProvider>
-  )
-}
+import { CopyablePopoverContent } from "@/components/ui/copyable-popover-content"
 
 /**
  * HTTP 状态码徽章组件
@@ -202,17 +131,12 @@ export function createDirectoryColumns({
             {isLong && (
               <Popover>
                 <PopoverTrigger asChild>
-                  <span className="inline-flex items-center rounded border bg-muted px-1.5 text-[10px] text-muted-foreground cursor-pointer hover:bg-accent hover:text-foreground flex-shrink-0 transition-colors">
-                    ···
+                  <span className="inline-flex items-center justify-center w-5 h-5 rounded text-muted-foreground cursor-pointer hover:bg-accent hover:text-foreground flex-shrink-0 transition-colors">
+                    <MoreHorizontal className="h-3.5 w-3.5" />
                   </span>
                 </PopoverTrigger>
                 <PopoverContent className="w-96 p-3">
-                  <div className="space-y-2">
-                    <h4 className="font-medium text-sm">完整 URL</h4>
-                    <div className="text-xs break-all bg-muted p-2 rounded max-h-48 overflow-y-auto font-mono">
-                      {url}
-                    </div>
-                  </div>
+                  <CopyablePopoverContent value={url} className="font-mono text-xs" />
                 </PopoverContent>
               </Popover>
             )}

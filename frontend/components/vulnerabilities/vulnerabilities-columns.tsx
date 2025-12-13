@@ -1,98 +1,17 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { Eye, Copy, Check } from "lucide-react"
+import { Eye, MoreHorizontal } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { useState } from "react"
+
 import { toast } from "sonner"
 import type { Vulnerability, VulnerabilitySeverity } from "@/types/vulnerability.types"
 
-/**
- * 复制到剪贴板（兼容 HTTP 环境）
- */
-async function copyToClipboard(text: string): Promise<boolean> {
-  try {
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(text)
-    } else {
-      // Fallback: 使用临时 textarea
-      const textArea = document.createElement('textarea')
-      textArea.value = text
-      textArea.style.position = 'fixed'
-      textArea.style.left = '-9999px'
-      textArea.style.top = '-9999px'
-      document.body.appendChild(textArea)
-      textArea.focus()
-      textArea.select()
-      document.execCommand('copy')
-      document.body.removeChild(textArea)
-    }
-    return true
-  } catch {
-    return false
-  }
-}
-
-/** URL 弹窗组件 */
-function UrlPopover({ url }: { url: string }) {
-  const [copied, setCopied] = useState(false)
-  const [open, setOpen] = useState(false)
-
-  const handleCopy = async (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    const success = await copyToClipboard(url)
-    if (success) {
-      setCopied(true)
-      toast.success("URL 已复制")
-      setTimeout(() => setCopied(false), 2000)
-    } else {
-      toast.error("复制失败")
-    }
-  }
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <span className="inline-flex items-center rounded border bg-muted px-1.5 text-[10px] text-muted-foreground cursor-pointer hover:bg-accent hover:text-foreground flex-shrink-0 transition-colors">
-          ···
-        </span>
-      </PopoverTrigger>
-      <PopoverContent 
-        className="w-auto max-w-[450px] p-0" 
-        align="start"
-        onInteractOutside={(e) => {
-          // 复制中不关闭弹窗
-          if (copied) e.preventDefault()
-        }}
-      >
-        <div className="group relative">
-          <div className="text-xs break-all bg-muted/30 px-3 py-2.5 font-mono text-muted-foreground select-all max-h-40 overflow-y-auto">
-            {url}
-          </div>
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            className="absolute top-1.5 right-1.5 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={handleCopy}
-          >
-            {copied ? (
-              <Check className="h-3 w-3 text-green-500" />
-            ) : (
-              <Copy className="h-3 w-3" />
-            )}
-          </Button>
-        </div>
-      </PopoverContent>
-    </Popover>
-  )
-}
+import { CopyablePopoverContent } from "@/components/ui/copyable-popover-content"
 
 // 统一的漏洞严重程度颜色配置（与图表一致）
 const severityConfig: Record<VulnerabilitySeverity, { label: string; className: string }> = {
@@ -206,7 +125,18 @@ export function createVulnerabilityColumns({
             >
               {displayUrl}
             </a>
-            {isLong && <UrlPopover url={url} />}
+            {isLong && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <span className="inline-flex items-center justify-center w-5 h-5 rounded text-muted-foreground cursor-pointer hover:bg-accent hover:text-foreground flex-shrink-0 transition-colors">
+                    <MoreHorizontal className="h-3.5 w-3.5" />
+                  </span>
+                </PopoverTrigger>
+                <PopoverContent className="w-96 p-3">
+                  <CopyablePopoverContent value={url} className="font-mono text-xs" />
+                </PopoverContent>
+              </Popover>
+            )}
           </div>
         )
       },

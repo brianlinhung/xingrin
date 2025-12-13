@@ -7,6 +7,7 @@ export interface WebSite {
   scan?: number
   target?: number
   url: string
+  host: string
   location: string
   title: string
   webserver: string
