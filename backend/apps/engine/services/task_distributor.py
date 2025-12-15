@@ -48,7 +48,7 @@ class TaskDistributor:
     _last_submit_time: float = 0
     
     def __init__(self):
-        self.docker_image = getattr(settings, 'TASK_EXECUTOR_IMAGE', 'yyhuni/xingrin-worker:latest')
+        self.docker_image = settings.TASK_EXECUTOR_IMAGE  # 必须有值，settings.py 启动时已校验
         self.results_mount = getattr(settings, 'CONTAINER_RESULTS_MOUNT', '/app/backend/results')
         self.logs_mount = getattr(settings, 'CONTAINER_LOGS_MOUNT', '/app/backend/logs')
         self.submit_interval = getattr(settings, 'TASK_SUBMIT_INTERVAL', 5)
@@ -213,7 +213,8 @@ class TaskDistributor:
         # 构建内部命令（日志轮转 + 执行脚本）
         inner_cmd = f'tail -n 10000 {log_file} > {log_file}.tmp 2>/dev/null; mv {log_file}.tmp {log_file} 2>/dev/null; python -m {script_module} {args_str} >> {log_file} 2>&1'
         
-        # 完整命令（--pull=always 检查并增量更新镜像，确保使用最新版本）
+        # 完整命令
+        # --pull=always: 确保本地镜像与 Docker Hub 一致（版本标签不变则跳过下载）
         # 使用双引号包裹 sh -c 命令，内部 shlex.quote 生成的单引号参数可正确解析
         cmd = f'''docker run --rm -d --pull=always {network_arg} \
             {' '.join(env_vars)} \

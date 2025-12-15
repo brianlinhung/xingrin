@@ -81,10 +81,20 @@ REAL_HOME=$(getent passwd "$REAL_USER" | cut -d: -f6)
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$ROOT_DIR"
 
+# 从 VERSION 文件读取版本号
+VERSION_FILE="$ROOT_DIR/VERSION"
+if [ -f "$VERSION_FILE" ]; then
+    APP_VERSION=$(cat "$VERSION_FILE" | tr -d '[:space:]')
+else
+    error "VERSION 文件不存在，无法确定安装版本"
+    exit 1
+fi
+
 # 显示标题
 header "XingRin 一键安装脚本 (Ubuntu)"
 info "当前用户: ${BOLD}$REAL_USER${RESET}"
 info "项目路径: ${BOLD}$ROOT_DIR${RESET}"
+info "安装版本: ${BOLD}$APP_VERSION${RESET}"
 
 # ==============================================================================
 # 工具函数
@@ -256,6 +266,10 @@ if [ -f "$DOCKER_DIR/.env.example" ]; then
     cp "$DOCKER_DIR/.env.example" "$DOCKER_DIR/.env"
     success "已创建: docker/.env"
     auto_fill_docker_env_secrets "$DOCKER_DIR/.env"
+    
+    # 写入版本号（锁定安装时的版本）
+    update_env_var "$DOCKER_DIR/.env" "IMAGE_TAG" "$APP_VERSION"
+    success "已锁定版本: IMAGE_TAG=$APP_VERSION"
     
     # 开发模式：开启调试日志
     if [ "$DEV_MODE" = true ]; then

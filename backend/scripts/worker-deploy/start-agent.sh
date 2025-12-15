@@ -14,7 +14,13 @@ set -e
 MARKER_DIR="/opt/xingrin"
 CONTAINER_NAME="xingrin-agent"
 # 使用轻量 agent 镜像（~30MB），仅包含心跳上报功能
-IMAGE="yyhuni/xingrin-agent:latest"
+# 镜像版本由部署时传入（必须设置）
+DOCKER_USER="${DOCKER_USER:-yyhuni}"
+if [ -z "$IMAGE_TAG" ]; then
+    echo "[ERROR] IMAGE_TAG 未设置，请确保部署时传入版本号"
+    exit 1
+fi
+IMAGE="${DOCKER_USER}/xingrin-agent:${IMAGE_TAG}"
 
 # 预设变量（远程部署时由 deploy_service.py 替换）
 PRESET_SERVER_URL="{{HEARTBEAT_API_URL}}"

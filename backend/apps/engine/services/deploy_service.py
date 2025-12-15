@@ -14,6 +14,7 @@
 """
 
 from pathlib import Path
+from django.conf import settings
 
 # 脚本目录
 SCRIPTS_DIR = Path(__file__).parent.parent.parent.parent / "scripts" / "worker-deploy"
@@ -35,7 +36,14 @@ def get_bootstrap_script() -> str:
 
 def get_deploy_script() -> str:
     """获取安装脚本（安装 Docker + 拉取镜像）"""
-    return _read_script("install.sh")
+    script = _read_script("install.sh")
+    # 注入镜像版本配置（确保远程节点使用相同版本）
+    docker_user = getattr(settings, 'DOCKER_USER', 'yyhuni')
+    image_tag = settings.IMAGE_TAG  # 必须有值，settings.py 启动时已校验
+    version_export = f'export DOCKER_USER="{docker_user}"\nexport IMAGE_TAG="{image_tag}"\n'
+    # 在 set -e 后插入版本配置
+    script = script.replace('set -e\n', f'set -e\n\n{version_export}', 1)
+    return script
 
 
 def get_uninstall_script() -> str:
@@ -55,8 +63,15 @@ def get_start_agent_script(
     """
     script = _read_script("start-agent.sh")
     
-    # 只需替换两个变量
+    # 替换变量
     script = script.replace("{{HEARTBEAT_API_URL}}", heartbeat_api_url or '')
     script = script.replace("{{WORKER_ID}}", str(worker_id) if worker_id else '')
+    
+    # 注入镜像版本配置（确保远程节点使用相同版本）
+    docker_user = getattr(settings, 'DOCKER_USER', 'yyhuni')
+    image_tag = settings.IMAGE_TAG  # 必须有值，settings.py 启动时已校验
+    version_export = f'export DOCKER_USER="{docker_user}"\nexport IMAGE_TAG="{image_tag}"\n'
+    # 在 set -e 后插入版本配置
+    script = script.replace('set -e\n', f'set -e\n\n{version_export}', 1)
     
     return script

@@ -125,7 +125,13 @@ cleanup_old_containers() {
 # 拉取镜像
 pull_image() {
     log_info "拉取 Worker 镜像..."
-    sudo docker pull yyhuni/xingrin-worker:latest
+    # 镜像版本由部署时传入（必须设置）
+    if [ -z "$IMAGE_TAG" ]; then
+        log_error "IMAGE_TAG 未设置，请确保部署时传入版本号"
+        exit 1
+    fi
+    local docker_user="${DOCKER_USER:-yyhuni}"
+    sudo docker pull "${docker_user}/xingrin-worker:${IMAGE_TAG}"
     log_success "镜像拉取完成"
 }
 

@@ -12,10 +12,23 @@ set -e
 export DOCKER_BUILDKIT=1
 
 # ==================== 配置 ====================
+# 切换到脚本所在目录（项目根目录）
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# 从 VERSION 文件读取版本号（单一版本源）
+VERSION_FILE="${SCRIPT_DIR}/VERSION"
+if [ -f "$VERSION_FILE" ]; then
+    FILE_VERSION=$(cat "$VERSION_FILE" | tr -d '[:space:]')
+else
+    echo -e "\033[0;31m[ERROR]\033[0m VERSION 文件不存在，请先创建版本文件"
+    echo "    示例: echo 'v1.0.0' > VERSION"
+    exit 1
+fi
+
 # Docker Hub 用户名（修改为你的用户名）
 DOCKER_USER="${DOCKER_USER:-yyhuni}"
-# 镜像版本标签
-VERSION="${VERSION:-latest}"
+# 镜像版本标签（从 VERSION 文件读取，确保版本一致性）
+VERSION="$FILE_VERSION"
 # 是否推送（默认 yes，设为 no 则只构建不推送）
 PUSH="${PUSH:-yes}"
 # 构建平台（默认当前架构，可设为 linux/amd64,linux/arm64 进行多架构构建）
@@ -47,9 +60,10 @@ show_help() {
     cat << EOF
 用法: $0 [选项] [镜像名...]
 
+版本号从 VERSION 文件读取，修改版本请编辑该文件。
+
 选项:
   -u, --user USER      Docker Hub 用户名 (默认: $DOCKER_USER)
-  -v, --version VER    镜像版本标签 (默认: latest)
   -p, --platform PLAT  构建平台 (如: linux/amd64,linux/arm64)
   --no-push            只构建不推送
   -h, --help           显示帮助
@@ -62,15 +76,13 @@ show_help() {
   agent     心跳上报 Agent（轻量）
 
 示例:
-  $0                           # 构建并推送所有镜像
-  $0 server frontend           # 只构建 server 和 frontend
-  $0 -v 1.0.0                  # 使用指定版本标签
-  $0 --no-push                 # 只构建不推送
+  $0                             # 构建并推送所有镜像
+  $0 server frontend             # 只构建 server 和 frontend
+  $0 --no-push                   # 只构建不推送
   $0 -p linux/amd64,linux/arm64  # 多架构构建
 
 环境变量:
   DOCKER_USER   Docker Hub 用户名
-  VERSION       镜像版本标签
   PUSH          是否推送 (yes/no)
   PLATFORM      构建平台
 EOF
@@ -84,10 +96,6 @@ while [[ $# -gt 0 ]]; do
     case $1 in
         -u|--user)
             DOCKER_USER="$2"
-            shift 2
-            ;;
-        -v|--version)
-            VERSION="$2"
             shift 2
             ;;
         -p|--platform)
@@ -151,10 +159,9 @@ build_image() {
         fi
     fi
     
-    # 执行构建
+    # 执行构建（只打版本标签，不打 latest）
     $build_cmd \
         -t "$full_name" \
-        -t "${DOCKER_USER}/${name}:latest" \
         -f "$dockerfile" \
         .
     
@@ -169,7 +176,6 @@ build_image() {
     if [ "$PUSH" = "yes" ] && [ -z "$PLATFORM" ]; then
         log_info "推送镜像: $full_name"
         docker push "$full_name"
-        docker push "${DOCKER_USER}/${name}:latest"
         log_success "推送成功: $full_name"
     fi
 }

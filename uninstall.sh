@@ -171,12 +171,32 @@ ans_images=${ans_images:-N}
 
 if [[ $ans_images =~ ^[Yy]$ ]]; then
     info "正在删除 Docker 镜像..."
-    # 直接删除相关镜像，避免 compose 警告
-    docker rmi yyhuni/xingrin-server:latest 2>/dev/null || true
-    docker rmi yyhuni/xingrin-frontend:latest 2>/dev/null || true
-    docker rmi yyhuni/xingrin-nginx:latest 2>/dev/null || true
-    docker rmi yyhuni/xingrin-agent:latest 2>/dev/null || true
-    docker rmi yyhuni/xingrin-worker:latest 2>/dev/null || true
+    
+    # 从 .env 读取版本号，如果不存在则使用 latest
+    if [ -f "$DOCKER_DIR/.env" ]; then
+        DOCKER_USER=$(grep "^DOCKER_USER=" "$DOCKER_DIR/.env" | cut -d= -f2 || echo "yyhuni")
+        IMAGE_TAG=$(grep "^IMAGE_TAG=" "$DOCKER_DIR/.env" | cut -d= -f2 || echo "latest")
+    else
+        DOCKER_USER="yyhuni"
+        IMAGE_TAG="latest"
+    fi
+    
+    # 删除指定版本的镜像
+    docker rmi "${DOCKER_USER}/xingrin-server:${IMAGE_TAG}" 2>/dev/null || true
+    docker rmi "${DOCKER_USER}/xingrin-frontend:${IMAGE_TAG}" 2>/dev/null || true
+    docker rmi "${DOCKER_USER}/xingrin-nginx:${IMAGE_TAG}" 2>/dev/null || true
+    docker rmi "${DOCKER_USER}/xingrin-agent:${IMAGE_TAG}" 2>/dev/null || true
+    docker rmi "${DOCKER_USER}/xingrin-worker:${IMAGE_TAG}" 2>/dev/null || true
+    
+    # 同时删除 latest 标签（如果存在）
+    if [ "$IMAGE_TAG" != "latest" ]; then
+        docker rmi "${DOCKER_USER}/xingrin-server:latest" 2>/dev/null || true
+        docker rmi "${DOCKER_USER}/xingrin-frontend:latest" 2>/dev/null || true
+        docker rmi "${DOCKER_USER}/xingrin-nginx:latest" 2>/dev/null || true
+        docker rmi "${DOCKER_USER}/xingrin-agent:latest" 2>/dev/null || true
+        docker rmi "${DOCKER_USER}/xingrin-worker:latest" 2>/dev/null || true
+    fi
+    
     docker rmi redis:7-alpine 2>/dev/null || true
     success "Docker 镜像已删除（如存在）。"
 else
