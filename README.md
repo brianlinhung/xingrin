@@ -18,17 +18,18 @@
   <b>🎨 多种 UI 主题</b>
 </p>
 
+<p align="center">
+  <img src="docs/screenshots/bubblegum.png" alt="Bubblegum" width="32%">
+  <img src="docs/screenshots/cosmic-night.png" alt="Cosmic Night" width="32%">
+  <img src="docs/screenshots/quantum-rose.png" alt="Quantum Rose" width="32%">
+</p>
+
 ## 📚 文档
 
 - [📖 技术文档](./docs/README.md) - 技术文档导航（🚧 持续完善中）
 - [🚀 快速开始](./docs/quick-start.md) - 一键安装和部署指南
 - [🔄 版本管理](./docs/version-management.md) - Git Tag 驱动的自动化版本管理系统
 
-<p align="center">
-  <img src="docs/screenshots/bubblegum.png" alt="Bubblegum" width="32%">
-  <img src="docs/screenshots/cosmic-night.png" alt="Cosmic Night" width="32%">
-  <img src="docs/screenshots/quantum-rose.png" alt="Quantum Rose" width="32%">
-</p>
 
 ---
 
