@@ -15,6 +15,9 @@ env:
   REGISTRY: docker.io
   IMAGE_PREFIX: yyhuni
 
+permissions:
+  contents: write  # 允许修改仓库内容
+
 jobs:
   build:
     runs-on: ubuntu-latest
