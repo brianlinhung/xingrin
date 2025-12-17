@@ -91,7 +91,7 @@ class SystemLogService:
         raw_lines = [ln for ln in raw.splitlines() if ln.strip()]
 
         # 解析日志行，提取时间戳用于排序
-        # 支持 JSON 格式日志（包含 asctime 字段）
+        # 支持 JSON 格式日志（包含 asctime 字段）和方括号格式 [2025-12-17 17:09:06]
         parsed: list[tuple[datetime | None, int, str]] = []
         for idx, line in enumerate(raw_lines):
             ts: datetime | None = None
@@ -102,6 +102,16 @@ class SystemLogService:
                     asctime = obj.get("asctime")
                     if isinstance(asctime, str):
                         ts = datetime.strptime(asctime, "%Y-%m-%d %H:%M:%S")
+                except Exception:
+                    ts = None
+            # 尝试解析方括号格式日志: [2025-12-17 17:09:06]
+            elif line.startswith("["):
+                try:
+                    # 提取第一个方括号内的时间戳
+                    end_bracket = line.find("]")
+                    if end_bracket > 1:
+                        time_str = line[1:end_bracket]
+                        ts = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S")
                 except Exception:
                     ts = None
             parsed.append((ts, idx, line))

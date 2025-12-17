@@ -389,6 +389,21 @@ fi
 generate_self_signed_cert
 
 # ==============================================================================
+# 预拉取 Worker 镜像（避免扫描时等待）
+# ==============================================================================
+step "预拉取 Worker 镜像..."
+DOCKER_USER=$(grep "^DOCKER_USER=" "$DOCKER_DIR/.env" 2>/dev/null | cut -d= -f2)
+DOCKER_USER=${DOCKER_USER:-yyhuni}
+WORKER_IMAGE="${DOCKER_USER}/xingrin-worker:${APP_VERSION}"
+
+info "正在拉取: $WORKER_IMAGE"
+if docker pull "$WORKER_IMAGE"; then
+    success "Worker 镜像拉取完成"
+else
+    warn "Worker 镜像拉取失败，扫描时会自动重试拉取"
+fi
+
+# ==============================================================================
 # 启动服务
 # ==============================================================================
 step "正在启动服务..."
