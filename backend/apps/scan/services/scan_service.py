@@ -157,7 +157,7 @@ class ScanService:
         """取消所有正在运行的阶段（委托给 ScanStateService）"""
         return self.state_service.cancel_running_stages(scan_id, final_status)
     
-    # todo：待接入
+    # TODO：待接入
     def add_command_to_scan(self, scan_id: int, stage_name: str, tool_name: str, command: str) -> bool:
         """
         增量添加命令到指定扫描阶段
