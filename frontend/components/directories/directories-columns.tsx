@@ -17,7 +17,6 @@ import { IconDots } from "@tabler/icons-react"
 import { ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react"
 import { toast } from "sonner"
 import type { Directory } from "@/types/directory.types"
-import { TruncatedUrlCell } from "@/components/ui/truncated-cell"
 
 /**
  * HTTP 状态码徽章组件
@@ -88,9 +87,9 @@ export function createDirectoryColumns({
     // URL 列
     {
       accessorKey: "url",
-      size: 400,
-      minSize: 200,
-      maxSize: 500,
+      size: 500,
+      minSize: 300,
+      maxSize: 700,
       header: ({ column }) => {
         return (
           <Button
@@ -109,9 +108,21 @@ export function createDirectoryColumns({
           </Button>
         )
       },
-      cell: ({ row }) => (
-        <TruncatedUrlCell value={row.getValue("url")} />
-      ),
+      cell: ({ row }) => {
+        const url = row.getValue("url") as string
+        return (
+          <span 
+            className="text-sm font-mono break-all cursor-pointer hover:text-primary leading-relaxed"
+            onClick={() => {
+              navigator.clipboard.writeText(url)
+              toast.success("URL 已复制")
+            }}
+            title="点击复制"
+          >
+            {url}
+          </span>
+        )
+      },
     },
     // Status 列
     {
