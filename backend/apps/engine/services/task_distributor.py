@@ -242,14 +242,13 @@ class TaskDistributor:
         
         # 环境变量：SERVER_URL + IS_LOCAL，其他配置容器启动时从配置中心获取
         # IS_LOCAL 用于 Worker 向配置中心声明身份，决定返回的数据库地址
-        # Prefect 本地模式配置：禁用 API server 和 ephemeral server
+        # Prefect 本地模式配置：启用 ephemeral server（本地临时服务器）
         is_local_str = "true" if worker.is_local else "false"
         env_vars = [
             f"-e SERVER_URL={shlex.quote(server_url)}",
             f"-e IS_LOCAL={is_local_str}",
-            "-e PREFECT_API_URL=",  # 不连接外部 API server
-            "-e PREFECT_SERVER_EPHEMERAL_ENABLED=false",  # 禁用 ephemeral server
-            "-e PREFECT_SERVER_EPHEMERAL_STARTUP_TIMEOUT_SECONDS=360",  # 兜底：增加超时时间
+            "-e PREFECT_SERVER_EPHEMERAL_ENABLED=true",  # 启用 ephemeral server（本地临时服务器）
+            "-e PREFECT_SERVER_EPHEMERAL_STARTUP_TIMEOUT_SECONDS=360",  # 增加启动超时时间
             "-e PREFECT_LOGGING_EXTRA_LOGGERS=",  # 禁用 Prefect 的额外内部日志器
         ]
         
