@@ -14,7 +14,7 @@ from urllib import parse as urllib_parse
 
 from django.conf import settings
 
-from apps.common.hash_utils import is_file_hash_match
+from apps.common.utils import is_file_hash_match
 from apps.engine.services import WordlistService
 
 logger = logging.getLogger(__name__)

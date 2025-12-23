@@ -6,6 +6,7 @@ from typing import List, Iterator
 from apps.asset.models.snapshot_models import HostPortMappingSnapshot
 from apps.asset.dtos.snapshot import HostPortMappingSnapshotDTO
 from apps.common.decorators import auto_ensure_db_connection
+from apps.common.utils import deduplicate_for_bulk
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,8 @@ class DjangoHostPortMappingSnapshotRepository:
     def save_snapshots(self, items: List[HostPortMappingSnapshotDTO]) -> None:
         """
         保存主机端口关联快照
+        
+        注意：会自动按 (scan_id, host, ip, port) 去重，保留最后一条记录。
         
         Args:
             items: 主机端口关联快照 DTO 列表
@@ -31,10 +34,13 @@ class DjangoHostPortMappingSnapshotRepository:
             if not items:
                 logger.debug("主机端口关联快照为空，跳过保存")
                 return
+            
+            # 根据模型唯一约束自动去重
+            unique_items = deduplicate_for_bulk(items, HostPortMappingSnapshot)
                 
             # 构建快照对象
             snapshots = []
-            for item in items:
+            for item in unique_items:
                 snapshots.append(HostPortMappingSnapshot(
                     scan_id=item.scan_id,
                     host=item.host,

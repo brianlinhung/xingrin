@@ -8,6 +8,7 @@ from django.db import transaction
 from apps.asset.models.asset_models import Subdomain
 from apps.asset.dtos import SubdomainDTO
 from apps.common.decorators import auto_ensure_db_connection
+from apps.common.utils import deduplicate_for_bulk
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,8 @@ class DjangoSubdomainRepository:
         """
         批量创建子域名，忽略冲突
         
+        注意：自动按模型唯一约束去重，保留最后一条记录。
+        
         Args:
             items: 子域名 DTO 列表
         """
@@ -27,12 +30,15 @@ class DjangoSubdomainRepository:
             return
 
         try:
+            # 自动按模型唯一约束去重
+            unique_items = deduplicate_for_bulk(items, Subdomain)
+            
             subdomain_objects = [
                 Subdomain(
                     name=item.name,
                     target_id=item.target_id,
                 )
-                for item in items
+                for item in unique_items
             ]
 
             with transaction.atomic():
@@ -41,7 +47,7 @@ class DjangoSubdomainRepository:
                     ignore_conflicts=True,
                 )
 
-            logger.debug(f"成功处理 {len(items)} 条子域名记录")
+            logger.debug(f"成功处理 {len(unique_items)} 条子域名记录")
 
         except Exception as e:
             logger.error(f"批量插入子域名失败: {e}")

@@ -11,6 +11,7 @@ from django.utils import timezone
 
 from ..models import Target
 from apps.common.decorators import auto_ensure_db_connection
+from apps.common.utils import deduplicate_for_bulk
 
 logger = logging.getLogger(__name__)
 
@@ -51,14 +52,19 @@ class DjangoTargetRepository:
         """
         批量创建目标，忽略冲突
         
+        注意：会自动按 name 去重，保留最后一条记录。
+        
         Args:
             targets: Target 对象列表
         """
         if not targets:
             return
-            
+        
         try:
-            Target.objects.bulk_create(targets, ignore_conflicts=True)
+            # 根据模型唯一约束自动去重
+            unique_targets = deduplicate_for_bulk(targets, Target)
+            
+            Target.objects.bulk_create(unique_targets, ignore_conflicts=True)
         except Exception as e:
             logger.error(f"批量创建目标失败: {e}")
             raise

@@ -6,6 +6,7 @@ from typing import List
 from apps.asset.models.snapshot_models import EndpointSnapshot
 from apps.asset.dtos.snapshot import EndpointSnapshotDTO
 from apps.common.decorators import auto_ensure_db_connection
+from apps.common.utils import deduplicate_for_bulk
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,8 @@ class DjangoEndpointSnapshotRepository:
     def save_snapshots(self, items: List[EndpointSnapshotDTO]) -> None:
         """
         保存端点快照
+        
+        注意：会自动按 (scan_id, url) 去重，保留最后一条记录。
         
         Args:
             items: 端点快照 DTO 列表
@@ -31,10 +34,13 @@ class DjangoEndpointSnapshotRepository:
             if not items:
                 logger.debug("端点快照为空，跳过保存")
                 return
+            
+            # 根据模型唯一约束自动去重
+            unique_items = deduplicate_for_bulk(items, EndpointSnapshot)
                 
             # 构建快照对象
             snapshots = []
-            for item in items:
+            for item in unique_items:
                 snapshots.append(EndpointSnapshot(
                     scan_id=item.scan_id,
                     url=item.url,

@@ -9,6 +9,7 @@ from django.db import transaction
 from apps.asset.models.asset_models import Directory
 from apps.asset.dtos import DirectoryDTO
 from apps.common.decorators import auto_ensure_db_connection
+from apps.common.utils import deduplicate_for_bulk
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +25,8 @@ class DjangoDirectoryRepository:
         存在则更新所有字段，不存在则创建。
         使用 Django 原生 update_conflicts。
         
+        注意：自动按模型唯一约束去重，保留最后一条记录。
+        
         Args:
             items: Directory DTO 列表
             
@@ -34,6 +37,9 @@ class DjangoDirectoryRepository:
             return 0
         
         try:
+            # 自动按模型唯一约束去重
+            unique_items = deduplicate_for_bulk(items, Directory)
+            
             # 直接从 DTO 字段构建 Model
             directories = [
                 Directory(
@@ -46,7 +52,7 @@ class DjangoDirectoryRepository:
                     content_type=item.content_type or '',
                     duration=item.duration
                 )
-                for item in items
+                for item in unique_items
             ]
             
             with transaction.atomic():
@@ -61,8 +67,8 @@ class DjangoDirectoryRepository:
                     batch_size=1000
                 )
             
-            logger.debug(f"批量 upsert Directory 成功: {len(items)} 条")
-            return len(items)
+            logger.debug(f"批量 upsert Directory 成功: {len(unique_items)} 条")
+            return len(unique_items)
                 
         except Exception as e:
             logger.error(f"批量 upsert Directory 失败: {e}")

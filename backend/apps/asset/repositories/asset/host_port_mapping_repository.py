@@ -6,6 +6,7 @@ from typing import List, Iterator
 from apps.asset.models.asset_models import HostPortMapping
 from apps.asset.dtos.asset import HostPortMappingDTO
 from apps.common.decorators import auto_ensure_db_connection
+from apps.common.utils import deduplicate_for_bulk
 
 logger = logging.getLogger(__name__)
 
@@ -18,15 +19,13 @@ class DjangoHostPortMappingRepository:
         """
         批量创建主机端口关联（忽略冲突）
         
+        注意：自动按模型唯一约束去重，保留最后一条记录。
+        
         Args:
             items: 主机端口关联 DTO 列表
         
         Returns:
-            int: 实际创建的记录数（注意：ignore_conflicts 时可能为 0）
-        
-        Note:
-            - 基于唯一约束 (target + host + ip + port) 自动去重
-            - 忽略已存在的记录，不更新
+            int: 实际创建的记录数
         """
         try:
             logger.debug("准备批量创建主机端口关联 - 数量: %d", len(items))
@@ -34,8 +33,10 @@ class DjangoHostPortMappingRepository:
             if not items:
                 logger.debug("主机端口关联为空，跳过创建")
                 return 0
+            
+            # 自动按模型唯一约束去重
+            unique_items = deduplicate_for_bulk(items, HostPortMapping)
                 
-            # 构建记录对象
             records = [
                 HostPortMapping(
                     target_id=item.target_id,
@@ -43,10 +44,9 @@ class DjangoHostPortMappingRepository:
                     ip=item.ip,
                     port=item.port
                 )
-                for item in items
+                for item in unique_items
             ]
             
-            # 批量创建（忽略冲突，基于唯一约束去重）
             created = HostPortMapping.objects.bulk_create(
                 records, 
                 ignore_conflicts=True
@@ -100,9 +100,7 @@ class DjangoHostPortMappingRepository:
         ip_aggregated = (
             qs
             .values('ip')
-            .annotate(
-                discovered_at=Min('discovered_at')
-            )
+            .annotate(discovered_at=Min('discovered_at'))
             .order_by('-discovered_at')
         )
 
@@ -115,17 +113,14 @@ class DjangoHostPortMappingRepository:
                 .values('host', 'port')
                 .distinct()
             )
-
             hosts = sorted({m['host'] for m in mappings})
             ports = sorted({m['port'] for m in mappings})
-
             results.append({
                 'ip': ip,
                 'hosts': hosts,
                 'ports': ports,
                 'discovered_at': item['discovered_at'],
             })
-
         return results
 
     def get_all_ip_aggregation(self, search: str = None):
@@ -139,9 +134,7 @@ class DjangoHostPortMappingRepository:
         ip_aggregated = (
             qs
             .values('ip')
-            .annotate(
-                discovered_at=Min('discovered_at')
-            )
+            .annotate(discovered_at=Min('discovered_at'))
             .order_by('-discovered_at')
         )
 
@@ -154,15 +147,12 @@ class DjangoHostPortMappingRepository:
                 .values('host', 'port')
                 .distinct()
             )
-
             hosts = sorted({m['host'] for m in mappings})
             ports = sorted({m['port'] for m in mappings})
-
             results.append({
                 'ip': ip,
                 'hosts': hosts,
                 'ports': ports,
                 'discovered_at': item['discovered_at'],
             })
-
         return results

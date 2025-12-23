@@ -7,6 +7,7 @@ from django.db import transaction
 from apps.asset.models import DirectorySnapshot
 from apps.asset.dtos.snapshot import DirectorySnapshotDTO
 from apps.common.decorators import auto_ensure_db_connection
+from apps.common.utils import deduplicate_for_bulk
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,8 @@ class DjangoDirectorySnapshotRepository:
         
         使用 ignore_conflicts 策略，如果快照已存在（相同 scan + url）则跳过
         
+        注意：会自动按 (scan_id, url) 去重，保留最后一条记录。
+        
         Args:
             items: 目录快照 DTO 列表
         
@@ -37,6 +40,9 @@ class DjangoDirectorySnapshotRepository:
             return
         
         try:
+            # 根据模型唯一约束自动去重
+            unique_items = deduplicate_for_bulk(items, DirectorySnapshot)
+            
             # 转换为 Django 模型对象
             snapshot_objects = [
                 DirectorySnapshot(
@@ -49,7 +55,7 @@ class DjangoDirectorySnapshotRepository:
                     content_type=item.content_type,
                     duration=item.duration
                 )
-                for item in items
+                for item in unique_items
             ]
             
             with transaction.atomic():
@@ -60,7 +66,7 @@ class DjangoDirectorySnapshotRepository:
                     ignore_conflicts=True
                 )
             
-            logger.debug("成功保存 %d 条目录快照记录", len(items))
+            logger.debug("成功保存 %d 条目录快照记录", len(unique_items))
             
         except Exception as e:
             logger.error(

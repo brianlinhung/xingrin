@@ -9,6 +9,7 @@ from django.db import transaction
 from apps.asset.models.asset_models import WebSite
 from apps.asset.dtos import WebSiteDTO
 from apps.common.decorators import auto_ensure_db_connection
+from apps.common.utils import deduplicate_for_bulk
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +25,8 @@ class DjangoWebSiteRepository:
         存在则更新所有字段，不存在则创建。
         使用 Django 原生 update_conflicts。
         
+        注意：自动按模型唯一约束去重，保留最后一条记录。
+        
         Args:
             items: WebSite DTO 列表
             
@@ -34,6 +37,9 @@ class DjangoWebSiteRepository:
             return 0
         
         try:
+            # 自动按模型唯一约束去重
+            unique_items = deduplicate_for_bulk(items, WebSite)
+            
             # 直接从 DTO 字段构建 Model
             websites = [
                 WebSite(
@@ -50,7 +56,7 @@ class DjangoWebSiteRepository:
                     content_length=item.content_length,
                     vhost=item.vhost
                 )
-                for item in items
+                for item in unique_items
             ]
             
             with transaction.atomic():
@@ -66,8 +72,8 @@ class DjangoWebSiteRepository:
                     batch_size=1000
                 )
             
-            logger.debug(f"批量 upsert WebSite 成功: {len(items)} 条")
-            return len(items)
+            logger.debug(f"批量 upsert WebSite 成功: {len(unique_items)} 条")
+            return len(unique_items)
                 
         except Exception as e:
             logger.error(f"批量 upsert WebSite 失败: {e}")
@@ -76,13 +82,6 @@ class DjangoWebSiteRepository:
     def get_urls_for_export(self, target_id: int, batch_size: int = 1000) -> Generator[str, None, None]:
         """
         流式导出目标下的所有站点 URL
-        
-        Args:
-            target_id: 目标 ID  
-            batch_size: 批次大小
-            
-        Yields:
-            str: 站点 URL
         """
         try:
             queryset = WebSite.objects.filter(
@@ -108,16 +107,7 @@ class DjangoWebSiteRepository:
         return WebSite.objects.filter(target_id=target_id).count()
 
     def get_by_url(self, url: str, target_id: int) -> Optional[int]:
-        """
-        根据 URL 和 target_id 查找站点 ID
-        
-        Args:
-            url: 站点 URL
-            target_id: 目标 ID
-            
-        Returns:
-            Optional[int]: 站点 ID，如果不存在返回 None
-        """
+        """根据 URL 和 target_id 查找站点 ID"""
         website = WebSite.objects.filter(url=url, target_id=target_id).first()
         return website.id if website else None
 
@@ -125,20 +115,15 @@ class DjangoWebSiteRepository:
         """
         批量创建 WebSite（存在即跳过）
         
-        与 bulk_upsert 不同，此方法不会更新已存在的记录。
-        适用于快速扫描场景，只提供 URL，没有其他字段数据。
-        
-        Args:
-            items: WebSite DTO 列表
-            
-        Returns:
-            int: 处理的记录数
+        注意：自动按模型唯一约束去重，保留最后一条记录。
         """
         if not items:
             return 0
         
         try:
-            # 直接从 DTO 字段构建 Model
+            # 自动按模型唯一约束去重
+            unique_items = deduplicate_for_bulk(items, WebSite)
+            
             websites = [
                 WebSite(
                     target_id=item.target_id,
@@ -154,7 +139,7 @@ class DjangoWebSiteRepository:
                     content_length=item.content_length,
                     vhost=item.vhost
                 )
-                for item in items
+                for item in unique_items
             ]
             
             with transaction.atomic():
@@ -164,8 +149,8 @@ class DjangoWebSiteRepository:
                     batch_size=1000
                 )
             
-            logger.debug(f"批量创建 WebSite 成功（ignore_conflicts）: {len(items)} 条")
-            return len(items)
+            logger.debug(f"批量创建 WebSite 成功（ignore_conflicts）: {len(unique_items)} 条")
+            return len(unique_items)
                 
         except Exception as e:
             logger.error(f"批量创建 WebSite 失败: {e}")

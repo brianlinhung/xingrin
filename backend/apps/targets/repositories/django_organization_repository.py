@@ -11,6 +11,7 @@ from django.utils import timezone
 
 from ..models import Organization, Target
 from apps.common.decorators import auto_ensure_db_connection
+from apps.common.utils import deduplicate_for_bulk
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,8 @@ class DjangoOrganizationRepository:
         """
         批量添加目标到组织
         
+        注意：会自动按 (organization_id, target_id) 去重，保留最后一条记录。
+        
         Args:
             organization_id: 组织 ID
             targets: Target 对象列表
@@ -32,14 +35,27 @@ class DjangoOrganizationRepository:
             
         # 使用 through model 批量插入，避免 N 次 add()
         ThroughModel = Organization.targets.through
+        
+        # 按 target_id 去重，避免批次内重复
+        seen = {}
+        for t in targets:
+            seen[t.id] = t
+        unique_targets = list(seen.values())
+        
+        if len(unique_targets) < len(targets):
+            logger.debug(f"Organization-Target 关联去重: {len(targets)} -> {len(unique_targets)} 条")
+        
         relations = [
             ThroughModel(organization_id=organization_id, target_id=t.id)
-            for t in targets
+            for t in unique_targets
         ]
+        
+        # 根据 through model 唯一约束自动去重
+        unique_relations = deduplicate_for_bulk(relations, ThroughModel)
         
         try:
             # 使用 ignore_conflicts 忽略已存在的关联
-            ThroughModel.objects.bulk_create(relations, ignore_conflicts=True)
+            ThroughModel.objects.bulk_create(unique_relations, ignore_conflicts=True)
         except Exception as e:
             logger.error(f"批量关联目标失败: {e}")
             raise

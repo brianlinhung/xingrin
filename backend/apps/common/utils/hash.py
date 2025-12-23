@@ -7,7 +7,6 @@
 
 import hashlib
 import logging
-from pathlib import Path
 from typing import Optional, BinaryIO
 
 logger = logging.getLogger(__name__)
@@ -91,11 +90,3 @@ def is_file_hash_match(file_path: str, expected_hash: str) -> bool:
         return False
 
     return actual_hash.lower() == expected_hash.lower()
-
-
-__all__ = [
-    "calc_file_sha256",
-    "calc_stream_sha256",
-    "safe_calc_file_sha256",
-    "is_file_hash_match",
-]

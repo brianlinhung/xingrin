@@ -6,6 +6,7 @@ from typing import List
 from apps.asset.models import Endpoint
 from apps.asset.dtos.asset import EndpointDTO
 from apps.common.decorators import auto_ensure_db_connection
+from apps.common.utils import deduplicate_for_bulk
 from django.db import transaction
 
 logger = logging.getLogger(__name__)
@@ -22,6 +23,8 @@ class DjangoEndpointRepository:
         存在则更新所有字段，不存在则创建。
         使用 Django 原生 update_conflicts。
         
+        注意：自动按模型唯一约束去重，保留最后一条记录。
+        
         Args:
             items: 端点 DTO 列表
             
@@ -32,6 +35,9 @@ class DjangoEndpointRepository:
             return 0
         
         try:
+            # 自动按模型唯一约束去重
+            unique_items = deduplicate_for_bulk(items, Endpoint)
+            
             # 直接从 DTO 字段构建 Model
             endpoints = [
                 Endpoint(
@@ -49,7 +55,7 @@ class DjangoEndpointRepository:
                     location=item.location or '',
                     matched_gf_patterns=item.matched_gf_patterns if item.matched_gf_patterns else []
                 )
-                for item in items
+                for item in unique_items
             ]
             
             with transaction.atomic():
@@ -65,8 +71,8 @@ class DjangoEndpointRepository:
                     batch_size=1000
                 )
             
-            logger.debug(f"批量 upsert 端点成功: {len(items)} 条")
-            return len(items)
+            logger.debug(f"批量 upsert 端点成功: {len(unique_items)} 条")
+            return len(unique_items)
                 
         except Exception as e:
             logger.error(f"批量 upsert 端点失败: {e}")
@@ -107,6 +113,8 @@ class DjangoEndpointRepository:
         与 bulk_upsert 不同，此方法不会更新已存在的记录。
         适用于快速扫描场景，只提供 URL，没有其他字段数据。
         
+        注意：自动按模型唯一约束去重，保留最后一条记录。
+        
         Args:
             items: 端点 DTO 列表
             
@@ -117,6 +125,9 @@ class DjangoEndpointRepository:
             return 0
         
         try:
+            # 自动按模型唯一约束去重
+            unique_items = deduplicate_for_bulk(items, Endpoint)
+            
             # 直接从 DTO 字段构建 Model
             endpoints = [
                 Endpoint(
@@ -134,7 +145,7 @@ class DjangoEndpointRepository:
                     location=item.location or '',
                     matched_gf_patterns=item.matched_gf_patterns if item.matched_gf_patterns else []
                 )
-                for item in items
+                for item in unique_items
             ]
             
             with transaction.atomic():
@@ -144,8 +155,8 @@ class DjangoEndpointRepository:
                     batch_size=1000
                 )
             
-            logger.debug(f"批量创建端点成功（ignore_conflicts）: {len(items)} 条")
-            return len(items)
+            logger.debug(f"批量创建端点成功（ignore_conflicts）: {len(unique_items)} 条")
+            return len(unique_items)
                 
         except Exception as e:
             logger.error(f"批量创建端点失败: {e}")

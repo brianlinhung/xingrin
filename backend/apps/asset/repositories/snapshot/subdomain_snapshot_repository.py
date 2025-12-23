@@ -6,6 +6,7 @@ from typing import List
 from apps.asset.models.snapshot_models import SubdomainSnapshot
 from apps.asset.dtos import SubdomainSnapshotDTO
 from apps.common.decorators import auto_ensure_db_connection
+from apps.common.utils import deduplicate_for_bulk
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,8 @@ class DjangoSubdomainSnapshotRepository:
     def save_subdomain_snapshots(self, items: List[SubdomainSnapshotDTO]) -> None:
         """
         保存子域名快照
+        
+        注意：会自动按 (scan_id, name) 去重，保留最后一条记录。
         
         Args:
             items: 子域名快照 DTO 列表
@@ -31,10 +34,13 @@ class DjangoSubdomainSnapshotRepository:
             if not items:
                 logger.debug("子域名快照为空，跳过保存")
                 return
+            
+            # 根据模型唯一约束自动去重
+            unique_items = deduplicate_for_bulk(items, SubdomainSnapshot)
                 
             # 构建快照对象
             snapshots = []
-            for item in items:
+            for item in unique_items:
                 snapshots.append(SubdomainSnapshot(
                     scan_id=item.scan_id,
                     name=item.name,

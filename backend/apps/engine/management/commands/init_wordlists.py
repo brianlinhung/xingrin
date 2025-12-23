@@ -13,7 +13,7 @@ from pathlib import Path
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from apps.common.hash_utils import safe_calc_file_sha256
+from apps.common.utils import safe_calc_file_sha256
 from apps.engine.models import Wordlist
 
 
