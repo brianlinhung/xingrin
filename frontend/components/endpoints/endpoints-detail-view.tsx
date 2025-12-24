@@ -2,12 +2,14 @@
 
 import React, { useState, useMemo } from "react"
 import { AlertTriangle } from "lucide-react"
-import { useTargetEndpoints } from "@/hooks/use-targets"
+import { useTargetEndpoints, useTarget } from "@/hooks/use-targets"
 import { useDeleteEndpoint, useScanEndpoints } from "@/hooks/use-endpoints"
 import { EndpointsDataTable } from "./endpoints-data-table"
 import { createEndpointColumns } from "./endpoints-columns"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { DataTableSkeleton } from "@/components/ui/data-table-skeleton"
+import { BulkAddUrlsDialog } from "@/components/common/bulk-add-urls-dialog"
+import type { TargetType } from "@/lib/url-validator"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +38,7 @@ export function EndpointsDetailView({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [endpointToDelete, setEndpointToDelete] = useState<Endpoint | null>(null)
   const [selectedEndpoints, setSelectedEndpoints] = useState<Endpoint[]>([])
+  const [bulkAddDialogOpen, setBulkAddDialogOpen] = useState(false)
 
   // 分页状态管理
   const [pagination, setPagination] = useState({
@@ -45,6 +48,9 @@ export function EndpointsDetailView({
 
   const [searchQuery, setSearchQuery] = useState("")
   const [isSearching, setIsSearching] = useState(false)
+
+  // 获取目标信息（用于 URL 匹配校验）
+  const { data: target } = useTarget(targetId || 0, { enabled: !!targetId })
 
   const handleSearchChange = (value: string) => {
     setIsSearching(true)
@@ -284,7 +290,21 @@ export function EndpointsDetailView({
         onSelectionChange={handleSelectionChange}
         onDownloadAll={handleDownloadAll}
         onDownloadSelected={handleDownloadSelected}
+        onBulkAdd={targetId ? () => setBulkAddDialogOpen(true) : undefined}
       />
+
+      {/* 批量添加弹窗 */}
+      {targetId && (
+        <BulkAddUrlsDialog
+          targetId={targetId}
+          assetType="endpoint"
+          targetName={target?.name}
+          targetType={target?.type as TargetType}
+          open={bulkAddDialogOpen}
+          onOpenChange={setBulkAddDialogOpen}
+          onSuccess={() => refetch()}
+        />
+      )}
 
       {/* 删除确认对话框 */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

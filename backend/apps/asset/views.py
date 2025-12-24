@@ -272,6 +272,70 @@ class WebSiteViewSet(viewsets.ModelViewSet):
             return self.service.get_websites_by_target(target_pk)
         return self.service.get_all()
 
+    @action(detail=False, methods=['post'], url_path='bulk-create')
+    def bulk_create(self, request, **kwargs):
+        """批量创建网站
+        
+        POST /api/targets/{target_pk}/websites/bulk-create/
+        
+        请求体:
+        {
+            "urls": ["https://example.com", "https://test.com"]
+        }
+        
+        响应:
+        {
+            "message": "批量创建完成",
+            "createdCount": 10,
+            "mismatchedCount": 2
+        }
+        """
+        from apps.targets.models import Target
+        
+        target_pk = self.kwargs.get('target_pk')
+        if not target_pk:
+            return Response(
+                {'error': '必须在目标下批量创建网站'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 获取目标
+        try:
+            target = Target.objects.get(pk=target_pk)
+        except Target.DoesNotExist:
+            return Response(
+                {'error': '目标不存在'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # 获取请求体中的 URL 列表
+        urls = request.data.get('urls', [])
+        if not urls or not isinstance(urls, list):
+            return Response(
+                {'error': '请求体不能为空或格式错误'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 调用 service 层处理
+        try:
+            created_count = self.service.bulk_create_urls(
+                target_id=int(target_pk),
+                target_name=target.name,
+                target_type=target.type,
+                urls=urls
+            )
+        except Exception as e:
+            logger.exception("批量创建网站失败")
+            return Response(
+                {'error': '服务器内部错误'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        return Response({
+            'message': '批量创建完成',
+            'createdCount': created_count,
+        }, status=status.HTTP_200_OK)
+
     @action(detail=False, methods=['get'], url_path='export')
     def export(self, request, **kwargs):
         """导出网站为 CSV 格式
@@ -329,6 +393,70 @@ class DirectoryViewSet(viewsets.ModelViewSet):
             return self.service.get_directories_by_target(target_pk)
         return self.service.get_all()
 
+    @action(detail=False, methods=['post'], url_path='bulk-create')
+    def bulk_create(self, request, **kwargs):
+        """批量创建目录
+        
+        POST /api/targets/{target_pk}/directories/bulk-create/
+        
+        请求体:
+        {
+            "urls": ["https://example.com/admin", "https://example.com/api"]
+        }
+        
+        响应:
+        {
+            "message": "批量创建完成",
+            "createdCount": 10,
+            "mismatchedCount": 2
+        }
+        """
+        from apps.targets.models import Target
+        
+        target_pk = self.kwargs.get('target_pk')
+        if not target_pk:
+            return Response(
+                {'error': '必须在目标下批量创建目录'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 获取目标
+        try:
+            target = Target.objects.get(pk=target_pk)
+        except Target.DoesNotExist:
+            return Response(
+                {'error': '目标不存在'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # 获取请求体中的 URL 列表
+        urls = request.data.get('urls', [])
+        if not urls or not isinstance(urls, list):
+            return Response(
+                {'error': '请求体不能为空或格式错误'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 调用 service 层处理
+        try:
+            created_count = self.service.bulk_create_urls(
+                target_id=int(target_pk),
+                target_name=target.name,
+                target_type=target.type,
+                urls=urls
+            )
+        except Exception as e:
+            logger.exception("批量创建目录失败")
+            return Response(
+                {'error': '服务器内部错误'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        return Response({
+            'message': '批量创建完成',
+            'createdCount': created_count,
+        }, status=status.HTTP_200_OK)
+
     @action(detail=False, methods=['get'], url_path='export')
     def export(self, request, **kwargs):
         """导出目录为 CSV 格式
@@ -383,6 +511,70 @@ class EndpointViewSet(viewsets.ModelViewSet):
         if target_pk:
             return self.service.get_endpoints_by_target(target_pk)
         return self.service.get_all()
+
+    @action(detail=False, methods=['post'], url_path='bulk-create')
+    def bulk_create(self, request, **kwargs):
+        """批量创建端点
+        
+        POST /api/targets/{target_pk}/endpoints/bulk-create/
+        
+        请求体:
+        {
+            "urls": ["https://example.com/api/v1", "https://example.com/api/v2"]
+        }
+        
+        响应:
+        {
+            "message": "批量创建完成",
+            "createdCount": 10,
+            "mismatchedCount": 2
+        }
+        """
+        from apps.targets.models import Target
+        
+        target_pk = self.kwargs.get('target_pk')
+        if not target_pk:
+            return Response(
+                {'error': '必须在目标下批量创建端点'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 获取目标
+        try:
+            target = Target.objects.get(pk=target_pk)
+        except Target.DoesNotExist:
+            return Response(
+                {'error': '目标不存在'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # 获取请求体中的 URL 列表
+        urls = request.data.get('urls', [])
+        if not urls or not isinstance(urls, list):
+            return Response(
+                {'error': '请求体不能为空或格式错误'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 调用 service 层处理
+        try:
+            created_count = self.service.bulk_create_urls(
+                target_id=int(target_pk),
+                target_name=target.name,
+                target_type=target.type,
+                urls=urls
+            )
+        except Exception as e:
+            logger.exception("批量创建端点失败")
+            return Response(
+                {'error': '服务器内部错误'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        return Response({
+            'message': '批量创建完成',
+            'createdCount': created_count,
+        }, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], url_path='export')
     def export(self, request, **kwargs):

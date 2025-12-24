@@ -9,7 +9,28 @@ import type {
   BatchDeleteEndpointsResponse
 } from "@/types/endpoint.types"
 
+// 批量创建端点响应类型
+export interface BulkCreateEndpointsResponse {
+  message: string
+  createdCount: number
+}
+
 export class EndpointService {
+
+  /**
+   * 批量创建端点（绑定到目标）
+   * POST /api/targets/{target_id}/endpoints/bulk-create/
+   */
+  static async bulkCreateEndpoints(
+    targetId: number,
+    urls: string[]
+  ): Promise<BulkCreateEndpointsResponse> {
+    const response = await api.post<BulkCreateEndpointsResponse>(
+      `/targets/${targetId}/endpoints/bulk-create/`,
+      { urls }
+    )
+    return response.data
+  }
 
   /**
    * 获取单个 Endpoint 详情

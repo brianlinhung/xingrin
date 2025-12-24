@@ -225,6 +225,50 @@ def is_valid_url(url: str, max_length: int = 2000) -> bool:
         return False
 
 
+def is_url_match_target(url: str, target_name: str, target_type: str) -> bool:
+    """
+    判断 URL 是否匹配目标
+    
+    Args:
+        url: URL 字符串
+        target_name: 目标名称（域名、IP 或 CIDR）
+        target_type: 目标类型 ('domain', 'ip', 'cidr')
+        
+    Returns:
+        bool: 是否匹配
+    """
+    try:
+        parsed = urlparse(url)
+        hostname = parsed.hostname
+        if not hostname:
+            return False
+        
+        hostname = hostname.lower()
+        target_name = target_name.lower()
+        
+        if target_type == 'domain':
+            # 域名类型：hostname 等于 target_name 或以 .target_name 结尾
+            return hostname == target_name or hostname.endswith('.' + target_name)
+        
+        elif target_type == 'ip':
+            # IP 类型：hostname 必须完全等于 target_name
+            return hostname == target_name
+        
+        elif target_type == 'cidr':
+            # CIDR 类型：hostname 必须是 IP 且在 CIDR 范围内
+            try:
+                ip = ipaddress.ip_address(hostname)
+                network = ipaddress.ip_network(target_name, strict=False)
+                return ip in network
+            except ValueError:
+                # hostname 不是有效 IP
+                return False
+        
+        return False
+    except Exception:
+        return False
+
+
 def detect_input_type(input_str: str) -> str:
     """
     检测输入类型（用于快速扫描输入解析）

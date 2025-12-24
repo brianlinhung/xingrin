@@ -97,11 +97,11 @@ export function useTargets(
 /**
  * 获取单个目标详情
  */
-export function useTarget(id: number) {
+export function useTarget(id: number, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['targets', id],
     queryFn: () => getTargetById(id),
-    enabled: !!id,
+    enabled: options?.enabled !== undefined ? options.enabled : !!id,
   })
 }
 

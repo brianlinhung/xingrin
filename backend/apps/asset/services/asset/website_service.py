@@ -5,7 +5,7 @@ from typing import List, Iterator
 
 from apps.asset.repositories import DjangoWebSiteRepository
 from apps.asset.dtos import WebSiteDTO
-from apps.common.validators import is_valid_url
+from apps.common.validators import is_valid_url, is_url_match_target
 
 logger = logging.getLogger(__name__)
 
@@ -38,15 +38,17 @@ class WebSiteService:
             logger.error(f"批量 upsert 网站失败: {e}")
             raise
     
-    def bulk_create_urls(self, target_id: int, urls: List[str]) -> int:
+    def bulk_create_urls(self, target_id: int, target_name: str, target_type: str, urls: List[str]) -> int:
         """
         批量创建网站（仅 URL，使用 ignore_conflicts）
         
-        验证 URL 格式，过滤无效 URL，去重后批量创建。
+        验证 URL 格式和匹配，过滤无效/不匹配 URL，去重后批量创建。
         已存在的记录会被跳过。
         
         Args:
             target_id: 目标 ID
+            target_name: 目标名称（用于匹配验证）
+            target_type: 目标类型 ('domain', 'ip', 'cidr')
             urls: URL 列表
             
         Returns:
@@ -58,6 +60,7 @@ class WebSiteService:
         # 过滤有效 URL 并去重
         valid_urls = []
         seen = set()
+        
         for url in urls:
             if not isinstance(url, str):
                 continue
@@ -66,6 +69,11 @@ class WebSiteService:
                 continue
             if not is_valid_url(url):
                 continue
+            
+            # 匹配验证（前端已阻止不匹配的提交，后端作为双重保障）
+            if not is_url_match_target(url, target_name, target_type):
+                continue
+            
             seen.add(url)
             valid_urls.append(url)
         

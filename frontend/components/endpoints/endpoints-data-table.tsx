@@ -74,6 +74,7 @@ interface EndpointsDataTableProps<TData extends { id: number | string }, TValue>
   totalPages?: number
   onDownloadAll?: () => void
   onDownloadSelected?: () => void
+  onBulkAdd?: () => void
 }
 
 export function EndpointsDataTable<TData extends { id: number | string }, TValue>({
@@ -93,6 +94,7 @@ export function EndpointsDataTable<TData extends { id: number | string }, TValue
   totalPages,
   onDownloadAll,
   onDownloadSelected,
+  onBulkAdd,
 }: EndpointsDataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState<Record<string, boolean>>({})
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -270,6 +272,13 @@ export function EndpointsDataTable<TData extends { id: number | string }, TValue
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
+          )}
+
+          {onBulkAdd && (
+            <Button onClick={onBulkAdd} size="sm" variant="outline">
+              <IconPlus />
+              批量添加
+            </Button>
           )}
 
           {onAddNew && (

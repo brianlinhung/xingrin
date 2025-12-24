@@ -9,7 +9,7 @@ class WebSiteDTO:
     """网站数据传输对象"""
     target_id: int
     url: str
-    host: str
+    host: str = ''
     title: str = ''
     status_code: Optional[int] = None
     content_length: Optional[int] = None

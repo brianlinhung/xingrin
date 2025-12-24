@@ -219,3 +219,36 @@ export function useBatchDeleteEndpoints() {
     },
   })
 }
+
+// 批量创建端点（绑定到目标）
+export function useBulkCreateEndpoints() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: { targetId: number; urls: string[] }) =>
+      EndpointService.bulkCreateEndpoints(data.targetId, data.urls),
+    onMutate: async () => {
+      toast.loading('正在批量创建端点...', { id: 'bulk-create-endpoints' })
+    },
+    onSuccess: (response, { targetId }) => {
+      toast.dismiss('bulk-create-endpoints')
+      const { createdCount } = response
+      
+      if (createdCount > 0) {
+        toast.success(`成功创建 ${createdCount} 个端点`)
+      } else {
+        toast.warning('没有新端点被创建（可能已存在）')
+      }
+      
+      // 刷新端点列表
+      queryClient.invalidateQueries({ queryKey: endpointKeys.byTarget(targetId, {}) })
+      queryClient.invalidateQueries({ queryKey: ['endpoints'] })
+    },
+    onError: (error: any) => {
+      toast.dismiss('bulk-create-endpoints')
+      console.error('批量创建端点失败:', error)
+      const errorMessage = error?.response?.data?.error || '批量创建失败，请查看控制台日志'
+      toast.error(errorMessage)
+    },
+  })
+}

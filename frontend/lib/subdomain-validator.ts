@@ -25,19 +25,14 @@ const SUBDOMAIN_REGEX = /^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(\.[a-zA-Z0-9-]{1,63})*$/
 
 export class SubdomainValidator {
   /**
-   * 解析输入文本，支持换行、逗号、空格分隔
+   * 解析输入文本，仅支持换行分隔（每行一个子域名）
    */
   static parse(input: string): string[] {
     if (!input || typeof input !== 'string') {
       return []
     }
     
-    // 统一分隔符为换行，然后按行分割
-    const normalized = input
-      .replace(/,/g, '\n')
-      .replace(/\s+/g, '\n')
-    
-    return normalized
+    return input
       .split('\n')
       .map(s => s.trim().toLowerCase())
       .filter(s => s.length > 0)

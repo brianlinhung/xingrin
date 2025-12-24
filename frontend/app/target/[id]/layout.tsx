@@ -146,12 +146,12 @@ export default function TargetLayout({
                 )}
               </Link>
             </TabsTrigger>
-            <TabsTrigger value="ip-addresses" asChild>
-              <Link href={tabPaths["ip-addresses"]} className="flex items-center gap-0.5">
-                IP Addresses
-                {counts["ip-addresses"] > 0 && (
+            <TabsTrigger value="websites" asChild>
+              <Link href={tabPaths.websites} className="flex items-center gap-0.5">
+                Websites
+                {counts.websites > 0 && (
                   <Badge variant="secondary" className="ml-1.5 h-5 min-w-5 rounded-full px-1.5 text-xs">
-                    {counts["ip-addresses"]}
+                    {counts.websites}
                   </Badge>
                 )}
               </Link>
@@ -166,22 +166,22 @@ export default function TargetLayout({
                 )}
               </Link>
             </TabsTrigger>
-            <TabsTrigger value="websites" asChild>
-              <Link href={tabPaths.websites} className="flex items-center gap-0.5">
-                Websites
-                {counts.websites > 0 && (
-                  <Badge variant="secondary" className="ml-1.5 h-5 min-w-5 rounded-full px-1.5 text-xs">
-                    {counts.websites}
-                  </Badge>
-                )}
-              </Link>
-            </TabsTrigger>
             <TabsTrigger value="directories" asChild>
               <Link href={tabPaths.directories} className="flex items-center gap-0.5">
                 Directories
                 {counts.directories > 0 && (
                   <Badge variant="secondary" className="ml-1.5 h-5 min-w-5 rounded-full px-1.5 text-xs">
                     {counts.directories}
+                  </Badge>
+                )}
+              </Link>
+            </TabsTrigger>
+            <TabsTrigger value="ip-addresses" asChild>
+              <Link href={tabPaths["ip-addresses"]} className="flex items-center gap-0.5">
+                IP Addresses
+                {counts["ip-addresses"] > 0 && (
+                  <Badge variant="secondary" className="ml-1.5 h-5 min-w-5 rounded-full px-1.5 text-xs">
+                    {counts["ip-addresses"]}
                   </Badge>
                 )}
               </Link>

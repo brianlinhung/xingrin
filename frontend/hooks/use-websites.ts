@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { WebsiteService } from '@/services/website.service'
 import type { WebSite, WebSiteListResponse } from '@/types/website.types'
 
 // API 服务函数
@@ -169,6 +170,40 @@ export function useBulkDeleteWebSites() {
     onError: (error: Error) => {
       toast.dismiss('bulk-delete-websites')
       toast.error(error.message || '批量删除网站失败')
+    },
+  })
+}
+
+
+// 批量创建网站（绑定到目标）
+export function useBulkCreateWebsites() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: { targetId: number; urls: string[] }) =>
+      WebsiteService.bulkCreateWebsites(data.targetId, data.urls),
+    onMutate: async () => {
+      toast.loading('正在批量创建网站...', { id: 'bulk-create-websites' })
+    },
+    onSuccess: (response, { targetId }) => {
+      toast.dismiss('bulk-create-websites')
+      const { createdCount } = response
+      
+      if (createdCount > 0) {
+        toast.success(`成功创建 ${createdCount} 个网站`)
+      } else {
+        toast.warning('没有新网站被创建（可能已存在）')
+      }
+      
+      // 刷新网站列表
+      queryClient.invalidateQueries({ queryKey: ['target-websites', targetId] })
+      queryClient.invalidateQueries({ queryKey: ['scan-websites'] })
+    },
+    onError: (error: any) => {
+      toast.dismiss('bulk-create-websites')
+      console.error('批量创建网站失败:', error)
+      const errorMessage = error?.response?.data?.error || '批量创建失败，请查看控制台日志'
+      toast.error(errorMessage)
     },
   })
 }

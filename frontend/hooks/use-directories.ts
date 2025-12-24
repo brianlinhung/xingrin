@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { DirectoryService } from '@/services/directory.service'
 import type { Directory, DirectoryListResponse } from '@/types/directory.types'
 
 // API 服务函数
@@ -155,6 +156,40 @@ export function useBulkDeleteDirectories() {
     onError: (error: Error) => {
       toast.dismiss('bulk-delete-directories')
       toast.error(error.message || '批量删除目录失败')
+    },
+  })
+}
+
+
+// 批量创建目录（绑定到目标）
+export function useBulkCreateDirectories() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: { targetId: number; urls: string[] }) =>
+      DirectoryService.bulkCreateDirectories(data.targetId, data.urls),
+    onMutate: async () => {
+      toast.loading('正在批量创建目录...', { id: 'bulk-create-directories' })
+    },
+    onSuccess: (response, { targetId }) => {
+      toast.dismiss('bulk-create-directories')
+      const { createdCount } = response
+      
+      if (createdCount > 0) {
+        toast.success(`成功创建 ${createdCount} 个目录`)
+      } else {
+        toast.warning('没有新目录被创建（可能已存在）')
+      }
+      
+      // 刷新目录列表
+      queryClient.invalidateQueries({ queryKey: ['target-directories', targetId] })
+      queryClient.invalidateQueries({ queryKey: ['scan-directories'] })
+    },
+    onError: (error: any) => {
+      toast.dismiss('bulk-create-directories')
+      console.error('批量创建目录失败:', error)
+      const errorMessage = error?.response?.data?.error || '批量创建失败，请查看控制台日志'
+      toast.error(errorMessage)
     },
   })
 }

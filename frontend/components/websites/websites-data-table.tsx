@@ -27,6 +27,7 @@ import {
   IconDownload,
   IconSearch,
   IconLoader2,
+  IconPlus,
 } from "@tabler/icons-react"
 
 import { Button } from "@/components/ui/button"
@@ -77,6 +78,7 @@ interface WebSitesDataTableProps {
   // 下载回调函数
   onDownloadAll?: () => void                     // 下载所有网站
   onDownloadSelected?: () => void                // 下载选中的网站
+  onBulkAdd?: () => void                         // 批量添加回调函数
 }
 
 export function WebSitesDataTable({
@@ -95,6 +97,7 @@ export function WebSitesDataTable({
   onSelectionChange,
   onDownloadAll,
   onDownloadSelected,
+  onBulkAdd,
 }: WebSitesDataTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -277,6 +280,14 @@ export function WebSitesDataTable({
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
+          )}
+
+          {/* 批量添加按钮 */}
+          {onBulkAdd && (
+            <Button onClick={onBulkAdd} size="sm" variant="outline">
+              <IconPlus />
+              批量添加
+            </Button>
           )}
 
           {/* 批量删除按钮 */}

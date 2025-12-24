@@ -7,7 +7,10 @@ import { createWebSiteColumns } from "./websites-columns"
 import { DataTableSkeleton } from "@/components/ui/data-table-skeleton"
 import { Button } from "@/components/ui/button"
 import { useTargetWebSites, useScanWebSites } from "@/hooks/use-websites"
+import { useTarget } from "@/hooks/use-targets"
 import { WebsiteService } from "@/services/website.service"
+import { BulkAddUrlsDialog } from "@/components/common/bulk-add-urls-dialog"
+import type { TargetType } from "@/lib/url-validator"
 import type { WebSite } from "@/types/website.types"
 import { toast } from "sonner"
 
@@ -23,9 +26,13 @@ export function WebSitesView({
     pageSize: 10,
   })
   const [selectedWebSites, setSelectedWebSites] = useState<WebSite[]>([])
+  const [bulkAddDialogOpen, setBulkAddDialogOpen] = useState(false)
 
   const [searchQuery, setSearchQuery] = useState("")
   const [isSearching, setIsSearching] = useState(false)
+
+  // 获取目标信息（用于 URL 匹配校验）
+  const { data: target } = useTarget(targetId || 0, { enabled: !!targetId })
 
   const handleSearchChange = (value: string) => {
     setIsSearching(true)
@@ -253,7 +260,21 @@ export function WebSitesView({
         onSelectionChange={handleSelectionChange}
         onDownloadAll={handleDownloadAll}
         onDownloadSelected={handleDownloadSelected}
+        onBulkAdd={targetId ? () => setBulkAddDialogOpen(true) : undefined}
       />
+
+      {/* 批量添加弹窗 */}
+      {targetId && (
+        <BulkAddUrlsDialog
+          targetId={targetId}
+          assetType="website"
+          targetName={target?.name}
+          targetType={target?.type as TargetType}
+          open={bulkAddDialogOpen}
+          onOpenChange={setBulkAddDialogOpen}
+          onSuccess={() => refetch()}
+        />
+      )}
     </>
   )
 }

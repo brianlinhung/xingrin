@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useRef } from "react"
-import { Plus, Globe, Loader2 } from "lucide-react"
+import { Plus, Link } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -16,30 +16,68 @@ import {
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { LoadingSpinner } from "@/components/loading-spinner"
-import { SubdomainValidator } from "@/lib/subdomain-validator"
-import { useBulkCreateSubdomains } from "@/hooks/use-subdomains"
+import { URLValidator, type TargetType } from "@/lib/url-validator"
+import { useBulkCreateEndpoints } from "@/hooks/use-endpoints"
+import { useBulkCreateWebsites } from "@/hooks/use-websites"
+import { useBulkCreateDirectories } from "@/hooks/use-directories"
 
-interface BulkAddSubdomainsDialogProps {
+export type AssetType = 'endpoint' | 'website' | 'directory'
+
+interface BulkAddUrlsDialogProps {
   targetId: number
-  targetName?: string
+  assetType: AssetType
+  targetName?: string      // 目标名称（用于 URL 匹配校验）
+  targetType?: TargetType  // 目标类型（domain/ip/cidr）
   open?: boolean
   onOpenChange?: (open: boolean) => void
   onSuccess?: () => void
 }
 
+const ASSET_TYPE_LABELS: Record<AssetType, { title: string; description: string; placeholder: string }> = {
+  endpoint: {
+    title: '批量添加端点',
+    description: '输入端点 URL 列表，每行一个。',
+    placeholder: `请输入端点 URL，每行一个
+例如：
+https://example.com/api/v1
+https://example.com/api/v2
+https://example.com/login`,
+  },
+  website: {
+    title: '批量添加网站',
+    description: '输入网站 URL 列表，每行一个。',
+    placeholder: `请输入网站 URL，每行一个
+例如：
+https://example.com
+https://www.example.com
+https://api.example.com`,
+  },
+  directory: {
+    title: '批量添加目录',
+    description: '输入目录 URL 列表，每行一个。',
+    placeholder: `请输入目录 URL，每行一个
+例如：
+https://example.com/admin
+https://example.com/api
+https://example.com/uploads`,
+  },
+}
+
 /**
- * 批量添加子域名弹窗组件
+ * 批量添加 URL 弹窗组件
  * 
- * 参考 AddTargetDialog 的设计模式，提供带行号的文本输入框，
- * 支持实时验证和错误提示。
+ * 支持 Endpoints、Websites、Directories 三种资产类型。
+ * 提供带行号的文本输入框，支持实时验证和错误提示。
  */
-export function BulkAddSubdomainsDialog({
+export function BulkAddUrlsDialog({
   targetId,
+  assetType,
   targetName,
+  targetType,
   open: externalOpen,
   onOpenChange: externalOnOpenChange,
   onSuccess,
-}: BulkAddSubdomainsDialogProps) {
+}: BulkAddUrlsDialogProps) {
   // 对话框开关状态
   const [internalOpen, setInternalOpen] = useState(false)
   const open = externalOpen !== undefined ? externalOpen : internalOpen
@@ -53,7 +91,9 @@ export function BulkAddSubdomainsDialog({
     validCount: number
     invalidCount: number
     duplicateCount: number
-    firstError?: { index: number; subdomain: string; error: string }
+    mismatchedCount: number
+    firstError?: { index: number; url: string; error: string }
+    firstMismatch?: { index: number; url: string }
   } | null>(null)
 
   // 行号列和输入框的 ref（用于同步滚动）
@@ -61,29 +101,53 @@ export function BulkAddSubdomainsDialog({
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
   // 使用批量创建 mutation
-  const bulkCreateSubdomains = useBulkCreateSubdomains()
+  const bulkCreateEndpoints = useBulkCreateEndpoints()
+  const bulkCreateWebsites = useBulkCreateWebsites()
+  const bulkCreateDirectories = useBulkCreateDirectories()
+
+  // 根据资产类型选择对应的 mutation
+  const getMutation = () => {
+    switch (assetType) {
+      case 'endpoint':
+        return bulkCreateEndpoints
+      case 'website':
+        return bulkCreateWebsites
+      case 'directory':
+        return bulkCreateDirectories
+    }
+  }
+
+  const mutation = getMutation()
+  const labels = ASSET_TYPE_LABELS[assetType]
 
   // 处理输入变化
   const handleInputChange = (value: string) => {
     setInputText(value)
 
     // 解析并验证
-    const parsed = SubdomainValidator.parse(value)
+    const parsed = URLValidator.parse(value)
     if (parsed.length === 0) {
       setValidationResult(null)
       return
     }
 
-    const result = SubdomainValidator.validateBatch(parsed)
+    const result = URLValidator.validateBatch(parsed, targetName, targetType)
     setValidationResult({
       validCount: result.validCount,
       invalidCount: result.invalidCount,
       duplicateCount: result.duplicateCount,
+      mismatchedCount: result.mismatchedCount,
       firstError: result.invalidItems[0]
         ? {
             index: result.invalidItems[0].index,
-            subdomain: result.invalidItems[0].subdomain,
+            url: result.invalidItems[0].url,
             error: result.invalidItems[0].error || "格式无效",
+          }
+        : undefined,
+      firstMismatch: result.mismatchedItems[0]
+        ? {
+            index: result.mismatchedItems[0].index,
+            url: result.mismatchedItems[0].url,
           }
         : undefined,
     })
@@ -96,12 +160,12 @@ export function BulkAddSubdomainsDialog({
     if (!inputText.trim()) return
     if (!validationResult || validationResult.validCount === 0) return
 
-    // 解析有效的子域名
-    const parsed = SubdomainValidator.parse(inputText)
-    const result = SubdomainValidator.validateBatch(parsed)
+    // 解析有效的 URL
+    const parsed = URLValidator.parse(inputText)
+    const result = URLValidator.validateBatch(parsed)
 
-    bulkCreateSubdomains.mutate(
-      { targetId, subdomains: result.subdomains },
+    mutation.mutate(
+      { targetId, urls: result.urls },
       {
         onSuccess: () => {
           // 重置表单
@@ -118,7 +182,7 @@ export function BulkAddSubdomainsDialog({
 
   // 处理对话框关闭
   const handleOpenChange = (newOpen: boolean) => {
-    if (!bulkCreateSubdomains.isPending) {
+    if (!mutation.isPending) {
       setOpen(newOpen)
       if (!newOpen) {
         setInputText("")
@@ -137,11 +201,17 @@ export function BulkAddSubdomainsDialog({
   // 计算行数
   const lineCount = Math.max(inputText.split("\n").length, 8)
 
-  // 表单验证
+  // 表单验证：有效数量 > 0，无效数量 = 0，不匹配数量 = 0（CIDR 类型除外）
+  const hasMismatchError = validationResult !== null && 
+    validationResult.mismatchedCount > 0 && 
+    targetType !== 'cidr'  // CIDR 类型前端无法校验，不阻止提交
+  
   const isFormValid =
     inputText.trim().length > 0 &&
     validationResult !== null &&
-    validationResult.validCount > 0
+    validationResult.validCount > 0 &&
+    validationResult.invalidCount === 0 &&
+    !hasMismatchError
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -157,24 +227,19 @@ export function BulkAddSubdomainsDialog({
       <DialogContent className="sm:max-w-[650px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
-            <Globe className="h-5 w-5" />
-            <span>批量添加子域名</span>
+            <Link className="h-5 w-5" />
+            <span>{labels.title}</span>
           </DialogTitle>
           <DialogDescription>
-            输入子域名列表，每行一个。
-            {targetName && (
-              <span className="block mt-1">
-                子域名必须属于 <code className="bg-muted px-1 rounded">{targetName}</code>
-              </span>
-            )}
+            {labels.description}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="subdomains">
-                子域名列表 <span className="text-destructive">*</span>
+              <Label htmlFor="urls">
+                URL 列表 <span className="text-destructive">*</span>
               </Label>
               <div className="flex border rounded-md overflow-hidden h-[220px]">
                 {/* 行号列 */}
@@ -194,16 +259,12 @@ export function BulkAddSubdomainsDialog({
                 <div className="flex-1 overflow-hidden">
                   <Textarea
                     ref={textareaRef}
-                    id="subdomains"
+                    id="urls"
                     value={inputText}
                     onChange={(e) => handleInputChange(e.target.value)}
                     onScroll={handleTextareaScroll}
-                    placeholder={`请输入子域名，每行一个
-例如：
-api.example.com
-www.example.com
-mail.example.com`}
-                    disabled={bulkCreateSubdomains.isPending}
+                    placeholder={labels.placeholder}
+                    disabled={mutation.isPending}
                     className="font-mono h-full overflow-y-auto resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 leading-[1.4] text-sm py-3"
                     style={{ lineHeight: "20px" }}
                   />
@@ -225,12 +286,28 @@ mail.example.com`}
                         无效: {validationResult.invalidCount} 个
                       </span>
                     )}
+                    {validationResult.mismatchedCount > 0 && (
+                      <span className="text-destructive ml-2">
+                        不匹配: {validationResult.mismatchedCount} 个
+                      </span>
+                    )}
                   </div>
                   {validationResult.firstError && (
                     <div className="text-destructive">
                       第 {validationResult.firstError.index + 1} 行: &quot;
-                      {validationResult.firstError.subdomain}&quot; -{" "}
+                      {validationResult.firstError.url.length > 50 
+                        ? validationResult.firstError.url.substring(0, 50) + '...'
+                        : validationResult.firstError.url}&quot; -{" "}
                       {validationResult.firstError.error}
+                    </div>
+                  )}
+                  {validationResult.firstMismatch && !validationResult.firstError && (
+                    <div className="text-destructive">
+                      第 {validationResult.firstMismatch.index + 1} 行: &quot;
+                      {validationResult.firstMismatch.url.length > 50 
+                        ? validationResult.firstMismatch.url.substring(0, 50) + '...'
+                        : validationResult.firstMismatch.url}&quot; - 
+                      URL 不属于目标 {targetName}，请移除后再提交
                     </div>
                   )}
                 </div>
@@ -243,15 +320,15 @@ mail.example.com`}
               type="button"
               variant="outline"
               onClick={() => handleOpenChange(false)}
-              disabled={bulkCreateSubdomains.isPending}
+              disabled={mutation.isPending}
             >
               取消
             </Button>
             <Button
               type="submit"
-              disabled={bulkCreateSubdomains.isPending || !isFormValid}
+              disabled={mutation.isPending || !isFormValid}
             >
-              {bulkCreateSubdomains.isPending ? (
+              {mutation.isPending ? (
                 <>
                   <LoadingSpinner />
                   创建中...
