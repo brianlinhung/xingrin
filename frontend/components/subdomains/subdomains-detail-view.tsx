@@ -13,6 +13,7 @@ import { createSubdomainColumns } from "./subdomains-columns"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { DataTableSkeleton } from "@/components/ui/data-table-skeleton"
 import { SubdomainService } from "@/services/subdomain.service"
+import { BulkAddSubdomainsDialog } from "./bulk-add-subdomains-dialog"
 import type { Subdomain } from "@/types/subdomain.types"
 
 /**
@@ -29,6 +30,9 @@ export function SubdomainsDetailView({
   scanId?: number
 }) {
   const [selectedSubdomains, setSelectedSubdomains] = useState<Subdomain[]>([])
+
+  // 批量添加弹窗状态
+  const [bulkAddOpen, setBulkAddOpen] = useState(false)
 
   // 分页状态
   const [pagination, setPagination] = useState({
@@ -266,7 +270,19 @@ export function SubdomainsDetailView({
           totalPages: subdomainsData?.totalPages || 1,
         }}
         onPaginationChange={handlePaginationChange}
+        onBulkAdd={targetId ? () => setBulkAddOpen(true) : undefined}
       />
+      
+      {/* 批量添加子域名弹窗 */}
+      {targetId && (
+        <BulkAddSubdomainsDialog
+          targetId={targetId}
+          targetName={targetData?.name}
+          open={bulkAddOpen}
+          onOpenChange={setBulkAddOpen}
+          onSuccess={() => refetch()}
+        />
+      )}
     </>
   )
 }

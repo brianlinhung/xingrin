@@ -71,6 +71,7 @@ interface SubdomainsDataTableProps {
   data: Subdomain[]                                // 子域名数据数组
   columns: ColumnDef<Subdomain>[]                  // 列定义数组
   onAddNew?: () => void                          // 添加新域名的回调函数
+  onBulkAdd?: () => void                         // 批量添加回调函数
   onBulkDelete?: () => void                      // 批量删除回调函数
   onSelectionChange?: (selectedRows: Subdomain[]) => void  // 选中行变化回调
   searchPlaceholder?: string                     // 搜索框占位符
@@ -100,6 +101,7 @@ export function SubdomainsDataTable({
   data = [],
   columns,
   onAddNew,
+  onBulkAdd,
   onBulkDelete,
   onSelectionChange,
   searchPlaceholder = "搜索子域名...",
@@ -338,6 +340,14 @@ export function SubdomainsDataTable({
             >
               <IconTrash />
               Delete
+            </Button>
+          )}
+
+          {/* 批量添加按钮 */}
+          {onBulkAdd && (
+            <Button onClick={onBulkAdd} size="sm" variant="outline">
+              <IconPlus />
+              批量添加
             </Button>
           )}
 

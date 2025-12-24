@@ -1,10 +1,22 @@
 import logging
 from typing import Tuple, List, Dict
+from dataclasses import dataclass
 
 from apps.asset.repositories import DjangoSubdomainRepository
 from apps.asset.dtos import SubdomainDTO
+from apps.common.validators import is_valid_domain
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class BulkCreateResult:
+    """批量创建结果"""
+    created_count: int
+    skipped_count: int
+    invalid_count: int
+    mismatched_count: int
+    total_received: int
 
 
 class SubdomainService:
@@ -117,5 +129,94 @@ class SubdomainService:
         """
         return self.repo.iter_raw_data_for_export(target_id=target_id)
 
+    def bulk_create_subdomains(
+        self,
+        target_id: int,
+        target_name: str,
+        subdomains: List[str]
+    ) -> BulkCreateResult:
+        """
+        批量创建子域名（带验证）
+        
+        Args:
+            target_id: 目标 ID
+            target_name: 目标域名（用于匹配验证）
+            subdomains: 子域名列表
+        
+        Returns:
+            BulkCreateResult: 创建结果统计
+        """
+        total_received = len(subdomains)
+        target_name = target_name.lower().strip()
+        
+        def is_subdomain_match(subdomain: str) -> bool:
+            """验证子域名是否匹配目标域名"""
+            if subdomain == target_name:
+                return True
+            if subdomain.endswith('.' + target_name):
+                return True
+            return False
+        
+        # 过滤有效的子域名
+        valid_subdomains = []
+        invalid_count = 0
+        mismatched_count = 0
+        
+        for subdomain in subdomains:
+            if not isinstance(subdomain, str) or not subdomain.strip():
+                continue
+            
+            subdomain = subdomain.lower().strip()
+            
+            # 验证格式
+            if not is_valid_domain(subdomain):
+                invalid_count += 1
+                continue
+            
+            # 验证匹配
+            if not is_subdomain_match(subdomain):
+                mismatched_count += 1
+                continue
+            
+            valid_subdomains.append(subdomain)
+        
+        # 去重
+        unique_subdomains = list(set(valid_subdomains))
+        duplicate_count = len(valid_subdomains) - len(unique_subdomains)
+        
+        if not unique_subdomains:
+            return BulkCreateResult(
+                created_count=0,
+                skipped_count=duplicate_count,
+                invalid_count=invalid_count,
+                mismatched_count=mismatched_count,
+                total_received=total_received,
+            )
+        
+        # 获取创建前的数量
+        count_before = self.repo.count_by_target(target_id)
+        
+        # 创建 DTO 列表并批量创建
+        subdomain_dtos = [
+            SubdomainDTO(name=name, target_id=target_id)
+            for name in unique_subdomains
+        ]
+        self.repo.bulk_create_ignore_conflicts(subdomain_dtos)
+        
+        # 获取创建后的数量
+        count_after = self.repo.count_by_target(target_id)
+        created_count = count_after - count_before
+        
+        # 计算因数据库冲突跳过的数量
+        db_skipped = len(unique_subdomains) - created_count
+        
+        return BulkCreateResult(
+            created_count=created_count,
+            skipped_count=duplicate_count + db_skipped,
+            invalid_count=invalid_count,
+            mismatched_count=mismatched_count,
+            total_received=total_received,
+        )
 
-__all__ = ['SubdomainService']
+
+__all__ = ['SubdomainService', 'BulkCreateResult']

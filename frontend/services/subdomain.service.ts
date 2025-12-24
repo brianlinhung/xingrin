@@ -1,7 +1,31 @@
 import { api } from "@/lib/api-client"
 import type { Subdomain, GetSubdomainsParams, GetSubdomainsResponse, GetAllSubdomainsParams, GetAllSubdomainsResponse, GetSubdomainByIDResponse, BatchCreateSubdomainsResponse } from "@/types/subdomain.types"
 
+// 批量创建子域名响应类型
+export interface BulkCreateSubdomainsResponse {
+  message: string
+  createdCount: number
+  skippedCount: number
+  invalidCount: number
+  mismatchedCount: number
+  totalReceived: number
+}
+
 export class SubdomainService {
+  /**
+   * 批量创建子域名（绑定到目标）
+   * POST /api/targets/{target_id}/subdomains/bulk-create/
+   */
+  static async bulkCreateSubdomains(
+    targetId: number,
+    subdomains: string[]
+  ): Promise<BulkCreateSubdomainsResponse> {
+    const response = await api.post<BulkCreateSubdomainsResponse>(
+      `/targets/${targetId}/subdomains/bulk-create/`,
+      { subdomains }
+    )
+    return response.data
+  }
   // ========== 子域名基础操作 ==========
 
   /**

@@ -291,3 +291,53 @@ export function useScanSubdomains(
     placeholderData: keepPreviousData,
   })
 }
+
+// 批量创建子域名（绑定到目标）
+export function useBulkCreateSubdomains() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: { targetId: number; subdomains: string[] }) =>
+      SubdomainService.bulkCreateSubdomains(data.targetId, data.subdomains),
+    onMutate: async () => {
+      toast.loading('正在批量创建子域名...', { id: 'bulk-create-subdomains' })
+    },
+    onSuccess: (response, { targetId }) => {
+      toast.dismiss('bulk-create-subdomains')
+      const { createdCount, skippedCount, invalidCount, mismatchedCount } = response
+      
+      let message = `成功创建 ${createdCount} 个子域名`
+      const details: string[] = []
+      
+      if (skippedCount > 0) {
+        details.push(`${skippedCount} 个重复`)
+      }
+      if (invalidCount > 0) {
+        details.push(`${invalidCount} 个格式无效`)
+      }
+      if (mismatchedCount > 0) {
+        details.push(`${mismatchedCount} 个不匹配`)
+      }
+      
+      if (details.length > 0) {
+        message += `（${details.join('，')}）`
+      }
+      
+      if (createdCount > 0) {
+        toast.success(message)
+      } else {
+        toast.warning(message)
+      }
+      
+      // 刷新子域名列表
+      queryClient.invalidateQueries({ queryKey: ['targets', targetId, 'subdomains'] })
+      queryClient.invalidateQueries({ queryKey: ['subdomains'] })
+    },
+    onError: (error: any) => {
+      toast.dismiss('bulk-create-subdomains')
+      console.error('批量创建子域名失败:', error)
+      const errorMessage = error?.response?.data?.error || '批量创建失败，请查看控制台日志'
+      toast.error(errorMessage)
+    },
+  })
+}

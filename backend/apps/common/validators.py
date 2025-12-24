@@ -27,6 +27,21 @@ def validate_domain(domain: str) -> None:
         raise ValueError(f"域名格式无效: {domain}")
 
 
+def is_valid_domain(domain: str) -> bool:
+    """
+    判断是否为有效域名（不抛异常）
+    
+    Args:
+        domain: 域名字符串
+        
+    Returns:
+        bool: 是否为有效域名
+    """
+    if not domain or len(domain) > 253:
+        return False
+    return bool(validators.domain(domain))
+
+
 def validate_ip(ip: str) -> None:
     """
     验证 IP 地址格式（支持 IPv4 和 IPv6）

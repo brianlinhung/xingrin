@@ -145,6 +145,83 @@ class SubdomainViewSet(viewsets.ModelViewSet):
             return self.service.get_subdomains_by_target(target_pk)
         return self.service.get_all()
 
+    @action(detail=False, methods=['post'], url_path='bulk-create')
+    def bulk_create(self, request, **kwargs):
+        """批量创建子域名
+        
+        POST /api/targets/{target_pk}/subdomains/bulk-create/
+        
+        请求体:
+        {
+            "subdomains": ["sub1.example.com", "sub2.example.com"]
+        }
+        
+        响应:
+        {
+            "message": "批量创建完成",
+            "createdCount": 10,
+            "skippedCount": 2,
+            "invalidCount": 1,
+            "mismatchedCount": 1,
+            "totalReceived": 14
+        }
+        """
+        from apps.targets.models import Target
+        
+        target_pk = self.kwargs.get('target_pk')
+        if not target_pk:
+            return Response(
+                {'error': '必须在目标下批量创建子域名'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 获取目标
+        try:
+            target = Target.objects.get(pk=target_pk)
+        except Target.DoesNotExist:
+            return Response(
+                {'error': '目标不存在'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # 验证目标类型必须为域名
+        if target.type != Target.TargetType.DOMAIN:
+            return Response(
+                {'error': '只有域名类型的目标支持导入子域名'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 获取请求体中的子域名列表
+        subdomains = request.data.get('subdomains', [])
+        if not subdomains or not isinstance(subdomains, list):
+            return Response(
+                {'error': '请求体不能为空或格式错误'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 调用 service 层处理
+        try:
+            result = self.service.bulk_create_subdomains(
+                target_id=int(target_pk),
+                target_name=target.name,
+                subdomains=subdomains
+            )
+        except Exception as e:
+            logger.exception("批量创建子域名失败")
+            return Response(
+                {'error': '服务器内部错误'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        return Response({
+            'message': '批量创建完成',
+            'createdCount': result.created_count,
+            'skippedCount': result.skipped_count,
+            'invalidCount': result.invalid_count,
+            'mismatchedCount': result.mismatched_count,
+            'totalReceived': result.total_received,
+        }, status=status.HTTP_200_OK)
+
     @action(detail=False, methods=['get'], url_path='export')
     def export(self, request, **kwargs):
         """导出子域名为 CSV 格式
