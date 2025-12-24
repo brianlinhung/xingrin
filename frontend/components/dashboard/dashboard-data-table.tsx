@@ -51,6 +51,19 @@ import { createScanHistoryColumns } from "@/components/scan/history/scan-history
 import { ScanProgressDialog, buildScanProgressData, type ScanProgressData } from "@/components/scan/scan-progress-dialog"
 import { getScan } from "@/services/scan.service"
 import { useRouter } from "next/navigation"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
+import { deleteScan, stopScan } from "@/services/scan.service"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import type { Vulnerability } from "@/types/vulnerability.types"
 import type { ScanRecord } from "@/types/scan.types"
 
@@ -66,6 +79,7 @@ function formatTime(dateStr: string) {
 
 export function DashboardDataTable() {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = React.useState("scans")
   const [vulnColumnVisibility, setVulnColumnVisibility] = React.useState<VisibilityState>({})
   const [scanColumnVisibility, setScanColumnVisibility] = React.useState<VisibilityState>({})
@@ -79,6 +93,14 @@ export function DashboardDataTable() {
   // 扫描进度弹窗
   const [progressData, setProgressData] = React.useState<ScanProgressData | null>(null)
   const [progressDialogOpen, setProgressDialogOpen] = React.useState(false)
+  
+  // 删除确认弹窗
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
+  const [scanToDelete, setScanToDelete] = React.useState<ScanRecord | null>(null)
+  
+  // 停止确认弹窗
+  const [stopDialogOpen, setStopDialogOpen] = React.useState(false)
+  const [scanToStop, setScanToStop] = React.useState<ScanRecord | null>(null)
   
   // 分页状态
   const [vulnPagination, setVulnPagination] = React.useState({ pageIndex: 0, pageSize: 10 })
@@ -118,6 +140,22 @@ export function DashboardDataTable() {
       setIsScanSearching(false)
     }
   }, [scanQuery.isFetching, isScanSearching])
+
+  // 删除扫描的 mutation
+  const deleteMutation = useMutation({
+    mutationFn: deleteScan,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scans'] })
+    },
+  })
+
+  // 停止扫描的 mutation
+  const stopMutation = useMutation({
+    mutationFn: stopScan,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scans'] })
+    },
+  })
 
   // 搜索处理
   const handleVulnSearch = () => {
@@ -175,16 +213,58 @@ export function DashboardDataTable() {
     }
   }, [])
 
+  // 处理删除扫描
+  const handleDelete = React.useCallback((scan: ScanRecord) => {
+    setScanToDelete(scan)
+    setDeleteDialogOpen(true)
+  }, [])
+
+  // 确认删除
+  const confirmDelete = async () => {
+    if (!scanToDelete) return
+    setDeleteDialogOpen(false)
+    try {
+      await deleteMutation.mutateAsync(scanToDelete.id)
+      toast.success(`已删除扫描记录: ${scanToDelete.targetName}`)
+    } catch (error) {
+      toast.error("删除失败，请重试")
+      console.error('删除失败:', error)
+    } finally {
+      setScanToDelete(null)
+    }
+  }
+
+  // 处理停止扫描
+  const handleStop = React.useCallback((scan: ScanRecord) => {
+    setScanToStop(scan)
+    setStopDialogOpen(true)
+  }, [])
+
+  // 确认停止
+  const confirmStop = async () => {
+    if (!scanToStop) return
+    setStopDialogOpen(false)
+    try {
+      await stopMutation.mutateAsync(scanToStop.id)
+      toast.success(`已停止扫描任务: ${scanToStop.targetName}`)
+    } catch (error) {
+      toast.error("停止失败，请重试")
+      console.error('停止扫描失败:', error)
+    } finally {
+      setScanToStop(null)
+    }
+  }
+
   // 扫描列定义 - 复用 scan-history 页面的列
   const scanColumns = React.useMemo(
     () => createScanHistoryColumns({
       formatDate,
       navigate: (path: string) => router.push(path),
-      handleDelete: () => {}, // Dashboard 不需要删除功能
-      handleStop: () => {},   // Dashboard 不需要停止功能
+      handleDelete,
+      handleStop,
       handleViewProgress,
     }),
-    [router, handleViewProgress]
+    [router, handleViewProgress, handleDelete, handleStop]
   )
 
   // 漏洞表格
@@ -247,6 +327,48 @@ export function DashboardDataTable() {
           data={progressData}
         />
       )}
+
+      {/* 删除确认对话框 */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认删除</AlertDialogTitle>
+            <AlertDialogDescription>
+              此操作无法撤销。这将永久删除扫描记录 &quot;{scanToDelete?.targetName}&quot; 及其相关数据。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete} 
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              删除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* 停止扫描确认对话框 */}
+      <AlertDialog open={stopDialogOpen} onOpenChange={setStopDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认停止扫描</AlertDialogTitle>
+            <AlertDialogDescription>
+              确定要停止扫描任务 &quot;{scanToStop?.targetName}&quot; 吗？扫描将会中止，已收集的数据将会保留。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmStop} 
+              className="bg-chart-2 text-white hover:bg-chart-2/90"
+            >
+              停止扫描
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         {/* Tab + 搜索框 + Columns 在同一行 */}
