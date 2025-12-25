@@ -26,8 +26,8 @@ const STORAGE_KEY = 'color-theme'
  * 获取当前颜色主题
  */
 function getStoredTheme(): ColorThemeId {
-  if (typeof window === 'undefined') return 'vercel'
-  return (localStorage.getItem(STORAGE_KEY) as ColorThemeId) || 'vercel'
+  if (typeof window === 'undefined') return 'vercel-dark'
+  return (localStorage.getItem(STORAGE_KEY) as ColorThemeId) || 'vercel-dark'
 }
 
 /**
@@ -43,7 +43,7 @@ function applyThemeAttribute(themeId: ColorThemeId) {
  * 颜色主题 hook
  */
 export function useColorTheme() {
-  const [theme, setThemeState] = useState<ColorThemeId>('vercel')
+  const [theme, setThemeState] = useState<ColorThemeId>('vercel-dark')
   const [mounted, setMounted] = useState(false)
   const { setTheme: setNextTheme } = useTheme()
 

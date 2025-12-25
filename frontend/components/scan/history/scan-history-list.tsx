@@ -27,7 +27,11 @@ import { ScanProgressDialog, buildScanProgressData, type ScanProgressData } from
  * 扫描历史列表组件
  * 用于显示和管理扫描历史记录
  */
-export function ScanHistoryList() {
+interface ScanHistoryListProps {
+  hideToolbar?: boolean
+}
+
+export function ScanHistoryList({ hideToolbar = false }: ScanHistoryListProps) {
   const queryClient = useQueryClient()
   const [selectedScans, setSelectedScans] = useState<ScanRecord[]>([])
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -259,7 +263,7 @@ export function ScanHistoryList() {
       <ScanHistoryDataTable
         data={scans}
         columns={scanColumns as ColumnDef<ScanRecord>[]}
-        onBulkDelete={handleBulkDelete}
+        onBulkDelete={hideToolbar ? undefined : handleBulkDelete}
         onSelectionChange={setSelectedScans}
         searchPlaceholder="搜索目标名称..."
         searchColumn="targetName"
@@ -275,6 +279,7 @@ export function ScanHistoryList() {
           totalPages: data?.totalPages || 1,
         }}
         onPaginationChange={handlePaginationChange}
+        hideToolbar={hideToolbar}
       />
 
       {/* 删除确认对话框 */}

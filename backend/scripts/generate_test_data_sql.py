@@ -125,20 +125,31 @@ class TestDataGenerator:
         print("👷 创建 Worker 节点...")
         cur = self.conn.cursor()
         
+        # 生成随机后缀确保唯一性
+        suffix = random.randint(1000, 9999)
+        
+        regions = ['asia-singapore', 'asia-tokyo', 'asia-hongkong', 'europe-frankfurt', 'europe-london', 
+                   'us-east-virginia', 'us-west-oregon', 'us-central-iowa', 'australia-sydney', 'brazil-saopaulo']
+        statuses = ['online', 'offline', 'pending', 'deploying', 'maintenance']
+        
         workers = [
-            ('local-worker-primary-node-for-internal-scanning-tasks', '127.0.0.1', True, 'online'),
-            ('remote-worker-asia-pacific-region-singapore-datacenter-01', '192.168.1.100', False, 'online'),
-            ('remote-worker-europe-west-region-frankfurt-datacenter-02', '192.168.1.101', False, 'offline'),
-            ('remote-worker-north-america-east-region-virginia-datacenter-03', '192.168.1.102', False, 'pending'),
-            ('remote-worker-asia-pacific-region-tokyo-datacenter-04', '192.168.1.103', False, 'deploying'),
+            (f'local-worker-primary-{suffix}', '127.0.0.1', True, 'online'),
         ]
+        
+        # 随机生成 4-8 个远程 worker
+        num_remote = random.randint(4, 8)
+        selected_regions = random.sample(regions, min(num_remote, len(regions)))
+        for i, region in enumerate(selected_regions):
+            ip = f'192.168.{random.randint(1, 254)}.{random.randint(1, 254)}'
+            status = random.choice(statuses)
+            workers.append((f'remote-worker-{region}-{suffix}-{i:02d}', ip, False, status))
         
         ids = []
         for name, ip, is_local, status in workers:
             cur.execute("""
                 INSERT INTO worker_node (name, ip_address, ssh_port, username, password, is_local, status, created_at, updated_at)
                 VALUES (%s, %s, 22, 'root', '', %s, %s, NOW(), NOW())
-                ON CONFLICT DO NOTHING
+                ON CONFLICT (name) DO UPDATE SET updated_at = NOW()
                 RETURNING id
             """, (name, ip, is_local, status))
             row = cur.fetchone()
@@ -153,19 +164,37 @@ class TestDataGenerator:
         print("⚙️  创建扫描引擎...")
         cur = self.conn.cursor()
         
-        engines = [
-            ('Full-Comprehensive-Security-Assessment-Engine-With-All-Modules-Enabled', 'subdomain_discovery:\n  enabled: true\n  tools: [subfinder, amass]\nvulnerability_scanning:\n  enabled: true'),
-            ('Quick-Reconnaissance-Engine-For-Fast-Surface-Discovery-Only', 'subdomain_discovery:\n  enabled: true\n  tools: [subfinder]\n  timeout: 600'),
-            ('Deep-Vulnerability-Assessment-Engine-With-Extended-Nuclei-Templates', 'vulnerability_scanning:\n  enabled: true\n  nuclei:\n    severity: critical,high,medium,low,info'),
-            ('Passive-Information-Gathering-Engine-No-Active-Probing', 'subdomain_discovery:\n  enabled: true\n  passive_only: true'),
+        suffix = random.randint(1000, 9999)
+        
+        engine_templates = [
+            ('Full-Comprehensive-Security-Assessment', 'subdomain_discovery:\n  enabled: true\n  tools: [subfinder, amass]\nvulnerability_scanning:\n  enabled: true\n  nuclei:\n    severity: critical,high,medium,low,info\n    rate_limit: {rate}\n    concurrency: {conc}'),
+            ('Quick-Reconnaissance-Fast-Discovery', 'subdomain_discovery:\n  enabled: true\n  tools: [subfinder]\n  timeout: {timeout}\nport_scanning:\n  enabled: true\n  top_ports: {ports}'),
+            ('Deep-Vulnerability-Assessment-Extended', 'vulnerability_scanning:\n  enabled: true\n  nuclei:\n    severity: critical,high,medium,low,info\n    templates: [cves, vulnerabilities, exposures]\n    rate_limit: {rate}'),
+            ('Passive-Information-Gathering-OSINT', 'subdomain_discovery:\n  enabled: true\n  passive_only: true\n  sources: [crtsh, hackertarget, threatcrowd]\n  timeout: {timeout}'),
+            ('Web-Application-Security-Scanner', 'web_discovery:\n  enabled: true\n  httpx:\n    threads: {conc}\nvulnerability_scanning:\n  enabled: true\n  dalfox:\n    enabled: true'),
+            ('API-Endpoint-Security-Audit', 'endpoint_discovery:\n  enabled: true\n  katana:\n    depth: {depth}\n    concurrency: {conc}\nvulnerability_scanning:\n  enabled: true'),
+            ('Infrastructure-Port-Scanner', 'port_scanning:\n  enabled: true\n  naabu:\n    top_ports: {ports}\n    rate: {rate}\n  service_detection: true'),
+            ('Directory-Bruteforce-Engine', 'directory_bruteforce:\n  enabled: true\n  ffuf:\n    threads: {conc}\n    wordlist: common.txt\n    recursion_depth: {depth}'),
         ]
         
+        # 随机选择 4-6 个引擎模板
+        num_engines = random.randint(4, 6)
+        selected = random.sample(engine_templates, min(num_engines, len(engine_templates)))
+        
         ids = []
-        for name, config in engines:
+        for name_base, config_template in selected:
+            name = f'{name_base}-{suffix}'
+            config = config_template.format(
+                rate=random.choice([100, 150, 200, 300]),
+                conc=random.choice([10, 20, 50, 100]),
+                timeout=random.choice([300, 600, 900, 1200]),
+                ports=random.choice([100, 1000, 'full']),
+                depth=random.choice([2, 3, 4, 5])
+            )
             cur.execute("""
                 INSERT INTO scan_engine (name, configuration, created_at, updated_at)
                 VALUES (%s, %s, NOW(), NOW())
-                ON CONFLICT (name) DO NOTHING
+                ON CONFLICT (name) DO UPDATE SET configuration = EXCLUDED.configuration, updated_at = NOW()
                 RETURNING id
             """, (name, config))
             row = cur.fetchone()
@@ -180,25 +209,39 @@ class TestDataGenerator:
         print("🏢 创建组织...")
         cur = self.conn.cursor()
         
-        orgs = [
-            ('Acme Corporation International Holdings Limited - Global Technology Division', '全球领先的技术解决方案提供商，专注于企业级软件开发、云计算服务和网络安全解决方案。'),
-            ('TechStart Innovation Labs - Research and Development Center', '专注于人工智能、机器学习和区块链技术研发的创新实验室。'),
-            ('Global Financial Services Group - Digital Banking Platform', '提供全方位数字银行服务的金融科技公司，包括移动支付、在线贷款、投资理财等服务。'),
-            ('HealthCare Plus Medical Systems - Electronic Health Records Division', '医疗信息化解决方案提供商，专注于电子病历系统、医院信息管理系统和远程医疗平台开发。'),
-            ('E-Commerce Mega Platform - Asia Pacific Regional Operations', '亚太地区最大的电子商务平台之一，提供 B2B、B2C 和 C2C 多种交易模式。'),
-            ('Smart City Infrastructure Solutions - IoT and Sensor Networks', '智慧城市基础设施解决方案提供商，专注于物联网传感器网络、智能交通系统。'),
-            ('Educational Technology Consortium - Online Learning Platform', '在线教育技术联盟，提供 K-12 和高等教育在线学习平台。'),
-            ('Green Energy Solutions - Renewable Power Management Systems', '可再生能源管理系统提供商，专注于太阳能、风能发电站的监控、调度和优化管理。'),
+        suffix = random.randint(1000, 9999)
+        
+        org_templates = [
+            ('Acme Corporation', '全球领先的技术解决方案提供商，专注于企业级软件开发、云计算服务和网络安全解决方案。'),
+            ('TechStart Innovation Labs', '专注于人工智能、机器学习和区块链技术研发的创新实验室。'),
+            ('Global Financial Services', '提供全方位数字银行服务的金融科技公司，包括移动支付、在线贷款、投资理财等服务。'),
+            ('HealthCare Plus Medical', '医疗信息化解决方案提供商，专注于电子病历系统、医院信息管理系统和远程医疗平台开发。'),
+            ('E-Commerce Mega Platform', '亚太地区最大的电子商务平台之一，提供 B2B、B2C 和 C2C 多种交易模式。'),
+            ('Smart City Infrastructure', '智慧城市基础设施解决方案提供商，专注于物联网传感器网络、智能交通系统。'),
+            ('Educational Technology', '在线教育技术联盟，提供 K-12 和高等教育在线学习平台。'),
+            ('Green Energy Solutions', '可再生能源管理系统提供商，专注于太阳能、风能发电站的监控、调度和优化管理。'),
+            ('CyberSec Defense Corp', '网络安全防御公司，提供渗透测试、漏洞评估和安全咨询服务。'),
+            ('CloudNative Systems', '云原生系统开发商，专注于 Kubernetes、微服务架构和 DevOps 工具链。'),
+            ('DataFlow Analytics', '大数据分析平台，提供实时数据处理、商业智能和预测分析服务。'),
+            ('MobileFirst Technologies', '移动优先技术公司，专注于 iOS/Android 应用开发和跨平台解决方案。'),
         ]
         
+        divisions = ['Global Division', 'Asia Pacific', 'EMEA Region', 'Americas', 'R&D Center', 'Digital Platform', 'Cloud Services', 'Security Team']
+        
+        # 随机选择 5-10 个组织
+        num_orgs = random.randint(5, 10)
+        selected = random.sample(org_templates, min(num_orgs, len(org_templates)))
+        
         ids = []
-        for name, desc in orgs:
+        for name_base, desc in selected:
+            division = random.choice(divisions)
+            name = f'{name_base} - {division} ({suffix})'
             cur.execute("""
                 INSERT INTO organization (name, description, created_at, deleted_at)
-                VALUES (%s, %s, NOW(), NULL)
+                VALUES (%s, %s, NOW() - INTERVAL '%s days', NULL)
                 ON CONFLICT DO NOTHING
                 RETURNING id
-            """, (name, desc))
+            """, (name, desc, random.randint(0, 365)))
             row = cur.fetchone()
             if row:
                 ids.append(row[0])
@@ -212,69 +255,84 @@ class TestDataGenerator:
         print("🎯 创建扫描目标...")
         cur = self.conn.cursor()
         
-        domains = [
-            'api.acme-corporation-international-holdings.com',
-            'portal.techstart-innovation-labs-research.io',
-            'secure.global-financial-services-digital-banking.com',
-            'ehr.healthcare-plus-medical-systems-platform.org',
-            'shop.ecommerce-mega-platform-asia-pacific.com',
-            'dashboard.smart-city-infrastructure-iot-sensors.net',
-            'learn.educational-technology-consortium-online.edu',
-            'monitor.green-energy-solutions-renewable-power.com',
-            'admin.enterprise-resource-planning-system-v2.internal.corp',
-            'staging.customer-relationship-management-platform.dev',
-            'beta.supply-chain-management-logistics-tracking.io',
-            'test.human-resources-information-system-portal.local',
-            'dev.content-management-system-headless-api.example.com',
-            'qa.business-intelligence-analytics-dashboard.staging',
-            'uat.project-management-collaboration-tools.preview',
-        ]
+        suffix = random.randint(1000, 9999)
         
-        ips = ['203.0.113.50', '198.51.100.100', '192.0.2.200', '203.0.113.150', '198.51.100.250']
-        cidrs = ['10.0.0.0/24', '172.16.0.0/16', '192.168.100.0/24']
+        # 域名前缀和后缀组合，增加随机性
+        prefixes = ['api', 'portal', 'secure', 'admin', 'dashboard', 'app', 'mobile', 'staging', 'dev', 'test', 'qa', 'uat', 'beta', 'prod', 'internal', 'external', 'public', 'private']
+        companies = ['acme', 'techstart', 'globalfinance', 'healthcare', 'ecommerce', 'smartcity', 'edutech', 'greenenergy', 'cybersec', 'cloudnative', 'dataflow', 'mobilefirst', 'secureops', 'devplatform']
+        tlds = ['.com', '.io', '.net', '.org', '.dev', '.app', '.cloud', '.tech', '.systems']
         
         ids = []
         
-        # 域名目标
-        for i, domain in enumerate(domains):
+        # 随机生成 10-20 个域名目标
+        num_domains = random.randint(10, 20)
+        used_domains = set()
+        
+        for i in range(num_domains):
+            prefix = random.choice(prefixes)
+            company = random.choice(companies)
+            tld = random.choice(tlds)
+            domain = f'{prefix}.{company}-{suffix}{tld}'
+            
+            if domain in used_domains:
+                continue
+            used_domains.add(domain)
+            
             cur.execute("""
                 INSERT INTO target (name, type, created_at, last_scanned_at, deleted_at)
-                VALUES (%s, 'domain', NOW(), NOW() - INTERVAL '%s days', NULL)
+                VALUES (%s, 'domain', NOW() - INTERVAL '%s days', NOW() - INTERVAL '%s days', NULL)
                 ON CONFLICT DO NOTHING
                 RETURNING id
-            """, (domain, random.randint(0, 30)))
+            """, (domain, random.randint(30, 365), random.randint(0, 30)))
             row = cur.fetchone()
             if row:
                 ids.append(row[0])
-                # 关联到组织
-                if org_ids:
-                    org_id = org_ids[i % len(org_ids)]
+                # 随机关联到组织
+                if org_ids and random.random() > 0.3:  # 70% 概率关联
+                    org_id = random.choice(org_ids)
                     cur.execute("""
                         INSERT INTO organization_targets (organization_id, target_id)
                         VALUES (%s, %s)
                         ON CONFLICT DO NOTHING
                     """, (org_id, row[0]))
         
-        # IP 目标
-        for ip in ips:
+        # 随机生成 3-8 个 IP 目标
+        num_ips = random.randint(3, 8)
+        for _ in range(num_ips):
+            # 使用文档保留的 IP 范围
+            ip_ranges = [
+                (203, 0, 113),   # TEST-NET-3
+                (198, 51, 100),  # TEST-NET-2
+                (192, 0, 2),     # TEST-NET-1
+            ]
+            base = random.choice(ip_ranges)
+            ip = f'{base[0]}.{base[1]}.{base[2]}.{random.randint(1, 254)}'
+            
             cur.execute("""
                 INSERT INTO target (name, type, created_at, last_scanned_at, deleted_at)
-                VALUES (%s, 'ip', NOW(), NOW() - INTERVAL '%s days', NULL)
+                VALUES (%s, 'ip', NOW() - INTERVAL '%s days', NOW() - INTERVAL '%s days', NULL)
                 ON CONFLICT DO NOTHING
                 RETURNING id
-            """, (ip, random.randint(0, 30)))
+            """, (ip, random.randint(30, 365), random.randint(0, 30)))
             row = cur.fetchone()
             if row:
                 ids.append(row[0])
         
-        # CIDR 目标
-        for cidr in cidrs:
+        # 随机生成 2-5 个 CIDR 目标
+        num_cidrs = random.randint(2, 5)
+        cidr_bases = ['10.0', '172.16', '172.17', '172.18', '192.168']
+        for _ in range(num_cidrs):
+            base = random.choice(cidr_bases)
+            third_octet = random.randint(0, 255)
+            mask = random.choice([24, 25, 26, 27, 28])
+            cidr = f'{base}.{third_octet}.0/{mask}'
+            
             cur.execute("""
                 INSERT INTO target (name, type, created_at, last_scanned_at, deleted_at)
-                VALUES (%s, 'cidr', NOW(), NOW() - INTERVAL '%s days', NULL)
+                VALUES (%s, 'cidr', NOW() - INTERVAL '%s days', NOW() - INTERVAL '%s days', NULL)
                 ON CONFLICT DO NOTHING
                 RETURNING id
-            """, (cidr, random.randint(0, 30)))
+            """, (cidr, random.randint(30, 365), random.randint(0, 30)))
             row = cur.fetchone()
             if row:
                 ids.append(row[0])
@@ -292,18 +350,49 @@ class TestDataGenerator:
             return []
         
         statuses = ['cancelled', 'completed', 'failed', 'initiated', 'running']
-        stages = ['subdomain_discovery', 'port_scanning', 'web_discovery', 'vulnerability_scanning']
+        status_weights = [0.05, 0.6, 0.1, 0.1, 0.15]  # completed 占比最高
+        stages = ['subdomain_discovery', 'port_scanning', 'web_discovery', 'vulnerability_scanning', 'directory_bruteforce', 'endpoint_discovery']
+        
+        error_messages = [
+            'Connection timeout while scanning target. Please check network connectivity.',
+            'DNS resolution failed for target domain.',
+            'Rate limit exceeded. Scan paused and will resume automatically.',
+            'Worker node disconnected during scan execution.',
+            'Insufficient disk space on worker node.',
+            'Target returned too many errors, scan aborted.',
+            'Authentication failed for protected resources.',
+        ]
         
         ids = []
-        for target_id in target_ids[:10]:
-            for _ in range(random.randint(2, 5)):
-                status = random.choice(statuses)
+        # 随机选择目标数量
+        num_targets = min(random.randint(8, 15), len(target_ids))
+        selected_targets = random.sample(target_ids, num_targets)
+        
+        for target_id in selected_targets:
+            # 每个目标随机 1-6 个扫描任务
+            num_scans = random.randint(1, 6)
+            for _ in range(num_scans):
+                status = random.choices(statuses, weights=status_weights)[0]
                 engine_id = random.choice(engine_ids)
                 worker_id = random.choice(worker_ids) if worker_ids else None
                 
-                progress = random.randint(0, 100) if status == 'running' else (100 if status == 'completed' else 0)
+                progress = random.randint(10, 95) if status == 'running' else (100 if status == 'completed' else random.randint(0, 50))
                 stage = random.choice(stages) if status == 'running' else ''
-                error_msg = 'Connection timeout while scanning target. Please check network connectivity.' if status == 'failed' else ''
+                error_msg = random.choice(error_messages) if status == 'failed' else ''
+                
+                # 随机生成更真实的统计数据
+                subdomains = random.randint(5, 800)
+                websites = random.randint(2, 150)
+                endpoints = random.randint(20, 2000)
+                ips = random.randint(3, 100)
+                directories = random.randint(50, 3000)
+                vulns_critical = random.randint(0, 8)
+                vulns_high = random.randint(0, 20)
+                vulns_medium = random.randint(0, 40)
+                vulns_low = random.randint(0, 60)
+                vulns_total = vulns_critical + vulns_high + vulns_medium + vulns_low + random.randint(0, 30)  # info
+                
+                days_ago = random.randint(0, 90)
                 
                 cur.execute("""
                     INSERT INTO scan (
@@ -321,12 +410,11 @@ class TestDataGenerator:
                     RETURNING id
                 """, (
                     target_id, engine_id, status, worker_id, progress, stage,
-                    f'/app/results/scan_{target_id}', error_msg, '{}', '{}',
-                    random.randint(10, 500), random.randint(5, 100), random.randint(50, 1000),
-                    random.randint(5, 50), random.randint(100, 2000), random.randint(0, 50),
-                    random.randint(0, 5), random.randint(0, 10), random.randint(0, 15), random.randint(0, 20),
-                    random.randint(0, 60),
-                    datetime.now() if status == 'completed' else None
+                    f'/app/results/scan_{target_id}_{random.randint(1000, 9999)}', error_msg, '{}', '{}',
+                    subdomains, websites, endpoints, ips, directories, vulns_total,
+                    vulns_critical, vulns_high, vulns_medium, vulns_low,
+                    days_ago,
+                    datetime.now() - timedelta(days=days_ago, hours=random.randint(0, 23)) if status in ['completed', 'failed', 'cancelled'] else None
                 ))
                 row = cur.fetchone()
                 if row:
@@ -344,35 +432,72 @@ class TestDataGenerator:
             print("  ⚠ 缺少引擎，跳过\n")
             return
         
-        schedules = [
-            ('Daily-Full-Security-Assessment-Scan-For-Production-Environment-Critical-Assets', '0 2 * * *', True),
-            ('Weekly-Comprehensive-Vulnerability-Scan-For-All-External-Facing-Services', '0 3 * * 0', True),
-            ('Monthly-Deep-Penetration-Testing-Scan-For-Internal-Network-Infrastructure', '0 4 1 * *', True),
-            ('Hourly-Quick-Reconnaissance-Scan-For-New-Asset-Discovery-And-Monitoring', '0 * * * *', False),
-            ('Bi-Weekly-Compliance-Check-Scan-For-PCI-DSS-And-SOC2-Requirements', '0 5 1,15 * *', True),
-            ('Quarterly-Full-Infrastructure-Security-Audit-Scan-With-Extended-Templates', '0 6 1 1,4,7,10 *', True),
-            ('Daily-API-Endpoint-Security-Scan-For-REST-And-GraphQL-Services', '30 1 * * *', True),
-            ('Weekly-Web-Application-Vulnerability-Scan-For-Customer-Facing-Portals', '0 4 * * 1', False),
+        suffix = random.randint(1000, 9999)
+        
+        schedule_templates = [
+            ('Daily-Full-Security-Assessment', '0 {hour} * * *'),
+            ('Weekly-Vulnerability-Scan', '0 {hour} * * {dow}'),
+            ('Monthly-Penetration-Testing', '0 {hour} {dom} * *'),
+            ('Hourly-Quick-Reconnaissance', '{min} * * * *'),
+            ('Bi-Weekly-Compliance-Check', '0 {hour} 1,15 * *'),
+            ('Quarterly-Infrastructure-Audit', '0 {hour} 1 1,4,7,10 *'),
+            ('Daily-API-Security-Scan', '{min} {hour} * * *'),
+            ('Weekly-Web-Application-Scan', '0 {hour} * * {dow}'),
+            ('Nightly-Asset-Discovery', '0 {hour} * * *'),
+            ('Weekend-Deep-Scan', '0 {hour} * * 0,6'),
+            ('Business-Hours-Monitor', '0 9-17 * * 1-5'),
+            ('Off-Hours-Intensive-Scan', '0 {hour} * * *'),
         ]
         
+        # 随机选择 6-12 个定时任务
+        num_schedules = random.randint(6, 12)
+        selected = random.sample(schedule_templates, min(num_schedules, len(schedule_templates)))
+        
         count = 0
-        for name, cron, enabled in schedules:
+        for name_base, cron_template in selected:
+            name = f'{name_base}-{suffix}-{count:02d}'
+            cron = cron_template.format(
+                hour=random.randint(0, 23),
+                min=random.randint(0, 59),
+                dow=random.randint(0, 6),
+                dom=random.randint(1, 28)
+            )
+            enabled = random.random() > 0.3  # 70% 启用
+            
             engine_id = random.choice(engine_ids)
-            org_id = random.choice(org_ids) if org_ids and random.choice([True, False]) else None
-            target_id = random.choice(target_ids) if target_ids and not org_id else None
+            # 随机决定关联组织还是目标
+            if org_ids and target_ids:
+                if random.random() > 0.5:
+                    org_id = random.choice(org_ids)
+                    target_id = None
+                else:
+                    org_id = None
+                    target_id = random.choice(target_ids)
+            elif org_ids:
+                org_id = random.choice(org_ids)
+                target_id = None
+            elif target_ids:
+                org_id = None
+                target_id = random.choice(target_ids)
+            else:
+                org_id = None
+                target_id = None
+            
+            run_count = random.randint(0, 200)
+            has_run = random.random() > 0.2  # 80% 已运行过
             
             cur.execute("""
                 INSERT INTO scheduled_scan (
                     name, engine_id, organization_id, target_id, cron_expression, is_enabled,
                     run_count, last_run_time, next_run_time, created_at, updated_at
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW() - INTERVAL '%s days', NOW())
                 ON CONFLICT DO NOTHING
             """, (
                 name, engine_id, org_id, target_id, cron, enabled,
-                random.randint(0, 100),
-                datetime.now() - timedelta(days=random.randint(0, 7)) if random.choice([True, False]) else None,
-                datetime.now() + timedelta(hours=random.randint(1, 168))
-            ))
+                run_count if has_run else 0,
+                datetime.now() - timedelta(days=random.randint(0, 14), hours=random.randint(0, 23)) if has_run else None,
+                datetime.now() + timedelta(hours=random.randint(1, 336))  # 最多 2 周后
+            , random.randint(30, 180)))
             count += 1
             
         print(f"  ✓ 创建了 {count} 个定时扫描任务\n")
@@ -392,24 +517,39 @@ class TestDataGenerator:
             'redis', 'mongo', 'elastic', 'vpn', 'remote', 'gateway', 'proxy',
             'monitoring', 'metrics', 'grafana', 'prometheus', 'kibana', 'logs',
             'jenkins', 'ci', 'cd', 'gitlab', 'jira', 'confluence', 'kubernetes', 'k8s',
+            'www', 'www2', 'www3', 'ns1', 'ns2', 'mx', 'mx1', 'mx2', 'autodiscover',
+            'webdisk', 'cpanel', 'whm', 'webmail2', 'email', 'smtp2', 'pop', 'pop3',
+            'imap2', 'calendar', 'contacts', 'drive', 'docs', 'sheets', 'slides',
+            'meet', 'chat', 'teams', 'slack', 'discord', 'zoom', 'video', 'stream',
+            'blog', 'news', 'press', 'media2', 'images', 'img', 'photos', 'video2',
+            'shop', 'store', 'cart', 'checkout', 'pay', 'payment', 'billing', 'invoice',
+            'support', 'help', 'helpdesk', 'ticket', 'tickets', 'status', 'health',
+            'api-v1', 'api-v2', 'api-v3', 'graphql', 'rest', 'soap', 'rpc', 'grpc',
         ]
         
+        # 二级前缀，用于生成更复杂的子域名
+        secondary_prefixes = ['', 'prod-', 'dev-', 'staging-', 'test-', 'int-', 'ext-', 'us-', 'eu-', 'ap-']
+        
         # 获取域名目标
-        cur.execute("SELECT id, name FROM target WHERE type = 'domain' AND deleted_at IS NULL LIMIT 8")
+        cur.execute("SELECT id, name FROM target WHERE type = 'domain' AND deleted_at IS NULL")
         domain_targets = cur.fetchall()
         
         count = 0
         for target_id, target_name in domain_targets:
-            num = random.randint(20, 40)
+            # 每个目标随机 15-60 个子域名
+            num = random.randint(15, 60)
             selected = random.sample(prefixes, min(num, len(prefixes)))
             
             for prefix in selected:
-                subdomain_name = f'{prefix}.{target_name}'
+                # 随机添加二级前缀
+                sec_prefix = random.choice(secondary_prefixes) if random.random() > 0.7 else ''
+                subdomain_name = f'{sec_prefix}{prefix}.{target_name}'
+                
                 cur.execute("""
                     INSERT INTO subdomain (name, target_id, created_at)
-                    VALUES (%s, %s, NOW())
+                    VALUES (%s, %s, NOW() - INTERVAL '%s days')
                     ON CONFLICT DO NOTHING
-                """, (subdomain_name, target_id))
+                """, (subdomain_name, target_id, random.randint(0, 90)))
                 count += 1
                 
         print(f"  ✓ 创建了 {count} 个子域名\n")

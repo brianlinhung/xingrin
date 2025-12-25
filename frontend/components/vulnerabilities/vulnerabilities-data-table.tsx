@@ -87,6 +87,7 @@ interface VulnerabilitiesDataTableProps {
   onSelectionChange?: (selectedRows: Vulnerability[]) => void
   onDownloadAll?: () => void
   onDownloadSelected?: () => void
+  hideToolbar?: boolean
 }
 
 export function VulnerabilitiesDataTable({
@@ -102,6 +103,7 @@ export function VulnerabilitiesDataTable({
   onSelectionChange,
   onDownloadAll,
   onDownloadSelected,
+  hideToolbar = false,
 }: VulnerabilitiesDataTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -176,105 +178,107 @@ export function VulnerabilitiesDataTable({
   return (
     <div className="w-full space-y-4">
       {/* 工具栏 */}
-      <div className="flex items-center justify-between">
-        {/* 智能过滤输入框 */}
-        <SmartFilterInput
-          fields={VULNERABILITY_FILTER_FIELDS}
-          examples={VULNERABILITY_FILTER_EXAMPLES}
-          value={filterValue}
-          onSearch={handleFilterSearch}
-          className="flex-1 max-w-xl"
-        />
+      {!hideToolbar && (
+        <div className="flex items-center justify-between">
+          {/* 智能过滤输入框 */}
+          <SmartFilterInput
+            fields={VULNERABILITY_FILTER_FIELDS}
+            examples={VULNERABILITY_FILTER_EXAMPLES}
+            value={filterValue}
+            onSearch={handleFilterSearch}
+            className="flex-1 max-w-xl"
+          />
 
-        {/* 右侧操作按钮 */}
-        <div className="flex items-center space-x-2">
-          {/* 列显示控制 */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <IconLayoutColumns />
-                Columns
-                <IconChevronDown />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {table
-                .getAllColumns()
-                .filter(
-                  (column) =>
-                    typeof column.accessorFn !== "undefined" && column.getCanHide()
-                )
-                .map((column) => (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                  >
-                    {column.id === "select" && "Select"}
-                    {column.id === "title" && "Title"}
-                    {column.id === "severity" && "Severity"}
-                    {column.id === "status" && "Status"}
-                    {column.id === "url" && "URL"}
-                    {column.id === "createdAt" && "Created At"}
-                    {column.id === "actions" && "Actions"}
-                    {!["select", "title", "severity", "status", "url", "createdAt", "actions"].includes(column.id) && column.id}
-                  </DropdownMenuCheckboxItem>
-                ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* 下载按钮 */}
-          {(onDownloadAll || onDownloadSelected) && (
+          {/* 右侧操作按钮 */}
+          <div className="flex items-center space-x-2">
+            {/* 列显示控制 */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
-                  <IconDownload />
-                  Download
+                  <IconLayoutColumns />
+                  Columns
                   <IconChevronDown />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64">
-                <DropdownMenuLabel>Download Options</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {onDownloadAll && (
-                  <DropdownMenuItem onClick={onDownloadAll}>
-                    <IconDownload className="h-4 w-4" />
-                    Download All Vulnerabilities
-                  </DropdownMenuItem>
-                )}
-                {onDownloadSelected && (
-                  <DropdownMenuItem 
-                    onClick={onDownloadSelected}
-                    disabled={table.getFilteredSelectedRowModel().rows.length === 0}
-                  >
-                    <IconDownload className="h-4 w-4" />
-                    Download Selected Vulnerabilities
-                  </DropdownMenuItem>
-                )}
+              <DropdownMenuContent align="end">
+                {table
+                  .getAllColumns()
+                  .filter(
+                    (column) =>
+                      typeof column.accessorFn !== "undefined" && column.getCanHide()
+                  )
+                  .map((column) => (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                    >
+                      {column.id === "select" && "Select"}
+                      {column.id === "title" && "Title"}
+                      {column.id === "severity" && "Severity"}
+                      {column.id === "status" && "Status"}
+                      {column.id === "url" && "URL"}
+                      {column.id === "createdAt" && "Created At"}
+                      {column.id === "actions" && "Actions"}
+                      {!["select", "title", "severity", "status", "url", "createdAt", "actions"].includes(column.id) && column.id}
+                    </DropdownMenuCheckboxItem>
+                  ))}
               </DropdownMenuContent>
             </DropdownMenu>
-          )}
 
-          {/* 批量删除按钮 */}
-          {onBulkDelete && (
-            <Button 
-              onClick={onBulkDelete}
-              size="sm"
-              variant="outline"
-              disabled={table.getFilteredSelectedRowModel().rows.length === 0}
-              className={
-                table.getFilteredSelectedRowModel().rows.length === 0
-                  ? "text-muted-foreground"
-                  : "text-destructive hover:text-destructive hover:bg-destructive/10"
-              }
-            >
-              <IconTrash />
-              Delete
-            </Button>
-          )}
+            {/* 下载按钮 */}
+            {(onDownloadAll || onDownloadSelected) && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <IconDownload />
+                    Download
+                    <IconChevronDown />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64">
+                  <DropdownMenuLabel>Download Options</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {onDownloadAll && (
+                    <DropdownMenuItem onClick={onDownloadAll}>
+                      <IconDownload className="h-4 w-4" />
+                      Download All Vulnerabilities
+                    </DropdownMenuItem>
+                  )}
+                  {onDownloadSelected && (
+                    <DropdownMenuItem 
+                      onClick={onDownloadSelected}
+                      disabled={table.getFilteredSelectedRowModel().rows.length === 0}
+                    >
+                      <IconDownload className="h-4 w-4" />
+                      Download Selected Vulnerabilities
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
+            {/* 批量删除按钮 */}
+            {onBulkDelete && (
+              <Button 
+                onClick={onBulkDelete}
+                size="sm"
+                variant="outline"
+                disabled={table.getFilteredSelectedRowModel().rows.length === 0}
+                className={
+                  table.getFilteredSelectedRowModel().rows.length === 0
+                    ? "text-muted-foreground"
+                    : "text-destructive hover:text-destructive hover:bg-destructive/10"
+                }
+              >
+                <IconTrash />
+                Delete
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="rounded-md border overflow-x-auto">
         <Table style={{ minWidth: table.getCenterTotalSize() }}>

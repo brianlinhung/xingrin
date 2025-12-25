@@ -11,28 +11,13 @@ import type { ColumnDef } from "@tanstack/react-table"
 
 export function DashboardScanHistory() {
   const [pagination, setPagination] = React.useState({ pageIndex: 0, pageSize: 5 })
-  const [searchQuery, setSearchQuery] = React.useState("")
-  const [isSearching, setIsSearching] = React.useState(false)
   const router = useRouter()
 
-  const handleSearchChange = (value: string) => {
-    setIsSearching(true)
-    setSearchQuery(value)
-    setPagination((prev) => ({ ...prev, pageIndex: 0 }))
-  }
-
-  const { data, isLoading, isFetching } = useScans({
+  const { data, isLoading } = useScans({
     page: pagination.pageIndex + 1,
     pageSize: pagination.pageSize,
     status: 'running',
-    search: searchQuery || undefined,
   })
-
-  React.useEffect(() => {
-    if (!isFetching && isSearching) {
-      setIsSearching(false)
-    }
-  }, [isFetching, isSearching])
 
   const formatDate = React.useCallback((dateString: string) => new Date(dateString).toLocaleString("zh-CN", { hour12: false }), [])
   const navigate = React.useCallback((path: string) => router.push(path), [router])
@@ -65,9 +50,7 @@ export function DashboardScanHistory() {
     <ScanHistoryDataTable
       data={data?.results ?? []}
       columns={columns}
-      searchValue={searchQuery}
-      onSearch={handleSearchChange}
-      isSearching={isSearching}
+      hideToolbar
       hidePagination
       pagination={pagination}
       setPagination={setPagination}

@@ -83,7 +83,7 @@ export default function RootLayout({
         {/* ThemeProvider 提供主题切换功能,跟随系统自动切换亮暗色 */}
         <ThemeProvider
             attribute="class"
-            defaultTheme="system"
+            defaultTheme="dark"
             enableSystem
             disableTransitionOnChange
           >

@@ -245,7 +245,7 @@ export const createScanHistoryColumns = ({
   {
     accessorKey: "summary",
     header: "Summary",
-    size: 250,
+    size: 420,
     minSize: 150,
     cell: ({ row }) => {
       const summary = (row.getValue("summary") as {

@@ -23,11 +23,14 @@ interface VulnerabilitiesDetailViewProps {
   scanId?: number
   /** 目标详情页面使用：按 target 维度查看漏洞 */
   targetId?: number
+  /** 隐藏工具栏（搜索、列控制等） */
+  hideToolbar?: boolean
 }
 
 export function VulnerabilitiesDetailView({
   scanId,
   targetId,
+  hideToolbar = false,
 }: VulnerabilitiesDetailViewProps) {
   const [selectedVulnerabilities, setSelectedVulnerabilities] = useState<Vulnerability[]>([])
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -212,6 +215,7 @@ export function VulnerabilitiesDetailView({
         }}
         onPaginationChange={handlePaginationChange}
         onSelectionChange={setSelectedVulnerabilities}
+        hideToolbar={hideToolbar}
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

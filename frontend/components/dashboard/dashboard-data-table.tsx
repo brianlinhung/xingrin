@@ -14,7 +14,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { IconLayoutColumns, IconBug, IconRadar, IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight, IconSearch, IconLoader2, IconChevronDown } from "@tabler/icons-react"
+import { IconLayoutColumns, IconBug, IconRadar, IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight, IconChevronDown } from "@tabler/icons-react"
 import { Label } from "@/components/ui/label"
 import {
   Select,
@@ -31,7 +31,6 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
 import {
   Table,
   TableBody,
@@ -106,40 +105,17 @@ export function DashboardDataTable() {
   const [vulnPagination, setVulnPagination] = React.useState({ pageIndex: 0, pageSize: 10 })
   const [scanPagination, setScanPagination] = React.useState({ pageIndex: 0, pageSize: 10 })
 
-  // 服务端搜索状态
-  const [vulnSearchQuery, setVulnSearchQuery] = React.useState("")
-  const [scanSearchQuery, setScanSearchQuery] = React.useState("")
-  const [localVulnSearch, setLocalVulnSearch] = React.useState("")
-  const [localScanSearch, setLocalScanSearch] = React.useState("")
-  const [isVulnSearching, setIsVulnSearching] = React.useState(false)
-  const [isScanSearching, setIsScanSearching] = React.useState(false)
-
   // 获取漏洞数据
   const vulnQuery = useAllVulnerabilities({
     page: vulnPagination.pageIndex + 1,
     pageSize: vulnPagination.pageSize,
-    search: vulnSearchQuery || undefined,
   })
   
   // 获取扫描数据
   const scanQuery = useScans({
     page: scanPagination.pageIndex + 1,
     pageSize: scanPagination.pageSize,
-    search: scanSearchQuery || undefined,
   })
-
-  // 当请求完成时重置搜索状态
-  React.useEffect(() => {
-    if (!vulnQuery.isFetching && isVulnSearching) {
-      setIsVulnSearching(false)
-    }
-  }, [vulnQuery.isFetching, isVulnSearching])
-
-  React.useEffect(() => {
-    if (!scanQuery.isFetching && isScanSearching) {
-      setIsScanSearching(false)
-    }
-  }, [scanQuery.isFetching, isScanSearching])
 
   // 删除扫描的 mutation
   const deleteMutation = useMutation({
@@ -156,19 +132,6 @@ export function DashboardDataTable() {
       queryClient.invalidateQueries({ queryKey: ['scans'] })
     },
   })
-
-  // 搜索处理
-  const handleVulnSearch = () => {
-    setIsVulnSearching(true)
-    setVulnSearchQuery(localVulnSearch)
-    setVulnPagination(prev => ({ ...prev, pageIndex: 0 }))
-  }
-
-  const handleScanSearch = () => {
-    setIsScanSearching(true)
-    setScanSearchQuery(localScanSearch)
-    setScanPagination(prev => ({ ...prev, pageIndex: 0 }))
-  }
 
   const vulnerabilities = vulnQuery.data?.vulnerabilities ?? []
   const scans = scanQuery.data?.results ?? []
@@ -302,10 +265,6 @@ export function DashboardDataTable() {
   })
 
   const currentTable = activeTab === "vulnerabilities" ? vulnTable : scanTable
-  const currentLocalSearch = activeTab === "vulnerabilities" ? localVulnSearch : localScanSearch
-  const setCurrentLocalSearch = activeTab === "vulnerabilities" ? setLocalVulnSearch : setLocalScanSearch
-  const handleCurrentSearch = activeTab === "vulnerabilities" ? handleVulnSearch : handleScanSearch
-  const isCurrentSearching = activeTab === "vulnerabilities" ? isVulnSearching : isScanSearching
   const isLoading = activeTab === "vulnerabilities" ? vulnQuery.isLoading : scanQuery.isLoading
   const pagination = activeTab === "vulnerabilities" ? vulnPagination : scanPagination
   const setPagination = activeTab === "vulnerabilities" ? setVulnPagination : setScanPagination
@@ -371,7 +330,7 @@ export function DashboardDataTable() {
       </AlertDialog>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        {/* Tab + 搜索框 + Columns 在同一行 */}
+        {/* Tab + Columns 在同一行 */}
         <div className="flex items-center justify-between gap-4 mb-4">
           <TabsList>
             <TabsTrigger value="scans" className="gap-1.5">
@@ -384,46 +343,30 @@ export function DashboardDataTable() {
             </TabsTrigger>
           </TabsList>
           
-          <div className="flex items-center gap-2">
-            <Input
-              placeholder={activeTab === "vulnerabilities" ? "搜索漏洞类型..." : "搜索目标名称..."}
-              value={currentLocalSearch}
-              onChange={(e) => setCurrentLocalSearch(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleCurrentSearch()}
-              className="h-8 w-[200px]"
-            />
-            <Button variant="outline" size="sm" onClick={handleCurrentSearch} disabled={isCurrentSearching} className="h-8">
-              {isCurrentSearching ? (
-                <IconLoader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <IconSearch className="h-4 w-4" />
-              )}
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <IconLayoutColumns />
-                  Columns
-                  <IconChevronDown />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {currentTable
-                  .getAllColumns()
-                  .filter((column) => column.getCanHide())
-                  .map((column) => (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      className="capitalize"
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                    >
-                      {column.id}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <IconLayoutColumns />
+                Columns
+                <IconChevronDown />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {currentTable
+                .getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    className="capitalize"
+                    checked={column.getIsVisible()}
+                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                  >
+                    {column.id}
+                  </DropdownMenuCheckboxItem>
+                ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* 表格内容 */}

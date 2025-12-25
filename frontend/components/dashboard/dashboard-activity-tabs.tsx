@@ -20,10 +20,10 @@ export function DashboardActivityTabs() {
       </TabsList>
       
       <TabsContent value="vulnerabilities" className="mt-0">
-        <VulnerabilitiesDetailView />
+        <VulnerabilitiesDetailView hideToolbar />
       </TabsContent>
       <TabsContent value="scans" className="mt-0">
-        <ScanHistoryList />
+        <ScanHistoryList hideToolbar />
       </TabsContent>
     </Tabs>
   )
