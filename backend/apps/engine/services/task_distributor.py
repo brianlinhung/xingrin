@@ -153,30 +153,68 @@ class TaskDistributor:
             else:
                 scored_workers.append((worker, score, cpu, mem))
         
-        # 降级策略：如果没有正常负载的，等待后重新选择
+        # 降级策略：如果没有正常负载的，循环等待后重新检测
         if not scored_workers:
             if high_load_workers:
-                # 高负载时先等待，给系统喘息时间（默认 60 秒）
+                # 高负载等待参数（默认每 60 秒检测一次，最多 10 次）
                 high_load_wait = getattr(settings, 'HIGH_LOAD_WAIT_SECONDS', 60)
-                logger.warning("所有 Worker 高负载，等待 %d 秒后重试...", high_load_wait)
-                time.sleep(high_load_wait)
+                high_load_max_retries = getattr(settings, 'HIGH_LOAD_MAX_RETRIES', 10)
                 
-                # 重新选择（递归调用，可能负载已降下来）
-                # 为避免无限递归，这里直接使用高负载中最低的
+                # 开始等待前发送高负载通知
                 high_load_workers.sort(key=lambda x: x[1])
-                best_worker, _, cpu, mem = high_load_workers[0]
-                
-                # 发送高负载通知
+                _, _, first_cpu, first_mem = high_load_workers[0]
                 from apps.common.signals import all_workers_high_load
                 all_workers_high_load.send(
                     sender=self.__class__,
-                    worker_name=best_worker.name,
-                    cpu=cpu,
-                    mem=mem
+                    worker_name="所有节点",
+                    cpu=first_cpu,
+                    mem=first_mem
                 )
                 
-                logger.info("选择 Worker: %s (CPU: %.1f%%, MEM: %.1f%%)", best_worker.name, cpu, mem)
-                return best_worker
+                for retry in range(high_load_max_retries):
+                    logger.warning(
+                        "所有 Worker 高负载，等待 %d 秒后重试... (%d/%d)",
+                        high_load_wait, retry + 1, high_load_max_retries
+                    )
+                    time.sleep(high_load_wait)
+                    
+                    # 重新获取负载数据
+                    loads = worker_load_service.get_all_loads(worker_ids)
+                    
+                    # 重新评估
+                    scored_workers = []
+                    high_load_workers = []
+                    
+                    for worker in workers:
+                        load = loads.get(worker.id)
+                        if not load:
+                            continue
+                        
+                        cpu = load.get('cpu', 0)
+                        mem = load.get('mem', 0)
+                        score = cpu * 0.7 + mem * 0.3
+                        
+                        if cpu > 85 or mem > 85:
+                            high_load_workers.append((worker, score, cpu, mem))
+                        else:
+                            scored_workers.append((worker, score, cpu, mem))
+                    
+                    # 如果有正常负载的 Worker，跳出循环
+                    if scored_workers:
+                        logger.info("检测到正常负载 Worker，结束等待")
+                        break
+                
+                # 超时或仍然高负载，选择负载最低的
+                if not scored_workers and high_load_workers:
+                    high_load_workers.sort(key=lambda x: x[1])
+                    best_worker, _, cpu, mem = high_load_workers[0]
+                    
+                    logger.warning(
+                        "等待超时，强制分发到高负载 Worker: %s (CPU: %.1f%%, MEM: %.1f%%)",
+                        best_worker.name, cpu, mem
+                    )
+                    return best_worker
+                    return best_worker
             else:
                 logger.warning("没有可用的 Worker")
                 return None

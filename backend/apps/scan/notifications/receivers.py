@@ -87,8 +87,8 @@ def on_all_workers_high_load(sender, worker_name, cpu, mem, **kwargs):
     """所有 Worker 高负载时的通知处理"""
     create_notification(
         title="系统负载较高",
-        message=f"所有节点负载较高，已选择负载最低的节点 {worker_name}（CPU: {cpu:.1f}%, 内存: {mem:.1f}%）执行任务，扫描速度可能受影响",
+        message=f"所有节点负载较高（最低负载节点 CPU: {cpu:.1f}%, 内存: {mem:.1f}%），系统将等待最多 10 分钟后分发任务，扫描速度可能受影响",
         level=NotificationLevel.MEDIUM,
         category=NotificationCategory.SYSTEM
     )
-    logger.warning("高负载通知已发送 - worker=%s, cpu=%.1f%%, mem=%.1f%%", worker_name, cpu, mem)
+    logger.warning("高负载通知已发送 - cpu=%.1f%%, mem=%.1f%%", cpu, mem)
