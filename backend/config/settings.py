@@ -336,9 +336,11 @@ TASK_SUBMIT_INTERVAL = int(os.getenv('TASK_SUBMIT_INTERVAL', '6'))
 DOCKER_NETWORK_NAME = os.getenv('DOCKER_NETWORK_NAME', 'xingrin_network')
 
 # 宿主机挂载源路径（所有节点统一使用固定路径）
-# 部署前需创建：mkdir -p /opt/xingrin/{results,logs}
+# 部署前需创建：mkdir -p /opt/xingrin/{results,logs,fingerprints,wordlists}
 HOST_RESULTS_DIR = '/opt/xingrin/results'
 HOST_LOGS_DIR = '/opt/xingrin/logs'
+HOST_FINGERPRINTS_DIR = '/opt/xingrin/fingerprints'
+HOST_WORDLISTS_DIR = '/opt/xingrin/wordlists'
 
 # ============================================
 # Worker 配置中心（任务容器从 /api/workers/config/ 获取）

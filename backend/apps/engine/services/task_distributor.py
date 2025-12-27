@@ -277,6 +277,8 @@ class TaskDistributor:
         # 挂载路径（所有节点统一使用固定路径）
         host_results_dir = settings.HOST_RESULTS_DIR  # /opt/xingrin/results
         host_logs_dir = settings.HOST_LOGS_DIR  # /opt/xingrin/logs
+        host_fingerprints_dir = settings.HOST_FINGERPRINTS_DIR  # /opt/xingrin/fingerprints
+        host_wordlists_dir = settings.HOST_WORDLISTS_DIR  # /opt/xingrin/wordlists
         
         # 环境变量：SERVER_URL + IS_LOCAL，其他配置容器启动时从配置中心获取
         # IS_LOCAL 用于 Worker 向配置中心声明身份，决定返回的数据库地址
@@ -296,6 +298,8 @@ class TaskDistributor:
         volumes = [
             f"-v {host_results_dir}:{self.results_mount}",
             f"-v {host_logs_dir}:{self.logs_mount}",
+            f"-v {host_fingerprints_dir}:{host_fingerprints_dir}",
+            f"-v {host_wordlists_dir}:{host_wordlists_dir}",
         ]
         
         # 构建命令行参数

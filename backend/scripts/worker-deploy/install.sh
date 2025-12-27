@@ -108,7 +108,9 @@ create_dirs() {
     log_info "创建数据目录..."
     sudo mkdir -p "${MARKER_DIR}/results"
     sudo mkdir -p "${MARKER_DIR}/logs"
-    sudo chmod -R 755 "${MARKER_DIR}"
+    sudo mkdir -p "${MARKER_DIR}/fingerprints"
+    sudo mkdir -p "${MARKER_DIR}/wordlists"
+    sudo chmod -R 777 "${MARKER_DIR}"
     log_success "数据目录已创建"
 }
 

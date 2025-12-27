@@ -335,6 +335,13 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then
 fi
 
 step "[3/3] 初始化配置"
+
+# 创建数据目录
+info "创建数据目录..."
+mkdir -p /opt/xingrin/{results,logs,fingerprints,wordlists}
+chmod -R 777 /opt/xingrin
+success "数据目录已创建: /opt/xingrin/{results,logs,fingerprints,wordlists}"
+
 DOCKER_DIR="$ROOT_DIR/docker"
 if [ ! -d "$DOCKER_DIR" ]; then
     error "未找到 docker 目录，请确认项目结构。"

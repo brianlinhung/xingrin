@@ -112,6 +112,8 @@ services:
     volumes:
       - /opt/xingrin/results:/app/backend/results
       - /opt/xingrin/logs:/app/backend/logs
+      - /opt/xingrin/fingerprints:/opt/xingrin/fingerprints
+      - /opt/xingrin/wordlists:/opt/xingrin/wordlists
     command: echo "Worker image built for development"
 
 volumes:
