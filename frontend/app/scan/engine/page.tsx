@@ -61,6 +61,7 @@ function parseEngineFeatures(engine: ScanEngine): Record<FeatureKey, boolean> {
       subdomain_discovery: !!config.subdomain_discovery,
       port_scan: !!config.port_scan,
       site_scan: !!config.site_scan,
+      fingerprint_detect: !!config.fingerprint_detect,
       directory_scan: !!config.directory_scan,
       url_fetch: !!config.url_fetch,
       vuln_scan: !!config.vuln_scan,
