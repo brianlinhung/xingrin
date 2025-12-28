@@ -14,7 +14,7 @@ export interface Endpoint {
   contentLength: number | null    // 后端: content_length (指针类型，可能为 null)
   contentType?: string | null     // 后端: content_type (可选)
   responseTime?: number | null    // 后端: response_time (单位秒，可选)
-  tags?: string[] | null          // 后端: tags/matched_gf_patterns 映射（可选）
+  gfPatterns?: string[] | null    // 后端: matched_gf_patterns，GF 模式匹配结果
 
   // 站点/端点维度的附加信息（资产表和快照表都会使用）
   host?: string
@@ -63,7 +63,7 @@ export interface CreateEndpointRequest {
   contentLength?: number | null    // 可选
   contentType?: string | null      // 可选
   responseTime?: number | null     // 可选
-  tags?: string[] | null           // 可选
+  gfPatterns?: string[] | null     // 可选，GF 模式匹配结果
   domain?: string                  // 可选
   subdomain?: string               // 可选
 }
@@ -83,7 +83,7 @@ export interface UpdateEndpointRequest {
   contentLength?: number
   contentType?: string | null
   responseTime?: number | null
-  tags?: string[] | null
+  gfPatterns?: string[] | null
   domain?: string
   subdomain?: string
 }

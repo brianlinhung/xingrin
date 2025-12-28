@@ -217,19 +217,19 @@ export function createEndpointColumns({
       },
     },
     {
-      accessorKey: "tags",
-      meta: { title: "Tags" },
+      accessorKey: "gfPatterns",
+      meta: { title: "GF Patterns" },
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Tags" />
+        <DataTableColumnHeader column={column} title="GF Patterns" />
       ),
       size: 150,
       minSize: 100,
       maxSize: 250,
       cell: ({ row }) => {
-        const tags = (row.getValue("tags") as string[] | null | undefined) || []
+        const patterns = (row.getValue("gfPatterns") as string[] | null | undefined) || []
         return (
           <ExpandableTagList
-            items={tags}
+            items={patterns}
             maxVisible={3}
             variant="secondary"
           />

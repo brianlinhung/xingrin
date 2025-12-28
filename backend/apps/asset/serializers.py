@@ -134,8 +134,8 @@ class VulnerabilitySnapshotSerializer(serializers.ModelSerializer):
 class EndpointListSerializer(serializers.ModelSerializer):
     """端点列表序列化器（用于目标端点列表页）"""
 
-    # 将 GF 匹配模式映射为前端使用的 tags 字段
-    tags = serializers.ListField(
+    # GF 匹配模式（gf-patterns 工具匹配的敏感 URL 模式）
+    gfPatterns = serializers.ListField(
         child=serializers.CharField(),
         source='matched_gf_patterns',
         read_only=True,
@@ -155,7 +155,7 @@ class EndpointListSerializer(serializers.ModelSerializer):
             'body_preview',
             'tech',
             'vhost',
-            'tags',
+            'gfPatterns',
             'created_at',
         ]
         read_only_fields = fields
@@ -258,8 +258,8 @@ class DirectorySnapshotSerializer(serializers.ModelSerializer):
 class EndpointSnapshotSerializer(serializers.ModelSerializer):
     """端点快照序列化器（用于扫描历史）"""
 
-    # 将 GF 匹配模式映射为前端使用的 tags 字段
-    tags = serializers.ListField(
+    # GF 匹配模式（gf-patterns 工具匹配的敏感 URL 模式）
+    gfPatterns = serializers.ListField(
         child=serializers.CharField(),
         source='matched_gf_patterns',
         read_only=True,
@@ -280,7 +280,7 @@ class EndpointSnapshotSerializer(serializers.ModelSerializer):
             'body_preview',
             'tech',
             'vhost',
-            'tags',
+            'gfPatterns',
             'created_at',
         ]
         read_only_fields = fields
