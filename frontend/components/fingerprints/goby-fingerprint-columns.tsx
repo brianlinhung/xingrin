@@ -12,26 +12,22 @@ interface ColumnOptions {
 }
 
 /**
- * 规则详情单元格组件 - 默认显示3条，超出可展开
+ * 规则详情单元格组件 - 显示原始 JSON 数据
  */
 function RuleDetailsCell({ rules }: { rules: any[] }) {
   const [expanded, setExpanded] = React.useState(false)
   
   if (!rules || rules.length === 0) return <span className="text-muted-foreground">-</span>
   
-  const displayRules = expanded ? rules : rules.slice(0, 3)
-  const hasMore = rules.length > 3
+  const displayRules = expanded ? rules : rules.slice(0, 2)
+  const hasMore = rules.length > 2
   
   return (
     <div className="flex flex-col gap-1">
-      <div 
-        className="font-mono text-xs text-muted-foreground space-y-0.5 max-w-md cursor-pointer hover:text-foreground transition-colors"
-        onClick={() => hasMore && setExpanded(!expanded)}
-        title={hasMore ? (expanded ? "点击收起" : "点击展开") : undefined}
-      >
+      <div className="font-mono text-xs space-y-0.5">
         {displayRules.map((r, idx) => (
           <div key={idx} className={expanded ? "break-all" : "truncate"}>
-            <span className="text-primary">{r.label}</span>: {r.feature}
+            {JSON.stringify(r)}
           </div>
         ))}
       </div>
@@ -101,14 +97,10 @@ export function createGobyFingerprintColumns({
       ),
       cell: ({ row }) => {
         const logic = row.getValue("logic") as string
-        return (
-          <Badge variant="outline" className="font-mono text-xs">
-            {logic}
-          </Badge>
-        )
+        return <span className="font-mono text-xs">{logic}</span>
       },
-      enableResizing: true,
-      size: 120,
+      enableResizing: false,
+      size: 100,
     },
     // 规则数量
     {
@@ -119,14 +111,10 @@ export function createGobyFingerprintColumns({
       ),
       cell: ({ row }) => {
         const rules = row.getValue("rule") as any[]
-        return (
-          <Badge variant="secondary">
-            {rules?.length || 0} 条规则
-          </Badge>
-        )
+        return <span>{rules?.length || 0}</span>
       },
-      enableResizing: true,
-      size: 100,
+      enableResizing: false,
+      size: 80,
     },
     // 规则详情
     {
@@ -154,7 +142,7 @@ export function createGobyFingerprintColumns({
           </div>
         )
       },
-      enableResizing: true,
+      enableResizing: false,
       size: 160,
     },
   ]

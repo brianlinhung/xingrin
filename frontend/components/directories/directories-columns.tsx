@@ -5,7 +5,7 @@ import { ColumnDef } from "@tanstack/react-table"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { DataTableColumnHeader } from "@/components/ui/data-table/column-header"
-import { TruncatedUrlCell } from "@/components/ui/truncated-cell"
+import { ExpandableCell } from "@/components/ui/data-table/expandable-cell"
 import type { Directory } from "@/types/directory.types"
 
 /**
@@ -88,10 +88,9 @@ export function createDirectoryColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="URL" />
       ),
-      cell: ({ row }) => {
-        const url = row.getValue("url") as string
-        return <TruncatedUrlCell value={url} />
-      },
+      cell: ({ row }) => (
+        <ExpandableCell value={row.getValue("url")} />
+      ),
     },
     // Status 列
     {
@@ -99,6 +98,7 @@ export function createDirectoryColumns({
       size: 80,
       minSize: 60,
       maxSize: 120,
+      enableResizing: false,
       meta: { title: "Status" },
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Status" />
@@ -156,6 +156,7 @@ export function createDirectoryColumns({
       size: 120,
       minSize: 80,
       maxSize: 200,
+      enableResizing: false,
       meta: { title: "Content Type" },
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Content Type" />
@@ -190,6 +191,7 @@ export function createDirectoryColumns({
       size: 150,
       minSize: 120,
       maxSize: 200,
+      enableResizing: false,
       meta: { title: "Created At" },
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Created At" />

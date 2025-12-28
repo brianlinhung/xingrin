@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { TruncatedUrlCell, TruncatedCell } from "@/components/ui/truncated-cell"
+import { ExpandableUrlCell } from "@/components/ui/data-table/expandable-cell"
 import { DataTableColumnHeader } from "@/components/ui/data-table/column-header"
 
 import type { Vulnerability, VulnerabilitySeverity } from "@/types/vulnerability.types"
@@ -62,9 +62,10 @@ export function createVulnerabilityColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Status" />
       ),
-      size: 80,
-      minSize: 60,
+      size: 100,
+      minSize: 80,
       maxSize: 120,
+      enableResizing: false,
       cell: ({ row }) => {
         const severity = row.getValue("severity") as VulnerabilitySeverity
         const config = severityConfig[severity]
@@ -84,6 +85,7 @@ export function createVulnerabilityColumns({
       size: 100,
       minSize: 80,
       maxSize: 150,
+      enableResizing: false,
       cell: ({ row }) => {
         const source = row.getValue("source") as string
         return (
@@ -129,10 +131,9 @@ export function createVulnerabilityColumns({
       size: 500,
       minSize: 300,
       maxSize: 700,
-      cell: ({ row }) => {
-        const url = row.original.url
-        return <TruncatedUrlCell value={url} />
-      },
+      cell: ({ row }) => (
+        <ExpandableUrlCell value={row.original.url} />
+      ),
     },
     {
       accessorKey: "createdAt",
@@ -143,6 +144,7 @@ export function createVulnerabilityColumns({
       size: 150,
       minSize: 120,
       maxSize: 200,
+      enableResizing: false,
       cell: ({ row }) => {
         const createdAt = row.getValue("createdAt") as string
         return (

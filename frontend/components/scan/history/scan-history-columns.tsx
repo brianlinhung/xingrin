@@ -370,6 +370,7 @@ export const createScanHistoryColumns = ({
     size: 120,
     minSize: 80,
     maxSize: 180,
+    enableResizing: false,
     meta: { title: "Engine Name" },
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Engine Name" />
@@ -390,6 +391,7 @@ export const createScanHistoryColumns = ({
     size: 150,
     minSize: 120,
     maxSize: 200,
+    enableResizing: false,
     meta: { title: "Created At" },
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Created At" />
@@ -407,9 +409,10 @@ export const createScanHistoryColumns = ({
   // Status 列
   {
     accessorKey: "status",
-    size: 100,
-    minSize: 80,
+    size: 110,
+    minSize: 90,
     maxSize: 130,
+    enableResizing: false,
     meta: { title: "Status" },
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Status" />

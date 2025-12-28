@@ -1,9 +1,9 @@
 "use client"
 
-import React from "react"
 import { ColumnDef } from "@tanstack/react-table"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DataTableColumnHeader } from "@/components/ui/data-table/column-header"
+import { ExpandableCell } from "@/components/ui/data-table/expandable-cell"
 import type { Subdomain } from "@/types/subdomain.types"
 
 // 列创建函数的参数类型
@@ -54,16 +54,9 @@ export const createSubdomainColumns = ({
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Subdomain" />
     ),
-    cell: ({ row }) => {
-      const name = row.getValue("name") as string
-      return (
-        <div className="flex-1 min-w-0">
-          <span className="text-sm font-medium font-mono break-all leading-relaxed whitespace-normal">
-            {name}
-          </span>
-        </div>
-      )
-    },
+    cell: ({ row }) => (
+      <ExpandableCell value={row.getValue("name")} />
+    ),
   },
 
   // 创建时间列
@@ -72,6 +65,7 @@ export const createSubdomainColumns = ({
     size: 150,
     minSize: 120,
     maxSize: 200,
+    enableResizing: false,
     meta: { title: "Created At" },
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Created At" />

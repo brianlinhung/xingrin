@@ -172,6 +172,7 @@ export const createEngineColumns = ({
     size: 80,
     minSize: 60,
     maxSize: 100,
+    enableResizing: false,
     cell: ({ row }) => {
       const features = parseEngineFeatures(row.original)
       return <FeatureStatus enabled={features.subdomain_discovery} />
@@ -189,6 +190,7 @@ export const createEngineColumns = ({
     size: 80,
     minSize: 60,
     maxSize: 100,
+    enableResizing: false,
     cell: ({ row }) => {
       const features = parseEngineFeatures(row.original)
       return <FeatureStatus enabled={features.port_scan} />
@@ -206,6 +208,7 @@ export const createEngineColumns = ({
     size: 80,
     minSize: 60,
     maxSize: 100,
+    enableResizing: false,
     cell: ({ row }) => {
       const features = parseEngineFeatures(row.original)
       return <FeatureStatus enabled={features.site_scan} />
@@ -223,6 +226,7 @@ export const createEngineColumns = ({
     size: 80,
     minSize: 60,
     maxSize: 100,
+    enableResizing: false,
     cell: ({ row }) => {
       const features = parseEngineFeatures(row.original)
       return <FeatureStatus enabled={features.directory_scan} />
@@ -240,6 +244,7 @@ export const createEngineColumns = ({
     size: 80,
     minSize: 60,
     maxSize: 100,
+    enableResizing: false,
     cell: ({ row }) => {
       const features = parseEngineFeatures(row.original)
       return <FeatureStatus enabled={features.url_fetch} />
@@ -257,6 +262,7 @@ export const createEngineColumns = ({
     size: 80,
     minSize: 60,
     maxSize: 100,
+    enableResizing: false,
     cell: ({ row }) => {
       const features = parseEngineFeatures(row.original)
       return <FeatureStatus enabled={features.osint} />
@@ -274,6 +280,7 @@ export const createEngineColumns = ({
     size: 80,
     minSize: 60,
     maxSize: 100,
+    enableResizing: false,
     cell: ({ row }) => {
       const features = parseEngineFeatures(row.original)
       return <FeatureStatus enabled={features.vulnerability_scan} />
@@ -291,6 +298,7 @@ export const createEngineColumns = ({
     size: 80,
     minSize: 60,
     maxSize: 100,
+    enableResizing: false,
     cell: ({ row }) => {
       const features = parseEngineFeatures(row.original)
       return <FeatureStatus enabled={features.waf_detection} />
@@ -308,6 +316,7 @@ export const createEngineColumns = ({
     size: 80,
     minSize: 60,
     maxSize: 100,
+    enableResizing: false,
     cell: ({ row }) => {
       const features = parseEngineFeatures(row.original)
       return <FeatureStatus enabled={features.screenshot} />

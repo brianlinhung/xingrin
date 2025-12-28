@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useState, useMemo, type FormEvent } from "react"
-import { GitBranch, Search, RefreshCw, Settings, Trash2, FolderOpen } from "lucide-react"
+import { GitBranch, Search, RefreshCw, Settings, Trash2, FolderOpen, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -173,7 +173,8 @@ export default function NucleiReposPage() {
           </div>
         </div>
         <Button onClick={() => setCreateDialogOpen(true)}>
-          新增模板仓库
+          <Plus className="h-4 w-4" />
+          新增仓库
         </Button>
       </div>
 

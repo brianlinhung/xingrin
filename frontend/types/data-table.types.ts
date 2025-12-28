@@ -105,8 +105,14 @@ export interface UnifiedDataTableProps<TData> {
   
   // 添加操作
   onAddNew?: () => void
+  onAddHover?: () => void
   addButtonLabel?: string
   showAddButton?: boolean
+  
+  // 批量添加操作
+  onBulkAdd?: () => void
+  bulkAddLabel?: string
+  showBulkAdd?: boolean
   
   // 下载操作
   downloadOptions?: DownloadOption[]

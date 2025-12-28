@@ -33,6 +33,117 @@ import psycopg2
 from psycopg2.extras import execute_values
 
 
+def generate_fixed_length_url(target_name: str, length: int = 245, path_hint: str = '') -> str:
+    """
+    生成固定长度的 URL
+    
+    Args:
+        target_name: 目标域名
+        length: 目标URL长度，默认245
+        path_hint: 可选的路径提示，用于区分不同类型的URL
+    
+    Returns:
+        固定长度的URL字符串
+    """
+    base = f'https://{target_name}'
+    
+    # 基础路径
+    paths = [
+        '/api/v3/enterprise/security-assessment/vulnerability-management',
+        '/admin/dashboard/system-configuration/advanced-settings',
+        '/portal/user-authentication/multi-factor/verification',
+        '/services/cloud-infrastructure/monitoring/metrics',
+        '/internal/system-administration/audit-logging/events',
+    ]
+    
+    path = random.choice(paths) if not path_hint else f'/{path_hint}'
+    url = f'{base}{path}'
+    
+    # 添加查询参数
+    param_idx = 0
+    while len(url) < length - 20:
+        param_idx += 1
+        param = f'p{param_idx}={random.randint(10000000, 99999999)}'
+        separator = '?' if '?' not in url else '&'
+        url = f'{url}{separator}{param}'
+    
+    # 精确调整到目标长度
+    if len(url) < length:
+        # 添加填充参数
+        padding_needed = length - len(url) - 1  # -1 for '&' or '?'
+        if padding_needed > 0:
+            separator = '?' if '?' not in url else '&'
+            # 创建精确长度的填充
+            padding = 'x' * padding_needed
+            url = f'{url}{separator}{padding}'
+    
+    # 截断到精确长度
+    if len(url) > length:
+        url = url[:length]
+    
+    return url
+
+
+def generate_fixed_length_text(length: int = 300, text_type: str = 'description') -> str:
+    """
+    生成固定长度的文本内容
+    
+    Args:
+        length: 目标文本长度，默认300
+        text_type: 文本类型，用于选择不同的内容模板
+    
+    Returns:
+        固定长度的文本字符串
+    """
+    # 基础文本模板
+    templates = {
+        'description': [
+            'A critical security vulnerability was discovered in the application authentication module. This vulnerability allows attackers to bypass security controls and gain unauthorized access to sensitive system resources. The issue stems from improper input validation and insufficient access control mechanisms. Exploitation could lead to complete system compromise, data exfiltration, and service disruption. Immediate remediation is strongly recommended including implementing proper input sanitization, strengthening authentication mechanisms, and deploying additional security monitoring. The vulnerability affects multiple components including user authentication, session management, API endpoints, and data processing pipelines. Risk assessment indicates high severity with potential for significant business impact.',
+            'Server-side request forgery (SSRF) vulnerability detected in the API gateway service. An attacker can manipulate server-side requests to access internal network resources, potentially exposing sensitive configuration data, internal services, and cloud metadata endpoints. The vulnerability exists due to insufficient URL validation in the proxy functionality. This could allow attackers to scan internal networks, access cloud instance metadata, retrieve sensitive credentials, and pivot to other internal systems. Recommended mitigations include implementing strict URL allowlisting, blocking requests to internal IP ranges, and adding network segmentation controls. The vulnerability has been assigned a high severity rating due to potential for lateral movement.',
+            'Remote code execution vulnerability identified in the file upload processing module. Insufficient file type validation allows attackers to upload malicious executable files that can be triggered to execute arbitrary code on the server. The vulnerability bypasses existing security controls through specially crafted file headers and extension manipulation. Successful exploitation grants attackers full control over the affected server, enabling data theft, malware deployment, and establishment of persistent backdoor access. Critical remediation steps include implementing strict file type validation, sandboxed file processing, content inspection, and removal of execution permissions from upload directories. This vulnerability requires immediate attention.',
+            'Cross-site scripting (XSS) vulnerability found in the user profile management interface. User-supplied input is rendered without proper encoding, allowing injection of malicious JavaScript code. Attackers can exploit this to steal session tokens, perform actions on behalf of authenticated users, redirect victims to phishing sites, and exfiltrate sensitive personal information. The vulnerability affects multiple input fields including display name, bio, and custom URL parameters. Remediation requires implementing context-aware output encoding, Content Security Policy headers, and input validation. Additionally, consider implementing HTTP-only and Secure flags on session cookies to limit the impact of successful XSS attacks.',
+            'SQL injection vulnerability discovered in the advanced search functionality. The application constructs database queries using unsanitized user input, enabling attackers to manipulate query logic, extract sensitive data, modify database contents, or execute administrative operations. The vulnerability affects the product search, user lookup, and reporting modules. Exploitation could result in complete database compromise, unauthorized data access, data manipulation, and potential privilege escalation. Immediate remediation includes implementing parameterized queries, stored procedures, input validation, and principle of least privilege for database accounts. Consider deploying a web application firewall as an additional defense layer.',
+        ],
+        'organization': [
+            'A leading global technology corporation specializing in enterprise software solutions, cloud computing infrastructure, cybersecurity services, and digital transformation consulting. The organization operates across multiple continents with regional headquarters in North America, Europe, and Asia-Pacific. Core business units include enterprise resource planning systems, customer relationship management platforms, supply chain optimization tools, and advanced analytics solutions. The company maintains strategic partnerships with major cloud providers and technology vendors. Annual revenue exceeds several billion dollars with consistent year-over-year growth. The organization employs thousands of professionals including software engineers, security researchers, and business consultants.',
+            'An innovative financial technology company providing comprehensive digital banking services, payment processing solutions, and investment management platforms. The organization serves millions of customers globally through mobile applications, web portals, and API integrations. Key offerings include real-time payment processing, cryptocurrency trading, automated investment advisory, and small business lending. The company maintains regulatory compliance across multiple jurisdictions and holds various financial services licenses. Security infrastructure includes advanced fraud detection, multi-factor authentication, and end-to-end encryption. The organization has received multiple industry awards for innovation and customer satisfaction.',
+            'A healthcare technology enterprise focused on electronic health records, telemedicine platforms, medical device integration, and healthcare analytics. The organization partners with hospitals, clinics, and healthcare systems worldwide to improve patient outcomes and operational efficiency. Core products include comprehensive EHR systems, patient engagement portals, clinical decision support tools, and population health management platforms. The company maintains strict compliance with healthcare regulations including HIPAA, GDPR, and regional data protection requirements. Research and development investments focus on artificial intelligence applications in diagnostics, treatment optimization, and predictive health analytics.',
+        ],
+        'title': [
+            'Enterprise Resource Planning System - Comprehensive Business Management Dashboard with Real-time Analytics, Workflow Automation, and Multi-department Integration Capabilities for Global Operations Management and Strategic Decision Support',
+            'Advanced Security Operations Center - Unified Threat Detection and Response Platform featuring Machine Learning-powered Anomaly Detection, Automated Incident Response, and Comprehensive Security Posture Management',
+            'Customer Experience Management Platform - Omnichannel Engagement Solution with AI-driven Personalization, Journey Orchestration, Sentiment Analysis, and Predictive Customer Behavior Modeling Capabilities',
+            'Cloud Infrastructure Management Console - Multi-cloud Orchestration Platform supporting AWS, Azure, and GCP with Automated Provisioning, Cost Optimization, Compliance Monitoring, and Performance Analytics',
+            'Data Analytics and Business Intelligence Suite - Self-service Analytics Platform with Advanced Visualization, Predictive Modeling, Natural Language Query Processing, and Automated Report Generation',
+        ],
+    }
+    
+    # 选择模板
+    template_list = templates.get(text_type, templates['description'])
+    base_text = random.choice(template_list)
+    
+    # 调整到目标长度
+    if len(base_text) < length:
+        # 需要扩展文本
+        padding_words = [
+            'Additionally', 'Furthermore', 'Moreover', 'Consequently', 'Subsequently',
+            'comprehensive', 'implementation', 'infrastructure', 'configuration', 'authentication',
+            'vulnerability', 'exploitation', 'remediation', 'mitigation', 'assessment',
+        ]
+        while len(base_text) < length - 20:
+            base_text += f' {random.choice(padding_words)}'
+        # 精确填充
+        if len(base_text) < length:
+            padding_needed = length - len(base_text)
+            base_text += ' ' + 'x' * (padding_needed - 1)
+    
+    # 截断到精确长度
+    if len(base_text) > length:
+        base_text = base_text[:length]
+    
+    return base_text
+
+
 def load_env_file(env_path: str) -> dict:
     """从 .env 文件加载环境变量"""
     env_vars = {}
@@ -107,6 +218,11 @@ class TestDataGenerator:
             self.create_host_port_mapping_snapshots(scan_ids)
             self.create_vulnerability_snapshots(scan_ids)
             
+            # 生成指纹数据
+            self.create_ehole_fingerprints()
+            self.create_goby_fingerprints()
+            self.create_wappalyzer_fingerprints()
+            
             self.conn.commit()
             print("\n✅ 测试数据生成完成！")
         except Exception as e:
@@ -120,6 +236,8 @@ class TestDataGenerator:
         """清除所有测试数据"""
         cur = self.conn.cursor()
         tables = [
+            # 指纹表
+            'ehole_fingerprint', 'goby_fingerprint', 'wappalyzer_fingerprint',
             # 快照表(先删除，因为有外键依赖 scan)
             'vulnerability_snapshot', 'host_port_mapping_snapshot', 'directory_snapshot',
             'endpoint_snapshot', 'website_snapshot', 'subdomain_snapshot',
@@ -264,9 +382,11 @@ class TestDataGenerator:
         selected = random.sample(org_templates, min(num_orgs, len(org_templates)))
         
         ids = []
-        for name_base, desc in selected:
+        for name_base, _ in selected:
             division = random.choice(divisions)
             name = f'{name_base} - {division} ({suffix})'
+            # 生成固定 300 长度的描述
+            desc = generate_fixed_length_text(length=300, text_type='organization')
             cur.execute("""
                 INSERT INTO organization (name, description, created_at, deleted_at)
                 VALUES (%s, %s, NOW() - INTERVAL '%s days', NULL)
@@ -335,13 +455,27 @@ class TestDataGenerator:
             if row:
                 ids.append(row[0])
                 # 随机关联到组织
-                if org_ids and random.random() > 0.3:  # 70% 概率关联
-                    org_id = random.choice(org_ids)
-                    cur.execute("""
-                        INSERT INTO organization_targets (organization_id, target_id)
-                        VALUES (%s, %s)
-                        ON CONFLICT DO NOTHING
-                    """, (org_id, row[0]))
+                if org_ids:
+                    # 20% 概率关联多个组织(3-5个)，50% 概率关联1个组织，30% 不关联
+                    rand_val = random.random()
+                    if rand_val < 0.2:
+                        # 关联多个组织 (3-5个)
+                        num_orgs = min(random.randint(3, 5), len(org_ids))
+                        selected_orgs = random.sample(org_ids, num_orgs)
+                        for org_id in selected_orgs:
+                            cur.execute("""
+                                INSERT INTO organization_targets (organization_id, target_id)
+                                VALUES (%s, %s)
+                                ON CONFLICT DO NOTHING
+                            """, (org_id, row[0]))
+                    elif rand_val < 0.7:
+                        # 关联1个组织
+                        org_id = random.choice(org_ids)
+                        cur.execute("""
+                            INSERT INTO organization_targets (organization_id, target_id)
+                            VALUES (%s, %s)
+                            ON CONFLICT DO NOTHING
+                        """, (org_id, row[0]))
         
         # 随机生成 50-80 个 IP 目标
         num_ips = random.randint(50, 80)
@@ -702,17 +836,8 @@ class TestDataGenerator:
         batch_data = []
         for target_id, target_name in domain_targets:
             for i in range(random.randint(15, 30)):
-                protocol = random.choice(['https', 'http'])
-                port = random.choice([80, 443, 8080, 8443, 3000])
-                
-                if port in [80, 443]:
-                    url = f'{protocol}://{target_name}/'
-                else:
-                    url = f'{protocol}://{target_name}:{port}/'
-                
-                if i > 0:
-                    path = random.choice(['admin/', 'api/', 'portal/', 'dashboard/'])
-                    url = f'{protocol}://{target_name}:{port}/{path}'
+                # 生成固定 245 长度的 URL
+                url = generate_fixed_length_url(target_name, length=245, path_hint=f'website/{i:04d}')
                 
                 batch_data.append((
                     url, target_id, target_name, random.choice(titles),
@@ -778,8 +903,62 @@ class TestDataGenerator:
             '/internal/secrets/vault/kv/applications/credentials/rotation',
         ]
         
-        gf_patterns = [['debug', 'config'], ['api', 'json'], ['upload', 'file'], ['admin'], ['auth'], 
-                       ['secrets', 'credentials'], ['backup', 'archive'], ['debug', 'trace'], []]
+        gf_patterns = [
+            ['debug', 'config', 'api', 'json', 'upload', 'file', 'admin', 'auth', 'secrets', 'credentials'],
+            ['backup', 'archive', 'debug', 'trace', 'log', 'error', 'exception', 'stack', 'dump', 'memory'],
+            ['api', 'rest', 'graphql', 'websocket', 'grpc', 'soap', 'xml', 'json', 'yaml', 'protobuf'],
+            ['auth', 'login', 'logout', 'session', 'token', 'jwt', 'oauth', 'saml', 'sso', 'mfa', 'otp', '2fa'],
+            ['upload', 'download', 'file', 'attachment', 'document', 'image', 'video', 'audio', 'media', 'asset'],
+            ['admin', 'dashboard', 'panel', 'console', 'management', 'settings', 'config', 'system', 'control'],
+            ['database', 'sql', 'query', 'table', 'schema', 'migration', 'backup', 'restore', 'dump', 'export'],
+            ['cache', 'redis', 'memcached', 'session', 'storage', 'temp', 'buffer', 'queue', 'message', 'event'],
+            ['security', 'vulnerability', 'exploit', 'injection', 'xss', 'csrf', 'ssrf', 'rce', 'lfi', 'sqli'],
+            ['payment', 'billing', 'invoice', 'subscription', 'checkout', 'cart', 'order', 'transaction', 'refund'],
+            ['user', 'profile', 'account', 'password', 'email', 'phone', 'address', 'preference', 'notification'],
+            ['api-key', 'secret-key', 'access-token', 'refresh-token', 'private-key', 'public-key', 'certificate'],
+            ['debug', 'trace', 'log', 'error', 'warning', 'info', 'verbose', 'metric', 'monitor', 'health'],
+            ['internal', 'private', 'restricted', 'confidential', 'sensitive', 'protected', 'secure', 'encrypted'],
+            ['test', 'staging', 'development', 'production', 'sandbox', 'demo', 'preview', 'beta', 'alpha'],
+            [],  # 空的情况
+        ]
+        
+        # 100字符长度的标题
+        titles = [
+            'Enterprise API Gateway - RESTful Service Documentation with OpenAPI 3.0 Specification and Interactive',
+            'User Authentication Service - OAuth 2.0 and SAML 2.0 Single Sign-On Integration Platform Dashboard',
+            'Payment Processing Gateway - PCI-DSS Compliant Transaction Management System Administration Panel',
+            'Content Delivery Network - Global Edge Cache Management and Real-time Analytics Dashboard Interface',
+            'Database Administration Console - PostgreSQL Cluster Management with Automated Backup and Recovery',
+            'Kubernetes Container Orchestration - Pod Deployment and Service Mesh Configuration Control Panel',
+            'Message Queue Management - RabbitMQ Exchange and Binding Configuration with Dead Letter Handling',
+            'Search Engine Administration - Elasticsearch Index Management and Query Performance Optimization',
+            'Monitoring and Alerting System - Prometheus Metrics Collection with Grafana Dashboard Integration',
+            'Security Operations Center - Vulnerability Assessment and Incident Response Management Platform',
+            'API Rate Limiting Service - Request Throttling and Quota Management with Real-time Usage Analytics',
+            'File Storage Management - S3-Compatible Object Storage with Lifecycle Policy and Access Control',
+            'Email Notification Service - SMTP Gateway with Template Management and Delivery Status Tracking',
+            'Webhook Integration Platform - Event-Driven Architecture with Retry Logic and Failure Handling',
+            'GraphQL API Playground - Interactive Query Builder with Schema Introspection and Documentation',
+        ]
+        
+        # 扩展的技术栈列表（用于生成10-20个技术）
+        all_techs = [
+            'React 18.2.0', 'Vue.js 3.4', 'Angular 17.1', 'Next.js 14.0', 'Nuxt 3.9', 'Svelte 4.2',
+            'Node.js 20.10', 'Express 4.18', 'NestJS 10.3', 'Fastify 4.25', 'Koa 2.15',
+            'Python 3.12', 'Django 5.0', 'FastAPI 0.109', 'Flask 3.0', 'Tornado 6.4',
+            'Go 1.21', 'Gin 1.9', 'Echo 4.11', 'Fiber 2.52', 'Chi 5.0',
+            'Java 21', 'Spring Boot 3.2', 'Quarkus 3.6', 'Micronaut 4.2',
+            'PostgreSQL 16.1', 'MySQL 8.2', 'MongoDB 7.0', 'Redis 7.2', 'Elasticsearch 8.11',
+            'Kubernetes 1.28', 'Docker 24.0', 'Nginx 1.25', 'Apache 2.4', 'Traefik 3.0',
+            'GraphQL 16.8', 'gRPC 1.60', 'WebSocket', 'REST API', 'OpenAPI 3.0',
+            'JWT', 'OAuth 2.0', 'SAML 2.0', 'OIDC', 'Passport.js',
+            'Webpack 5.89', 'Vite 5.0', 'esbuild 0.19', 'Rollup 4.9', 'Parcel 2.11',
+            'TypeScript 5.3', 'Tailwind CSS 3.4', 'Bootstrap 5.3', 'Material UI 5.15',
+            'Jest 29.7', 'Vitest 1.1', 'Cypress 13.6', 'Playwright 1.40',
+            'Prometheus', 'Grafana 10.2', 'Jaeger', 'Zipkin', 'OpenTelemetry',
+            'RabbitMQ 3.12', 'Kafka 3.6', 'NATS 2.10', 'Redis Streams',
+            'AWS Lambda', 'Azure Functions', 'Google Cloud Functions', 'Cloudflare Workers',
+        ]
         
         # 真实的 API 响应 body preview
         body_previews = [
@@ -820,19 +999,28 @@ class TestDataGenerator:
             num = random.randint(50, 100)
             selected = random.sample(paths, min(num, len(paths)))
             
-            for path in selected:
-                protocol = random.choice(['https', 'http'])
-                port = random.choice([443, 8443, 3000, 8080])
-                url = f'{protocol}://{target_name}:{port}{path}' if port != 443 else f'{protocol}://{target_name}{path}'
+            for idx, path in enumerate(selected):
+                # 生成固定 245 长度的 URL
+                url = generate_fixed_length_url(target_name, length=245, path_hint=f'endpoint/{idx:04d}')
+                
+                # 生成 100 字符的标题
+                title = random.choice(titles)
+                
+                # 生成 10-20 个技术
+                num_techs = random.randint(10, 20)
+                tech_list = random.sample(all_techs, min(num_techs, len(all_techs)))
+                
+                # 生成 10-20 个 tags (gf_patterns)
+                tags = random.choice(gf_patterns)
                 
                 batch_data.append((
-                    url, target_id, target_name, 'API Documentation - Swagger UI',
+                    url, target_id, target_name, title,
                     random.choice(['nginx/1.24.0', 'gunicorn/21.2.0']),
                     random.choice([200, 201, 301, 400, 401, 403, 404, 500]),
                     random.randint(100, 50000), 'application/json',
-                    random.choice([['Node.js', 'Express'], ['Python', 'FastAPI'], ['Go', 'Gin']]),
+                    tech_list,
                     '', random.choice(body_previews),
-                    random.choice([True, False, None]), random.choice(gf_patterns)
+                    random.choice([True, False, None]), tags
                 ))
                 count += 1
         
@@ -854,10 +1042,6 @@ class TestDataGenerator:
         """创建目录"""
         print("📁 创建目录...")
         cur = self.conn.cursor()
-        
-        if not website_ids:
-            print("  ⚠ 没有网站，跳过\n")
-            return
         
         dir_paths = [
             '/admin/', '/administrator/', '/wp-admin/', '/wp-content/', '/backup/', '/backups/',
@@ -890,18 +1074,23 @@ class TestDataGenerator:
         content_types = ['text/html; charset=utf-8', 'application/json', 'text/plain', 'text/css', 
                          'application/xml', 'application/javascript', 'text/xml']
         
-        # 获取网站信息(用于生成目录 URL)
-        cur.execute("SELECT id, url, target_id FROM website LIMIT 100")
-        websites = cur.fetchall()
+        # 直接获取域名目标来生成目录数据
+        cur.execute("SELECT id, name FROM target WHERE type = 'domain' AND deleted_at IS NULL LIMIT 100")
+        domain_targets = cur.fetchall()
+        
+        if not domain_targets:
+            print("  ⚠ 没有域名目标，跳过\n")
+            return
         
         count = 0
         batch_data = []
-        for website_id, website_url, target_id in websites:
+        for target_id, target_name in domain_targets:
             num = random.randint(60, 100)
             selected = random.sample(dir_paths, min(num, len(dir_paths)))
             
-            for path in selected:
-                url = website_url.rstrip('/') + path
+            for idx, path in enumerate(selected):
+                # 生成固定 245 长度的 URL
+                url = generate_fixed_length_url(target_name, length=245, path_hint=f'directory/{idx:04d}')
                 batch_data.append((
                     url, target_id,
                     random.choice([200, 301, 302, 403, 404, 500]),
@@ -997,44 +1186,61 @@ class TestDataGenerator:
         cur = self.conn.cursor()
         
         vuln_types = [
-            'sql-injection', 'cross-site-scripting-xss', 'cross-site-request-forgery-csrf',
-            'server-side-request-forgery-ssrf', 'xml-external-entity-xxe', 'remote-code-execution-rce',
-            'local-file-inclusion-lfi', 'directory-traversal', 'authentication-bypass',
-            'insecure-direct-object-reference-idor', 'sensitive-data-exposure', 'security-misconfiguration',
-            'broken-access-control', 'cors-misconfiguration', 'subdomain-takeover',
-            'exposed-admin-panel', 'default-credentials', 'information-disclosure',
-            # 扩展漏洞类型
-            'command-injection', 'ldap-injection', 'xpath-injection', 'nosql-injection',
-            'template-injection-ssti', 'deserialization-vulnerability', 'jwt-vulnerability',
-            'open-redirect', 'http-request-smuggling', 'host-header-injection',
-            'clickjacking', 'session-fixation', 'session-hijacking', 'privilege-escalation',
-            'path-traversal', 'arbitrary-file-upload', 'arbitrary-file-download',
-            'buffer-overflow', 'integer-overflow', 'race-condition', 'time-based-attack',
-            'blind-sql-injection', 'stored-xss', 'dom-based-xss', 'reflected-xss',
-            'crlf-injection', 'http-response-splitting', 'cache-poisoning', 'dns-rebinding',
-            'prototype-pollution', 'mass-assignment', 'graphql-introspection-enabled',
-            'api-key-exposure', 'hardcoded-credentials', 'weak-password-policy',
-            'missing-rate-limiting', 'missing-security-headers', 'insecure-cookie-configuration',
-            'tls-ssl-vulnerability', 'weak-cipher-suite', 'certificate-validation-bypass',
+            'sql-injection-authentication-bypass-vulnerability-',  # 50 chars
+            'cross-site-scripting-xss-stored-persistent-attack-',  # 50 chars
+            'cross-site-request-forgery-csrf-token-validation--',  # 50 chars
+            'server-side-request-forgery-ssrf-internal-access--',  # 50 chars
+            'xml-external-entity-xxe-injection-vulnerability---',  # 50 chars
+            'remote-code-execution-rce-command-injection-flaw--',  # 50 chars
+            'local-file-inclusion-lfi-path-traversal-exploit---',  # 50 chars
+            'directory-traversal-arbitrary-file-read-access----',  # 50 chars
+            'authentication-bypass-session-management-flaw-----',  # 50 chars
+            'insecure-direct-object-reference-idor-access-ctrl-',  # 50 chars
+            'sensitive-data-exposure-information-disclosure----',  # 50 chars
+            'security-misconfiguration-default-credentials-----',  # 50 chars
+            'broken-access-control-privilege-escalation-vuln---',  # 50 chars
+            'cors-misconfiguration-cross-origin-data-leakage---',  # 50 chars
+            'subdomain-takeover-dns-misconfiguration-exploit---',  # 50 chars
+            'exposed-admin-panel-unauthorized-access-control---',  # 50 chars
+            'default-credentials-weak-authentication-bypass----',  # 50 chars
+            'information-disclosure-sensitive-data-exposure----',  # 50 chars
+            'command-injection-os-command-execution-exploit----',  # 50 chars
+            'ldap-injection-directory-service-manipulation-----',  # 50 chars
+            'xpath-injection-xml-query-manipulation-attack-----',  # 50 chars
+            'nosql-injection-mongodb-query-manipulation--------',  # 50 chars
+            'template-injection-ssti-server-side-execution-----',  # 50 chars
+            'deserialization-vulnerability-object-injection----',  # 50 chars
+            'jwt-vulnerability-token-forgery-authentication----',  # 50 chars
+            'open-redirect-url-redirection-phishing-attack-----',  # 50 chars
+            'http-request-smuggling-cache-poisoning-attack-----',  # 50 chars
+            'host-header-injection-password-reset-poisoning----',  # 50 chars
+            'clickjacking-ui-redressing-frame-injection--------',  # 50 chars
+            'session-fixation-authentication-session-attack----',  # 50 chars
         ]
         
-        sources = ['nuclei', 'dalfox', 'sqlmap', 'crlfuzz', 'httpx', 'manual-testing',
-                   'burp-suite', 'zap', 'nmap', 'nikto', 'wpscan', 'dirsearch', 'ffuf',
-                   'amass', 'subfinder', 'masscan', 'nessus', 'qualys', 'acunetix']
+        sources = [
+            'nuclei-vulnerability-scanner--',  # 30 chars
+            'dalfox-xss-parameter-analysis-',  # 30 chars
+            'sqlmap-sql-injection-testing--',  # 30 chars
+            'crlfuzz-crlf-injection-finder-',  # 30 chars
+            'httpx-web-probe-fingerprint---',  # 30 chars
+            'manual-penetration-testing----',  # 30 chars
+            'burp-suite-professional-scan--',  # 30 chars
+            'owasp-zap-security-scanner----',  # 30 chars
+            'nmap-network-service-scanner--',  # 30 chars
+            'nikto-web-server-scanner------',  # 30 chars
+            'wpscan-wordpress-vuln-scan----',  # 30 chars
+            'dirsearch-directory-brute-----',  # 30 chars
+            'ffuf-web-fuzzer-content-disc--',  # 30 chars
+            'amass-subdomain-enumeration---',  # 30 chars
+            'subfinder-passive-subdomain---',  # 30 chars
+            'masscan-port-scanner-fast-----',  # 30 chars
+            'nessus-vulnerability-assess---',  # 30 chars
+            'qualys-cloud-security-scan----',  # 30 chars
+            'acunetix-web-vuln-scanner-----',  # 30 chars
+            'semgrep-static-code-analysis--',  # 30 chars
+        ]
         severities = ['unknown', 'info', 'low', 'medium', 'high', 'critical']
-        
-        descriptions = [
-            'A critical SQL injection vulnerability was discovered in the login form authentication module. An attacker can inject malicious SQL queries through the username parameter to bypass authentication or extract sensitive data from the database. The vulnerability exists due to improper input validation and lack of parameterized queries in the authentication module. This vulnerability affects all database operations including user authentication, session management, and data retrieval. Exploitation could lead to complete database compromise, unauthorized access to all user accounts, and potential data exfiltration. Recommended remediation includes implementing parameterized queries, input validation, and web application firewall rules.',
-            'A reflected cross-site scripting (XSS) vulnerability was found in the search functionality of the web application. User input is not properly sanitized before being rendered in the response, allowing attackers to execute arbitrary JavaScript code in the context of the victims browser session, potentially stealing session cookies or performing actions on behalf of the user. This vulnerability can be exploited to hijack user sessions, deface the website, redirect users to malicious sites, or steal sensitive information. The attack vector includes crafted URLs that can be distributed via phishing emails or social engineering. Immediate patching is recommended along with implementation of Content Security Policy headers.',
-            'Server-Side Request Forgery (SSRF) vulnerability detected in the URL preview feature of the application. An attacker can manipulate the server to make requests to internal services, potentially accessing sensitive internal resources such as cloud metadata endpoints (169.254.169.254), internal APIs, administrative interfaces, or other services that are not directly accessible from the internet. This vulnerability can be chained with other vulnerabilities to achieve remote code execution or access sensitive cloud credentials. The application should implement strict URL validation, whitelist allowed domains, and block requests to internal IP ranges.',
-            'Remote Code Execution (RCE) vulnerability found in the file upload functionality of the content management system. Insufficient validation of uploaded files allows attackers to upload malicious scripts and execute arbitrary code on the server. This could lead to complete server compromise, data exfiltration, cryptocurrency mining, ransomware deployment, or lateral movement within the network infrastructure. The vulnerability bypasses file type validation by manipulating Content-Type headers or using double extensions. Recommended fixes include implementing strict file type validation, storing uploads outside the web root, and using antivirus scanning.',
-            'Authentication bypass vulnerability discovered in the password reset mechanism of the user management system. Attackers can reset any users password without proper verification by manipulating the reset token or user identifier in the password reset request. This vulnerability allows unauthorized access to any user account including administrative accounts with elevated privileges. The flaw exists in the token validation logic which does not properly verify token ownership. Organizations should implement secure token generation, add rate limiting, and require additional verification steps for password resets.',
-            'Insecure Direct Object Reference (IDOR) vulnerability found in the user profile API endpoints. By manipulating the user ID parameter in API requests, attackers can access, modify, or delete other users data without proper authorization checks. This affects all user-related endpoints including profile information, payment details, personal documents, and account settings. The vulnerability stems from missing access control checks at the API layer. Remediation requires implementing proper authorization checks, using indirect object references, and adding audit logging for sensitive operations.',
-        ]
-        
-        paths = ['/api/v1/users/login', '/api/v2/search', '/admin/dashboard', '/portal/upload', '/graphql', '/oauth/authorize',
-                 '/api/v1/users/profile', '/api/v2/orders', '/admin/settings', '/portal/documents', '/webhook/callback',
-                 '/api/v3/analytics', '/admin/users/export', '/portal/payments', '/api/internal/debug', '/system/config']
         
         # 获取域名目标
         cur.execute("SELECT id, name FROM target WHERE type = 'domain' AND deleted_at IS NULL LIMIT 80")
@@ -1045,7 +1251,7 @@ class TestDataGenerator:
         for target_id, target_name in domain_targets:
             num = random.randint(30, 80)
             
-            for _ in range(num):
+            for idx in range(num):
                 severity = random.choice(severities)
                 cvss_ranges = {
                     'critical': (9.0, 10.0), 'high': (7.0, 8.9), 'medium': (4.0, 6.9),
@@ -1054,8 +1260,11 @@ class TestDataGenerator:
                 cvss_range = cvss_ranges.get(severity, (0.0, 10.0))
                 cvss_score = round(random.uniform(*cvss_range), 1)
                 
-                path = random.choice(paths)
-                url = f'https://{target_name}{path}?param=test&id={random.randint(1, 1000)}'
+                # 生成固定 245 长度的 URL
+                url = generate_fixed_length_url(target_name, length=245, path_hint=f'vuln/{idx:04d}')
+                
+                # 生成固定 300 长度的描述
+                description = generate_fixed_length_text(length=300, text_type='description')
                 
                 raw_output = json.dumps({
                     'template': f'CVE-2024-{random.randint(10000, 99999)}',
@@ -1067,7 +1276,7 @@ class TestDataGenerator:
                 
                 batch_data.append((
                     target_id, url, random.choice(vuln_types), severity,
-                    random.choice(sources), cvss_score, random.choice(descriptions), raw_output
+                    random.choice(sources), cvss_score, description, raw_output
                 ))
                 count += 1
         
@@ -1098,11 +1307,23 @@ class TestDataGenerator:
             'monitoring', 'metrics', 'grafana', 'prometheus', 'kibana', 'logs',
             'jenkins', 'ci', 'cd', 'gitlab', 'jira', 'confluence', 'kubernetes',
             'www', 'www2', 'ns1', 'ns2', 'mx', 'mx1', 'autodiscover', 'webmail',
+            'api-v1', 'api-v2', 'api-v3', 'internal', 'external', 'public', 'private',
+            'gateway', 'proxy', 'cache', 'redis', 'mongo', 'mysql', 'postgres',
+            'elastic', 'search', 'analytics', 'reporting', 'billing', 'payment',
+            'checkout', 'cart', 'shop', 'store', 'catalog', 'inventory', 'orders',
+            'users', 'customers', 'partners', 'vendors', 'suppliers', 'merchants',
+            'docs', 'help', 'support', 'faq', 'kb', 'wiki', 'blog', 'news',
+            'status', 'health', 'ping', 'heartbeat', 'uptime', 'monitor',
+            'backup', 'archive', 'storage', 'files', 'uploads', 'downloads',
+            'assets', 'images', 'media', 'video', 'audio', 'fonts', 'icons',
+            'api-gateway', 'load-balancer', 'reverse-proxy', 'edge', 'origin',
+            'primary', 'secondary', 'failover', 'replica', 'master', 'slave',
+            'prod', 'stage', 'preprod', 'sandbox', 'demo', 'preview', 'canary',
         ]
         
         count = 0
         batch_data = []
-        for scan_id in scan_ids[:100]:  # 为前100个扫描创建快照
+        for scan_id in scan_ids:  # 为所有扫描创建快照
             # 获取扫描对应的目标域名
             cur.execute("""
                 SELECT t.name FROM scan s 
@@ -1114,7 +1335,7 @@ class TestDataGenerator:
                 continue
             target_name = row[0]
             
-            num = random.randint(40, 80)
+            num = random.randint(60, 100)
             selected = random.sample(prefixes, min(num, len(prefixes)))
             
             for prefix in selected:
@@ -1161,7 +1382,7 @@ class TestDataGenerator:
         
         count = 0
         batch_data = []
-        for scan_id in scan_ids[:100]:
+        for scan_id in scan_ids:  # 为所有扫描创建快照
             cur.execute("""
                 SELECT t.name FROM scan s 
                 JOIN target t ON s.target_id = t.id 
@@ -1172,10 +1393,9 @@ class TestDataGenerator:
                 continue
             target_name = row[0]
             
-            for i in range(random.randint(15, 30)):
-                protocol = random.choice(['https', 'http'])
-                port = random.choice([80, 443, 8080])
-                url = f'{protocol}://{target_name}:{port}/' if port not in [80, 443] else f'{protocol}://{target_name}/'
+            for i in range(random.randint(30, 60)):
+                # 生成固定 245 长度的 URL
+                url = generate_fixed_length_url(target_name, length=245, path_hint=f'website-snap/{i:04d}')
                 
                 batch_data.append((
                     scan_id, url, target_name, random.choice(titles),
@@ -1222,9 +1442,33 @@ class TestDataGenerator:
             '/swagger/v1/api-docs/openapi.json',
         ]
         
+        # 100字符长度的标题
+        titles = [
+            'Enterprise API Gateway - RESTful Service Documentation with OpenAPI 3.0 Specification and Interactive',
+            'User Authentication Service - OAuth 2.0 and SAML 2.0 Single Sign-On Integration Platform Dashboard',
+            'Payment Processing Gateway - PCI-DSS Compliant Transaction Management System Administration Panel',
+            'Content Delivery Network - Global Edge Cache Management and Real-time Analytics Dashboard Interface',
+            'Database Administration Console - PostgreSQL Cluster Management with Automated Backup and Recovery',
+        ]
+        
+        # 扩展的技术栈列表
+        all_techs = [
+            'React 18.2.0', 'Vue.js 3.4', 'Angular 17.1', 'Next.js 14.0', 'Node.js 20.10',
+            'Express 4.18', 'Python 3.12', 'Django 5.0', 'FastAPI 0.109', 'Go 1.21',
+            'PostgreSQL 16.1', 'MySQL 8.2', 'MongoDB 7.0', 'Redis 7.2', 'Elasticsearch 8.11',
+            'Kubernetes 1.28', 'Docker 24.0', 'Nginx 1.25', 'GraphQL 16.8', 'JWT',
+        ]
+        
+        # 扩展的 tags
+        all_tags = [
+            'debug', 'config', 'api', 'json', 'upload', 'file', 'admin', 'auth',
+            'secrets', 'credentials', 'backup', 'archive', 'trace', 'log', 'error',
+            'security', 'vulnerability', 'payment', 'user', 'internal', 'private',
+        ]
+        
         count = 0
         batch_data = []
-        for scan_id in scan_ids[:100]:
+        for scan_id in scan_ids:  # 为所有扫描创建快照
             cur.execute("""
                 SELECT t.name FROM scan s 
                 JOIN target t ON s.target_id = t.id 
@@ -1235,17 +1479,30 @@ class TestDataGenerator:
                 continue
             target_name = row[0]
             
-            for path in random.sample(paths, min(random.randint(20, 40), len(paths))):
-                url = f'https://{target_name}{path}'
+            for idx, path in enumerate(random.sample(paths, min(random.randint(40, 80), len(paths)))):
+                # 生成固定 245 长度的 URL
+                url = generate_fixed_length_url(target_name, length=245, path_hint=f'endpoint-snap/{idx:04d}')
+                
+                # 生成 100 字符的标题
+                title = random.choice(titles)
+                
+                # 生成 10-20 个技术
+                num_techs = random.randint(10, 20)
+                tech_list = random.sample(all_techs, min(num_techs, len(all_techs)))
+                
+                # 生成 10-20 个 tags
+                num_tags = random.randint(10, 20)
+                tags = random.sample(all_tags, min(num_tags, len(all_tags)))
+                
                 batch_data.append((
-                    scan_id, url, target_name, 'API Endpoint',
+                    scan_id, url, target_name, title,
                     random.choice([200, 201, 401, 403, 404]),
                     random.randint(100, 5000),
                     '',  # location
                     'nginx/1.24.0',
-                    'application/json', ['REST', 'JSON'],
+                    'application/json', tech_list,
                     '{"status":"ok","data":{}}',
-                    []  # matched_gf_patterns
+                    tags
                 ))
                 count += 1
         
@@ -1289,7 +1546,7 @@ class TestDataGenerator:
         
         count = 0
         batch_data = []
-        for scan_id in scan_ids[:100]:
+        for scan_id in scan_ids:  # 为所有扫描创建快照
             cur.execute("""
                 SELECT t.name FROM scan s 
                 JOIN target t ON s.target_id = t.id 
@@ -1300,8 +1557,9 @@ class TestDataGenerator:
                 continue
             target_name = row[0]
             
-            for d in random.sample(dirs, min(random.randint(30, 50), len(dirs))):
-                url = f'https://{target_name}{d}'
+            for idx, d in enumerate(random.sample(dirs, min(random.randint(50, 80), len(dirs)))):
+                # 生成固定 245 长度的 URL
+                url = generate_fixed_length_url(target_name, length=245, path_hint=f'dir-snap/{idx:04d}')
                 batch_data.append((
                     scan_id, url, random.choice([200, 301, 403]),
                     random.randint(500, 10000), random.randint(50, 500),
@@ -1338,7 +1596,7 @@ class TestDataGenerator:
         
         count = 0
         batch_data = []
-        for scan_id in scan_ids[:100]:
+        for scan_id in scan_ids:  # 为所有扫描创建快照
             cur.execute("""
                 SELECT t.name FROM scan s 
                 JOIN target t ON s.target_id = t.id 
@@ -1350,10 +1608,10 @@ class TestDataGenerator:
             target_name = row[0]
             
             # 生成多个随机 IP
-            for _ in range(random.randint(8, 15)):
+            for _ in range(random.randint(10, 20)):
                 ip = f'192.168.{random.randint(1, 254)}.{random.randint(1, 254)}'
                 
-                for port in random.sample(common_ports, min(random.randint(15, 30), len(common_ports))):
+                for port in random.sample(common_ports, min(random.randint(20, 35), len(common_ports))):
                     batch_data.append((scan_id, target_name, ip, port))
                     count += 1
         
@@ -1377,16 +1635,34 @@ class TestDataGenerator:
             print("  ⚠ 缺少扫描任务，跳过\n")
             return
         
-        vuln_types = ['xss', 'sqli', 'ssrf', 'lfi', 'rce', 'xxe', 'csrf',
-                      'idor', 'auth-bypass', 'info-disclosure', 'cors-misconfig',
-                      'open-redirect', 'command-injection', 'deserialization',
-                      'jwt-vulnerability', 'path-traversal', 'file-upload']
+        vuln_types = [
+            'sql-injection-authentication-bypass-vulnerability-',
+            'cross-site-scripting-xss-stored-persistent-attack-',
+            'server-side-request-forgery-ssrf-internal-access--',
+            'remote-code-execution-rce-command-injection-flaw--',
+            'insecure-direct-object-reference-idor-access-ctrl-',
+            'authentication-bypass-session-management-flaw-----',
+            'cors-misconfiguration-cross-origin-data-leakage---',
+            'command-injection-os-command-execution-exploit----',
+            'deserialization-vulnerability-object-injection----',
+            'jwt-vulnerability-token-forgery-authentication----',
+            'open-redirect-url-redirection-phishing-attack-----',
+            'path-traversal-arbitrary-file-read-access-vuln----',
+        ]
         severities = ['critical', 'high', 'medium', 'low', 'info']
-        sources = ['nuclei', 'dalfox', 'sqlmap', 'burp-suite', 'zap', 'nmap', 'nikto']
+        sources = [
+            'nuclei-vulnerability-scanner--',
+            'dalfox-xss-parameter-analysis-',
+            'sqlmap-sql-injection-testing--',
+            'burp-suite-professional-scan--',
+            'owasp-zap-security-scanner----',
+            'nmap-network-service-scanner--',
+            'nikto-web-server-scanner------',
+        ]
         
         count = 0
         batch_data = []
-        for scan_id in scan_ids[:100]:
+        for scan_id in scan_ids:  # 为所有扫描创建快照
             cur.execute("""
                 SELECT t.name FROM scan s 
                 JOIN target t ON s.target_id = t.id 
@@ -1397,7 +1673,7 @@ class TestDataGenerator:
                 continue
             target_name = row[0]
             
-            for _ in range(random.randint(15, 40)):
+            for idx in range(random.randint(30, 60)):
                 severity = random.choice(severities)
                 cvss_ranges = {
                     'critical': (9.0, 10.0), 'high': (7.0, 8.9), 'medium': (4.0, 6.9),
@@ -1406,12 +1682,16 @@ class TestDataGenerator:
                 cvss_range = cvss_ranges.get(severity, (0.0, 10.0))
                 cvss_score = round(random.uniform(*cvss_range), 1)
                 
-                url = f'https://{target_name}/api/v1/users?id={random.randint(1, 100)}'
+                # 生成固定 245 长度的 URL
+                url = generate_fixed_length_url(target_name, length=245, path_hint=f'vuln-snap/{idx:04d}')
+                
+                # 生成固定 300 长度的描述
+                description = generate_fixed_length_text(length=300, text_type='description')
                 
                 batch_data.append((
                     scan_id, url, random.choice(vuln_types), severity,
                     random.choice(sources), cvss_score,
-                    f'Detected {severity} severity vulnerability',
+                    description,
                     json.dumps({'template': f'CVE-2024-{random.randint(10000, 99999)}'})
                 ))
                 count += 1
@@ -1426,6 +1706,289 @@ class TestDataGenerator:
             """, batch_data, template="(%s, %s, %s, %s, %s, %s, %s, %s, NOW())")
                 
         print(f"  ✓ 创建了 {count} 个漏洞快照\n")
+
+    def create_ehole_fingerprints(self):
+        """创建 EHole 指纹数据"""
+        print("🔍 创建 EHole 指纹...")
+        cur = self.conn.cursor()
+        
+        # CMS/产品名称模板（长名称）
+        cms_templates = [
+            'WordPress-Enterprise-Content-Management-System-Professional-Edition',
+            'Drupal-Open-Source-CMS-Platform-Community-Extended-Version',
+            'Joomla-Web-Content-Management-Framework-Business-Suite',
+            'Magento-E-Commerce-Platform-Enterprise-Cloud-Edition',
+            'Shopify-Online-Store-Builder-Professional-Business-Plan',
+            'PrestaShop-E-Commerce-Solution-Multi-Store-Edition',
+            'OpenCart-Shopping-Cart-System-Enterprise-Features',
+            'WooCommerce-WordPress-E-Commerce-Plugin-Extended',
+            'Laravel-PHP-Framework-Application-Boilerplate',
+            'Django-Python-Web-Framework-Admin-Dashboard',
+            'Spring-Boot-Java-Microservices-Framework-Starter',
+            'Express-Node-JS-Web-Application-Framework-API',
+            'Ruby-on-Rails-MVC-Framework-Application-Template',
+            'ASP-NET-Core-Microsoft-Web-Framework-Enterprise',
+            'Flask-Python-Micro-Framework-REST-API-Template',
+            'FastAPI-Python-Modern-Web-Framework-OpenAPI',
+            'Next-JS-React-Framework-Server-Side-Rendering',
+            'Nuxt-JS-Vue-Framework-Universal-Application',
+            'Angular-Universal-Server-Side-Rendering-Platform',
+            'Svelte-Kit-Web-Application-Framework-Compiler',
+            'Apache-Tomcat-Java-Servlet-Container-Server',
+            'Nginx-Web-Server-Reverse-Proxy-Load-Balancer',
+            'Microsoft-IIS-Internet-Information-Services-Server',
+            'Apache-HTTP-Server-Web-Server-Platform',
+            'Caddy-Web-Server-Automatic-HTTPS-Configuration',
+            'LiteSpeed-Web-Server-High-Performance-HTTP',
+            'Oracle-WebLogic-Server-Java-EE-Application',
+            'IBM-WebSphere-Application-Server-Enterprise',
+            'JBoss-EAP-Enterprise-Application-Platform-RedHat',
+            'GlassFish-Server-Open-Source-Java-EE-Reference',
+        ]
+        
+        methods = ['keyword', 'faviconhash', 'regula']
+        locations = ['body', 'header', 'title', 'server', 'cookie', 'cert']
+        types = ['CMS', 'Framework', 'Server', 'Database', 'Cache', 'CDN', 'WAF', 'Load-Balancer', 'Container', 'Cloud']
+        
+        # 关键词模板（多个长关键词）
+        keyword_templates = [
+            ['wp-content/themes/', 'wp-includes/js/', 'wp-admin/css/', 'wordpress-hash-', 'wp-json/wp/v2/'],
+            ['sites/all/modules/', 'misc/drupal.js', 'drupal-settings-json', 'X-Drupal-Cache', 'X-Generator: Drupal'],
+            ['media/jui/js/', 'administrator/index.php', 'Joomla!', 'com_content', 'mod_custom'],
+            ['skin/frontend/', 'Mage.Cookies', 'MAGENTO_CACHE', 'varien/js.js', 'mage/cookies.js'],
+            ['cdn.shopify.com', 'Shopify.theme', 'shopify-section', 'shopify-payment-button', 'myshopify.com'],
+            ['prestashop', 'PrestaShop', 'ps_versions_compliancy', 'prestashop-page', 'id_product'],
+            ['catalog/view/theme/', 'index.php?route=', 'OpenCart', 'text_home', 'common/home'],
+            ['woocommerce', 'WooCommerce', 'wc-ajax', 'woocommerce-page', 'add_to_cart_button'],
+            ['laravel_session', 'XSRF-TOKEN', 'Laravel', 'laravel-livewire', 'laravel_token'],
+            ['csrfmiddlewaretoken', 'django.contrib', 'Django', '__admin_media_prefix__', 'django-debug-toolbar'],
+            ['X-Application-Context', 'spring-boot', 'Spring', 'actuator/health', 'spring-security'],
+            ['X-Powered-By: Express', 'express-session', 'connect.sid', 'express.static', 'express-validator'],
+            ['X-Powered-By: Phusion', 'Rails', 'csrf-token', 'action_controller', 'rails-ujs'],
+            ['X-AspNet-Version', 'ASP.NET', '__VIEWSTATE', '__EVENTVALIDATION', 'aspnetcore-'],
+            ['Werkzeug', 'Flask', 'flask-login', 'flask-wtf', 'flask-session'],
+        ]
+        
+        count = 0
+        batch_data = []
+        
+        for i in range(200):  # 生成 200 条 EHole 指纹
+            cms = f'{random.choice(cms_templates)}-{random.randint(1000, 9999)}'
+            method = random.choice(methods)
+            location = random.choice(locations)
+            keywords = random.choice(keyword_templates) + [f'custom-keyword-{random.randint(10000, 99999)}' for _ in range(random.randint(3, 8))]
+            is_important = random.choice([True, False])
+            fp_type = random.choice(types)
+            
+            batch_data.append((
+                cms, method, location, json.dumps(keywords), is_important, fp_type
+            ))
+            count += 1
+        
+        if batch_data:
+            execute_values(cur, """
+                INSERT INTO ehole_fingerprint (cms, method, location, keyword, is_important, type, created_at)
+                VALUES %s
+                ON CONFLICT DO NOTHING
+            """, batch_data, template="(%s, %s, %s, %s, %s, %s, NOW())")
+        
+        print(f"  ✓ 创建了 {count} 个 EHole 指纹\n")
+
+    def create_goby_fingerprints(self):
+        """创建 Goby 指纹数据"""
+        print("🔍 创建 Goby 指纹...")
+        cur = self.conn.cursor()
+        
+        # 产品名称模板（长名称）
+        name_templates = [
+            'Apache-Tomcat-Java-Servlet-Container-Application-Server-Enterprise',
+            'Nginx-High-Performance-Web-Server-Reverse-Proxy-Load-Balancer',
+            'Microsoft-Exchange-Server-Email-Collaboration-Platform-Enterprise',
+            'VMware-vCenter-Server-Virtual-Infrastructure-Management-Platform',
+            'Cisco-Adaptive-Security-Appliance-Firewall-VPN-Concentrator',
+            'Fortinet-FortiGate-Next-Generation-Firewall-Security-Platform',
+            'Palo-Alto-Networks-Firewall-Threat-Prevention-Platform',
+            'F5-BIG-IP-Application-Delivery-Controller-Load-Balancer',
+            'Citrix-NetScaler-Application-Delivery-Controller-Gateway',
+            'Juniper-Networks-SRX-Series-Services-Gateway-Firewall',
+            'Oracle-WebLogic-Server-Java-Enterprise-Application-Platform',
+            'IBM-WebSphere-Application-Server-Java-EE-Enterprise-Edition',
+            'SAP-NetWeaver-Application-Server-Business-Suite-Platform',
+            'Adobe-Experience-Manager-Content-Management-System-Enterprise',
+            'Atlassian-Confluence-Team-Collaboration-Wiki-Platform-Server',
+            'Atlassian-Jira-Project-Issue-Tracking-Software-Server-Edition',
+            'GitLab-DevOps-Platform-Source-Code-Management-CI-CD-Pipeline',
+            'Jenkins-Automation-Server-Continuous-Integration-Deployment',
+            'SonarQube-Code-Quality-Security-Analysis-Platform-Enterprise',
+            'Elasticsearch-Distributed-Search-Analytics-Engine-Cluster',
+            'Kibana-Data-Visualization-Dashboard-Elasticsearch-Frontend',
+            'Grafana-Observability-Platform-Metrics-Logs-Traces-Dashboard',
+            'Prometheus-Monitoring-System-Time-Series-Database-Alerting',
+            'Zabbix-Enterprise-Monitoring-Solution-Network-Server-Cloud',
+            'Nagios-Infrastructure-Monitoring-Alerting-System-Enterprise',
+            'Redis-In-Memory-Data-Structure-Store-Cache-Message-Broker',
+            'MongoDB-Document-Database-NoSQL-Distributed-Cluster-Platform',
+            'PostgreSQL-Advanced-Open-Source-Relational-Database-System',
+            'MySQL-Enterprise-Relational-Database-Management-System-Server',
+            'Microsoft-SQL-Server-Relational-Database-Management-Platform',
+        ]
+        
+        # 逻辑表达式模板
+        logic_templates = [
+            '(a&&b)||c', 'a||(b&&c)', '(a||b)&&(c||d)', 'a&&b&&c', 'a||b||c',
+            '((a&&b)||c)&&d', '(a||(b&&c))&&(d||e)', 'a&&(b||c)&&d',
+            '(a&&b&&c)||(d&&e)', '((a||b)&&c)||(d&&e&&f)',
+        ]
+        
+        # 规则模板
+        rule_labels = ['body', 'header', 'title', 'server', 'cert', 'banner', 'protocol', 'port']
+        
+        count = 0
+        batch_data = []
+        
+        for i in range(200):  # 生成 200 条 Goby 指纹
+            name = f'{random.choice(name_templates)}-{random.randint(1000, 9999)}'
+            logic = random.choice(logic_templates)
+            
+            # 生成 5-15 条规则
+            num_rules = random.randint(5, 15)
+            rules = []
+            for j in range(num_rules):
+                rule = {
+                    'label': random.choice(rule_labels),
+                    'feature': f'feature-pattern-{random.randint(10000, 99999)}-{random.choice(["regex", "keyword", "hash"])}',
+                    'is_equal': random.choice([True, False])
+                }
+                rules.append(rule)
+            
+            batch_data.append((name, logic, json.dumps(rules)))
+            count += 1
+        
+        if batch_data:
+            execute_values(cur, """
+                INSERT INTO goby_fingerprint (name, logic, rule, created_at)
+                VALUES %s
+                ON CONFLICT DO NOTHING
+            """, batch_data, template="(%s, %s, %s, NOW())")
+        
+        print(f"  ✓ 创建了 {count} 个 Goby 指纹\n")
+
+    def create_wappalyzer_fingerprints(self):
+        """创建 Wappalyzer 指纹数据"""
+        print("🔍 创建 Wappalyzer 指纹...")
+        cur = self.conn.cursor()
+        
+        # 应用名称模板（长名称）
+        name_templates = [
+            'WordPress-Content-Management-System-Open-Source-Blogging-Platform',
+            'React-JavaScript-Library-User-Interface-Components-Facebook',
+            'Vue-JS-Progressive-JavaScript-Framework-Reactive-Components',
+            'Angular-Platform-Web-Application-Framework-Google-TypeScript',
+            'jQuery-JavaScript-Library-DOM-Manipulation-Event-Handling',
+            'Bootstrap-CSS-Framework-Responsive-Design-Mobile-First',
+            'Tailwind-CSS-Utility-First-Framework-Rapid-UI-Development',
+            'Node-JS-JavaScript-Runtime-Server-Side-V8-Engine-Platform',
+            'Express-JS-Web-Application-Framework-Node-JS-Middleware',
+            'Django-Python-Web-Framework-Batteries-Included-MTV-Pattern',
+            'Flask-Python-Micro-Framework-Lightweight-WSGI-Application',
+            'Ruby-on-Rails-MVC-Framework-Convention-Over-Configuration',
+            'Laravel-PHP-Framework-Elegant-Syntax-Expressive-Beautiful',
+            'Spring-Framework-Java-Enterprise-Application-Development',
+            'ASP-NET-Core-Cross-Platform-Web-Framework-Microsoft-Open',
+            'Nginx-Web-Server-Reverse-Proxy-Load-Balancer-HTTP-Cache',
+            'Apache-HTTP-Server-Web-Server-Cross-Platform-Open-Source',
+            'Cloudflare-CDN-DDoS-Protection-Web-Application-Firewall',
+            'Amazon-Web-Services-Cloud-Computing-Platform-Infrastructure',
+            'Google-Cloud-Platform-Cloud-Computing-Services-Infrastructure',
+            'Microsoft-Azure-Cloud-Computing-Service-Platform-Enterprise',
+            'Docker-Container-Platform-Application-Deployment-Orchestration',
+            'Kubernetes-Container-Orchestration-Platform-Cloud-Native',
+            'Elasticsearch-Search-Analytics-Engine-Distributed-RESTful',
+            'Redis-In-Memory-Data-Store-Cache-Message-Broker-Database',
+            'MongoDB-Document-Database-NoSQL-Scalable-High-Performance',
+            'PostgreSQL-Object-Relational-Database-System-Open-Source',
+            'MySQL-Relational-Database-Management-System-Oracle-Open',
+            'GraphQL-Query-Language-API-Runtime-Data-Fetching-Facebook',
+            'Webpack-Module-Bundler-JavaScript-Asset-Pipeline-Build-Tool',
+        ]
+        
+        # 分类 ID
+        cats_options = [
+            [1, 2, 3], [4, 5], [6, 7, 8, 9], [10, 11, 12], [13, 14, 15, 16],
+            [17, 18], [19, 20, 21], [22, 23, 24, 25], [26, 27], [28, 29, 30],
+        ]
+        
+        # 描述模板
+        descriptions = [
+            'A powerful and flexible content management system designed for enterprise-level web applications with extensive plugin ecosystem and community support.',
+            'Modern JavaScript framework for building interactive user interfaces with component-based architecture and virtual DOM for optimal performance.',
+            'High-performance web server and reverse proxy with advanced load balancing, caching, and security features for production deployments.',
+            'Comprehensive cloud computing platform providing infrastructure as a service, platform as a service, and software as a service solutions.',
+            'Enterprise-grade database management system with ACID compliance, advanced security features, and horizontal scaling capabilities.',
+            'Container orchestration platform for automating deployment, scaling, and management of containerized applications across clusters.',
+            'Full-stack web application framework with built-in ORM, authentication, and admin interface for rapid development.',
+            'Lightweight and modular CSS framework with utility classes for building responsive and customizable user interfaces.',
+            'Real-time search and analytics engine with distributed architecture for handling large-scale data processing workloads.',
+            'In-memory data structure store supporting various data types with persistence options and pub/sub messaging capabilities.',
+        ]
+        
+        count = 0
+        batch_data = []
+        
+        for i in range(200):  # 生成 200 条 Wappalyzer 指纹
+            name = f'{random.choice(name_templates)}-{random.randint(1000, 9999)}'
+            cats = random.choice(cats_options)
+            
+            # 生成 cookies 规则
+            cookies = {}
+            for j in range(random.randint(2, 5)):
+                cookies[f'cookie_name_{j}'] = f'regex_pattern_{random.randint(1000, 9999)}'
+            
+            # 生成 headers 规则
+            headers = {}
+            header_names = ['X-Powered-By', 'Server', 'X-Generator', 'X-Framework', 'X-Application']
+            for h in random.sample(header_names, random.randint(2, 4)):
+                headers[h] = f'pattern_{random.randint(1000, 9999)}'
+            
+            # 生成 script_src 规则
+            script_src = [f'/js/lib/framework-{random.randint(100, 999)}.min.js' for _ in range(random.randint(3, 8))]
+            
+            # 生成 js 变量规则
+            js_vars = [f'window.Framework{random.randint(100, 999)}' for _ in range(random.randint(2, 6))]
+            
+            # 生成 implies 依赖
+            implies = [f'Dependency-{random.randint(100, 999)}' for _ in range(random.randint(1, 4))]
+            
+            # 生成 meta 规则
+            meta = {}
+            meta_names = ['generator', 'framework', 'application-name', 'author', 'description']
+            for m in random.sample(meta_names, random.randint(2, 4)):
+                meta[m] = f'meta_pattern_{random.randint(1000, 9999)}'
+            
+            # 生成 html 规则
+            html = [f'<div class="framework-{random.randint(100, 999)}">' for _ in range(random.randint(3, 7))]
+            
+            description = random.choice(descriptions)
+            website = f'https://www.example-framework-{random.randint(1000, 9999)}.com'
+            cpe = f'cpe:/a:vendor:product:{random.randint(1, 10)}.{random.randint(0, 9)}.{random.randint(0, 9)}'
+            
+            batch_data.append((
+                name, json.dumps(cats), json.dumps(cookies), json.dumps(headers),
+                json.dumps(script_src), json.dumps(js_vars), json.dumps(implies),
+                json.dumps(meta), json.dumps(html), description, website, cpe
+            ))
+            count += 1
+        
+        if batch_data:
+            execute_values(cur, """
+                INSERT INTO wappalyzer_fingerprint (
+                    name, cats, cookies, headers, script_src, js, implies,
+                    meta, html, description, website, cpe, created_at
+                ) VALUES %s
+                ON CONFLICT DO NOTHING
+            """, batch_data, template="(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())")
+        
+        print(f"  ✓ 创建了 {count} 个 Wappalyzer 指纹\n")
 
 
 class MillionDataGenerator:
@@ -1597,9 +2160,8 @@ class MillionDataGenerator:
             for i in range(per_target):
                 if count >= target_count:
                     break
-                protocol = random.choice(['https', 'http'])
-                port = random.choice([80, 443, 8080, 8443, 3000])
-                url = f'{protocol}://{target_name}:{port}/path-{i:04d}/'
+                # 生成固定 245 长度的 URL
+                url = generate_fixed_length_url(target_name, length=245, path_hint=f'million-website/{i:06d}')
                 
                 batch_data.append((
                     url, target_id, target_name, f'Website Title {count}',
@@ -1638,6 +2200,30 @@ class MillionDataGenerator:
         
         paths = ['/api/v1/', '/api/v2/', '/admin/', '/portal/', '/graphql/', '/health/', '/metrics/']
         
+        # 100字符长度的标题
+        titles = [
+            'Enterprise API Gateway - RESTful Service Documentation with OpenAPI 3.0 Specification and Interactive',
+            'User Authentication Service - OAuth 2.0 and SAML 2.0 Single Sign-On Integration Platform Dashboard',
+            'Payment Processing Gateway - PCI-DSS Compliant Transaction Management System Administration Panel',
+            'Content Delivery Network - Global Edge Cache Management and Real-time Analytics Dashboard Interface',
+            'Database Administration Console - PostgreSQL Cluster Management with Automated Backup and Recovery',
+        ]
+        
+        # 扩展的技术栈列表
+        all_techs = [
+            'React 18.2.0', 'Vue.js 3.4', 'Angular 17.1', 'Next.js 14.0', 'Node.js 20.10',
+            'Express 4.18', 'Python 3.12', 'Django 5.0', 'FastAPI 0.109', 'Go 1.21',
+            'PostgreSQL 16.1', 'MySQL 8.2', 'MongoDB 7.0', 'Redis 7.2', 'Elasticsearch 8.11',
+            'Kubernetes 1.28', 'Docker 24.0', 'Nginx 1.25', 'GraphQL 16.8', 'JWT',
+        ]
+        
+        # 扩展的 tags
+        all_tags = [
+            'debug', 'config', 'api', 'json', 'upload', 'file', 'admin', 'auth',
+            'secrets', 'credentials', 'backup', 'archive', 'trace', 'log', 'error',
+            'security', 'vulnerability', 'payment', 'user', 'internal', 'private',
+        ]
+        
         cur.execute("SELECT id, name FROM target WHERE type = 'domain' AND deleted_at IS NULL")
         domain_targets = cur.fetchall()
         
@@ -1651,14 +2237,25 @@ class MillionDataGenerator:
             for i in range(per_target):
                 if count >= target_count:
                     break
-                path = random.choice(paths)
-                url = f'https://{target_name}{path}endpoint-{i:04d}'
+                # 生成固定 245 长度的 URL
+                url = generate_fixed_length_url(target_name, length=245, path_hint=f'million-endpoint/{i:06d}')
+                
+                # 生成 100 字符的标题
+                title = random.choice(titles)
+                
+                # 生成 10-20 个技术
+                num_techs = random.randint(10, 20)
+                tech_list = random.sample(all_techs, min(num_techs, len(all_techs)))
+                
+                # 生成 10-20 个 tags
+                num_tags = random.randint(10, 20)
+                tags = random.sample(all_tags, min(num_tags, len(all_tags)))
                 
                 batch_data.append((
-                    url, target_id, target_name, 'API Endpoint',
+                    url, target_id, target_name, title,
                     'nginx/1.24.0', random.choice([200, 201, 401, 403]),
                     random.randint(100, 5000), 'application/json',
-                    ['Node.js', 'Express'], '', '{"status":"ok"}', None, []
+                    tech_list, '', '{"status":"ok"}', None, tags
                 ))
                 count += 1
                 
@@ -1737,8 +2334,23 @@ class MillionDataGenerator:
         print("🐛 创建漏洞 (200,000 个)...")
         cur = self.conn.cursor()
         
-        vuln_types = ['sql-injection', 'xss', 'ssrf', 'rce', 'lfi', 'xxe', 'csrf', 'idor']
-        sources = ['nuclei', 'dalfox', 'sqlmap', 'burp-suite', 'zap']
+        vuln_types = [
+            'sql-injection-authentication-bypass-vulnerability-',
+            'cross-site-scripting-xss-stored-persistent-attack-',
+            'server-side-request-forgery-ssrf-internal-access--',
+            'remote-code-execution-rce-command-injection-flaw--',
+            'local-file-inclusion-lfi-path-traversal-exploit---',
+            'xml-external-entity-xxe-injection-vulnerability---',
+            'cross-site-request-forgery-csrf-token-validation--',
+            'insecure-direct-object-reference-idor-access-ctrl-',
+        ]
+        sources = [
+            'nuclei-vulnerability-scanner--',
+            'dalfox-xss-parameter-analysis-',
+            'sqlmap-sql-injection-testing--',
+            'burp-suite-professional-scan--',
+            'owasp-zap-security-scanner----',
+        ]
         
         # 按严重程度分配数量
         severity_counts = {
@@ -1773,12 +2385,16 @@ class MillionDataGenerator:
                         break
                     
                     cvss_score = round(random.uniform(*cvss_range), 1)
-                    url = f'https://{target_name}/api/v1/vuln-{severity_count:06d}'
+                    # 生成固定 245 长度的 URL
+                    url = generate_fixed_length_url(target_name, length=245, path_hint=f'million-vuln/{severity_count:06d}')
+                    
+                    # 生成固定 300 长度的描述
+                    description = generate_fixed_length_text(length=300, text_type='description')
                     
                     batch_data.append((
                         target_id, url, random.choice(vuln_types), severity,
                         random.choice(sources), cvss_score,
-                        f'{severity.upper()} vulnerability detected',
+                        description,
                         json.dumps({'template': f'CVE-2024-{random.randint(10000, 99999)}'})
                     ))
                     severity_count += 1

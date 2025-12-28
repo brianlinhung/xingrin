@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react"
 import { ColumnDef } from "@tanstack/react-table"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
@@ -8,6 +9,38 @@ import type { EholeFingerprint } from "@/types/fingerprint.types"
 
 interface ColumnOptions {
   formatDate: (date: string) => string
+}
+
+/**
+ * 关键词列表单元格 - 默认显示3个，超出可展开
+ */
+function KeywordListCell({ keywords }: { keywords: string[] }) {
+  const [expanded, setExpanded] = React.useState(false)
+  
+  if (!keywords || keywords.length === 0) return <span className="text-muted-foreground">-</span>
+  
+  const displayKeywords = expanded ? keywords : keywords.slice(0, 3)
+  const hasMore = keywords.length > 3
+  
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="font-mono text-xs space-y-0.5">
+        {displayKeywords.map((kw, idx) => (
+          <div key={idx} className={expanded ? "break-all" : "truncate"}>
+            {kw}
+          </div>
+        ))}
+      </div>
+      {hasMore && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="text-xs text-primary hover:underline self-start"
+        >
+          {expanded ? "收起" : "展开"}
+        </button>
+      )}
+    </div>
+  )
 }
 
 /**
@@ -70,8 +103,8 @@ export function createEholeFingerprintColumns({
           </Badge>
         )
       },
-      enableResizing: true,
-      size: 100,
+      enableResizing: false,
+      size: 120,
     },
     // 匹配位置
     {
@@ -88,7 +121,7 @@ export function createEholeFingerprintColumns({
           </Badge>
         )
       },
-      enableResizing: true,
+      enableResizing: false,
       size: 100,
     },
     // 关键词
@@ -98,17 +131,7 @@ export function createEholeFingerprintColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Keyword" />
       ),
-      cell: ({ row }) => {
-        const keywords = row.getValue("keyword") as string[]
-        if (!keywords || keywords.length === 0) return "-"
-        return (
-          <div className="font-mono text-xs text-muted-foreground space-y-0.5">
-            {keywords.map((kw, idx) => (
-              <div key={idx}>{kw}</div>
-            ))}
-          </div>
-        )
-      },
+      cell: ({ row }) => <KeywordListCell keywords={row.getValue("keyword") || []} />,
       enableResizing: true,
       size: 300,
     },
@@ -124,7 +147,7 @@ export function createEholeFingerprintColumns({
         if (!type || type === "-") return "-"
         return <Badge variant="outline">{type}</Badge>
       },
-      enableResizing: true,
+      enableResizing: false,
       size: 100,
     },
     // 重点资产
@@ -135,13 +158,11 @@ export function createEholeFingerprintColumns({
         <DataTableColumnHeader column={column} title="Important" />
       ),
       cell: ({ row }) => {
-        const isImportant = row.getValue("isImportant") as boolean
-        return isImportant ? (
-          <Badge variant="destructive">重点</Badge>
-        ) : null
+        const isImportant = row.getValue("isImportant")
+        return <span>{String(isImportant)}</span>
       },
-      enableResizing: true,
-      size: 80,
+      enableResizing: false,
+      size: 100,
     },
     // 创建时间
     {
@@ -158,7 +179,7 @@ export function createEholeFingerprintColumns({
           </div>
         )
       },
-      enableResizing: true,
+      enableResizing: false,
       size: 160,
     },
   ]

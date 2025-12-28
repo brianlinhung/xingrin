@@ -2,8 +2,6 @@
 
 import * as React from "react"
 import type { ColumnDef } from "@tanstack/react-table"
-import { IconPlus } from "@tabler/icons-react"
-import { Button } from "@/components/ui/button"
 import { UnifiedDataTable } from "@/components/ui/data-table"
 import type { FilterField } from "@/components/common/smart-filter-input"
 import type { DownloadOption, PaginationState } from "@/types/data-table.types"
@@ -109,14 +107,6 @@ export function EndpointsDataTable<TData extends { id: number | string }, TValue
     })
   }
 
-  // 自定义工具栏右侧按钮
-  const toolbarRightContent = onBulkAdd ? (
-    <Button onClick={onBulkAdd} size="sm" variant="outline">
-      <IconPlus className="h-4 w-4" />
-      批量添加
-    </Button>
-  ) : undefined
-
   return (
     <UnifiedDataTable
       data={data}
@@ -140,12 +130,13 @@ export function EndpointsDataTable<TData extends { id: number | string }, TValue
       showBulkDelete={false}
       onAddNew={onAddNew}
       addButtonLabel={addButtonText}
+      // 批量添加按钮
+      onBulkAdd={onBulkAdd}
+      bulkAddLabel="批量添加"
       // 下载
       downloadOptions={downloadOptions.length > 0 ? downloadOptions : undefined}
       // 空状态
       emptyMessage="No results"
-      // 自定义工具栏按钮
-      toolbarRight={toolbarRightContent}
     />
   )
 }

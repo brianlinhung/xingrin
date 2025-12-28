@@ -15,6 +15,7 @@ import {
 // 导入图标组件
 import { MoreHorizontal, Play, Calendar, Edit, Trash2, Eye } from "lucide-react"
 import { DataTableColumnHeader } from "@/components/ui/data-table/column-header"
+import { ExpandableCell } from "@/components/ui/data-table/expandable-cell"
 import {
   Tooltip,
   TooltipContent,
@@ -161,21 +162,9 @@ export const createOrganizationColumns = ({
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Description" />
     ),
-    cell: ({ row }) => {
-      const description = row.getValue("description") as string
-      
-      if (!description) {
-        return <span className="text-muted-foreground">-</span>
-      }
-      
-      return (
-        <div className="flex-1 min-w-0">
-          <span className="text-sm text-muted-foreground break-all leading-relaxed whitespace-normal">
-            {description}
-          </span>
-        </div>
-      )
-    },
+    cell: ({ row }) => (
+      <ExpandableCell value={row.getValue("description")} variant="muted" />
+    ),
   },
   
   // Total Targets 列

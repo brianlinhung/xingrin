@@ -2,12 +2,11 @@
 
 import React from "react"
 import { ColumnDef } from "@tanstack/react-table"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DataTableColumnHeader } from "@/components/ui/data-table/column-header"
 import type { Endpoint } from "@/types/endpoint.types"
-import { TruncatedCell, TruncatedUrlCell } from "@/components/ui/truncated-cell"
+import { ExpandableCell, ExpandableTagList } from "@/components/ui/data-table/expandable-cell"
 
 interface CreateColumnsProps {
   formatDate: (dateString: string) => string
@@ -42,37 +41,6 @@ function HttpStatusBadge({ statusCode }: { statusCode: number | null | undefined
     <Badge variant={variant} className="px-2 py-1 font-mono tabular-nums">
       {statusCode}
     </Badge>
-  )
-}
-
-/**
- * Body Preview 单元格组件 - 最多显示3行，超出折叠，点击展开查看完整内容
- */
-function BodyPreviewCell({ value }: { value: string | null | undefined }) {
-  const [expanded, setExpanded] = React.useState(false)
-  
-  if (!value) {
-    return <span className="text-muted-foreground text-sm">-</span>
-  }
-
-  return (
-    <div className="flex flex-col gap-1">
-      <div 
-        className={`text-sm text-muted-foreground break-all leading-relaxed whitespace-normal cursor-pointer hover:text-foreground transition-colors ${!expanded ? 'line-clamp-3' : ''}`}
-        onClick={() => setExpanded(!expanded)}
-        title={expanded ? "点击收起" : "点击展开"}
-      >
-        {value}
-      </div>
-      {value.length > 100 && (
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="text-xs text-primary hover:underline self-start"
-        >
-          {expanded ? "收起" : "展开"}
-        </button>
-      )}
-    </div>
   )
 }
 
@@ -115,10 +83,9 @@ export function createEndpointColumns({
       size: 400,
       minSize: 200,
       maxSize: 700,
-      cell: ({ row }) => {
-        const url = row.getValue("url") as string
-        return <TruncatedUrlCell value={url} />
-      },
+      cell: ({ row }) => (
+        <ExpandableCell value={row.getValue("url")} />
+      ),
     },
     {
       accessorKey: "title",
@@ -130,7 +97,7 @@ export function createEndpointColumns({
       minSize: 100,
       maxSize: 300,
       cell: ({ row }) => (
-        <TruncatedCell value={row.getValue("title")} maxLength="title" />
+        <ExpandableCell value={row.getValue("title")} />
       ),
     },
     {
@@ -174,7 +141,7 @@ export function createEndpointColumns({
       minSize: 100,
       maxSize: 300,
       cell: ({ row }) => (
-        <TruncatedCell value={row.getValue("location")} maxLength="location" />
+        <ExpandableCell value={row.getValue("location")} />
       ),
     },
     {
@@ -187,7 +154,7 @@ export function createEndpointColumns({
       minSize: 80,
       maxSize: 200,
       cell: ({ row }) => (
-        <TruncatedCell value={row.getValue("webserver")} maxLength="webServer" />
+        <ExpandableCell value={row.getValue("webserver")} />
       ),
     },
     {
@@ -200,7 +167,7 @@ export function createEndpointColumns({
       minSize: 80,
       maxSize: 200,
       cell: ({ row }) => (
-        <TruncatedCell value={row.getValue("contentType")} maxLength="contentType" />
+        <ExpandableCell value={row.getValue("contentType")} />
       ),
     },
     {
@@ -213,16 +180,12 @@ export function createEndpointColumns({
       minSize: 150,
       cell: ({ row }) => {
         const tech = (row.getValue("tech") as string[] | null | undefined) || []
-        if (!tech.length) return <span className="text-sm text-muted-foreground">-</span>
-
         return (
-          <div className="flex flex-wrap items-center gap-1.5">
-            {tech.map((t, index) => (
-              <Badge key={index} variant="outline" className="text-xs">
-                {t}
-              </Badge>
-            ))}
-          </div>
+          <ExpandableTagList
+            items={tech}
+            maxVisible={3}
+            variant="outline"
+          />
         )
       },
     },
@@ -235,7 +198,7 @@ export function createEndpointColumns({
       size: 350,
       minSize: 250,
       cell: ({ row }) => (
-        <BodyPreviewCell value={row.getValue("bodyPreview")} />
+        <ExpandableCell value={row.getValue("bodyPreview")} />
       ),
     },
     {
@@ -264,21 +227,12 @@ export function createEndpointColumns({
       maxSize: 250,
       cell: ({ row }) => {
         const tags = (row.getValue("tags") as string[] | null | undefined) || []
-        if (!tags.length) {
-          return <span className="text-muted-foreground text-sm">-</span>
-        }
         return (
-          <div className="flex flex-wrap gap-1">
-            {tags.map((tag, idx) => (
-              <Badge
-                key={idx}
-                variant={/xss|sqli|idor|rce|ssrf|lfi|rfi|xxe|csrf|open.?redirect|interesting/i.test(tag) ? "destructive" : "secondary"}
-                className="text-xs"
-              >
-                {tag}
-              </Badge>
-            ))}
-          </div>
+          <ExpandableTagList
+            items={tags}
+            maxVisible={3}
+            variant="secondary"
+          />
         )
       },
       enableSorting: false,

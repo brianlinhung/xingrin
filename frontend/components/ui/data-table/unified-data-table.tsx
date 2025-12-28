@@ -113,8 +113,14 @@ export function UnifiedDataTable<TData>({
   
   // 添加操作
   onAddNew,
+  onAddHover,
   addButtonLabel = "Add",
   showAddButton = true,
+  
+  // 批量添加操作
+  onBulkAdd,
+  bulkAddLabel = "批量添加",
+  showBulkAdd = true,
   
   // 下载操作
   downloadOptions,
@@ -436,9 +442,17 @@ export function UnifiedDataTable<TData>({
 
           {/* 添加按钮 */}
           {showAddButton && onAddNew && (
-            <Button onClick={onAddNew} size="sm">
+            <Button onClick={onAddNew} onMouseEnter={onAddHover} size="sm">
               <IconPlus className="h-4 w-4" />
               {addButtonLabel}
+            </Button>
+          )}
+
+          {/* 批量添加按钮 */}
+          {showBulkAdd && onBulkAdd && (
+            <Button onClick={onBulkAdd} size="sm" variant="outline">
+              <IconPlus className="h-4 w-4" />
+              {bulkAddLabel}
             </Button>
           )}
         </DataTableToolbar>

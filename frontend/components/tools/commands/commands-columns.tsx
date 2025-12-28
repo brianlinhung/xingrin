@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal, Eye, Trash2, Copy } from "lucide-react"
 import { DataTableColumnHeader } from "@/components/ui/data-table/column-header"
+import { ExpandableCell } from "@/components/ui/data-table/expandable-cell"
 import { Badge } from "@/components/ui/badge"
 import { formatDate } from "@/lib/utils"
 import { toast } from "sonner"
@@ -110,18 +111,9 @@ export const commandColumns: ColumnDef<Command>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Command Template" />
     ),
-    cell: ({ row }) => {
-      const template = row.getValue("commandTemplate") as string
-      if (!template) return <span className="text-muted-foreground text-sm">-</span>
-
-      return (
-        <div className="flex-1 min-w-0">
-          <span className="text-sm font-mono break-all leading-relaxed whitespace-normal">
-            {template}
-          </span>
-        </div>
-      )
-    },
+    cell: ({ row }) => (
+      <ExpandableCell value={row.getValue("commandTemplate")} variant="mono" />
+    ),
   },
   
   // 描述列
@@ -133,18 +125,9 @@ export const commandColumns: ColumnDef<Command>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Description" />
     ),
-    cell: ({ row }) => {
-      const description = row.getValue("description") as string
-      if (!description) return <span className="text-muted-foreground text-sm">-</span>
-      
-      return (
-        <div className="flex-1 min-w-0">
-          <span className="text-sm text-muted-foreground break-all leading-relaxed whitespace-normal">
-            {description}
-          </span>
-        </div>
-      )
-    },
+    cell: ({ row }) => (
+      <ExpandableCell value={row.getValue("description")} variant="muted" />
+    ),
   },
   
   // 更新时间列

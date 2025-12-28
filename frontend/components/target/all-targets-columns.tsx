@@ -18,9 +18,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { MoreHorizontal, Eye, Trash2, Play, Calendar, Copy, Check } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { DataTableColumnHeader } from "@/components/ui/data-table/column-header"
+import { ExpandableBadgeList } from "@/components/ui/data-table/expandable-cell"
 import type { Target } from "@/types/target.types"
 
 /**
@@ -278,54 +278,12 @@ export const createAllTargetsColumns = ({
     ),
     cell: ({ row }) => {
       const organizations = row.getValue("organizations") as Array<{ id: number; name: string }> | undefined
-      if (!organizations || organizations.length === 0) {
-        return <span className="text-sm text-muted-foreground">-</span>
-      }
-      
-      const displayOrgs = organizations.slice(0, 2)
-      const remainingCount = organizations.length - 2
-      
       return (
-        <div className="flex flex-wrap gap-1">
-          {displayOrgs.map((org) => (
-            <Badge 
-              key={org.id} 
-              variant="secondary" 
-              className="text-xs"
-              title={org.name}
-            >
-              {org.name}
-            </Badge>
-          ))}
-          {remainingCount > 0 && (
-            <TooltipProvider delayDuration={500} skipDelayDuration={0}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge 
-                    variant="outline" 
-                    className="text-xs cursor-default"
-                  >
-                    +{remainingCount}
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent 
-                  side="top" 
-                  align="start"
-                  sideOffset={5}
-                  className="max-w-sm"
-                >
-                  <div className="flex flex-col gap-1">
-                    {organizations.slice(2).map((org) => (
-                      <div key={org.id} className="text-xs">
-                        {org.name}
-                      </div>
-                    ))}
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-        </div>
+        <ExpandableBadgeList
+          items={organizations}
+          maxVisible={2}
+          variant="secondary"
+        />
       )
     },
     enableSorting: false,

@@ -6,38 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { DataTableColumnHeader } from "@/components/ui/data-table/column-header"
 import type { WebSite } from "@/types/website.types"
-import { TruncatedCell, TruncatedUrlCell } from "@/components/ui/truncated-cell"
-
-/**
- * Body Preview 单元格组件 - 最多显示3行，超出折叠，点击展开查看完整内容
- */
-function BodyPreviewCell({ value }: { value: string | null | undefined }) {
-  const [expanded, setExpanded] = React.useState(false)
-  
-  if (!value) {
-    return <span className="text-muted-foreground text-sm">-</span>
-  }
-
-  return (
-    <div className="flex flex-col gap-1">
-      <div 
-        className={`text-sm text-muted-foreground break-all leading-relaxed whitespace-normal cursor-pointer hover:text-foreground transition-colors ${!expanded ? 'line-clamp-3' : ''}`}
-        onClick={() => setExpanded(!expanded)}
-        title={expanded ? "点击收起" : "点击展开"}
-      >
-        {value}
-      </div>
-      {value.length > 100 && (
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="text-xs text-primary hover:underline self-start"
-        >
-          {expanded ? "收起" : "展开"}
-        </button>
-      )}
-    </div>
-  )
-}
+import { ExpandableCell, ExpandableTagList } from "@/components/ui/data-table/expandable-cell"
 
 interface CreateWebSiteColumnsProps {
   formatDate: (dateString: string) => string
@@ -82,10 +51,9 @@ export function createWebSiteColumns({
       size: 400,
       minSize: 200,
       maxSize: 700,
-      cell: ({ row }) => {
-        const url = row.getValue("url") as string
-        return <TruncatedUrlCell value={url} />
-      },
+      cell: ({ row }) => (
+        <ExpandableCell value={row.getValue("url")} />
+      ),
     },
     {
       accessorKey: "host",
@@ -97,7 +65,7 @@ export function createWebSiteColumns({
       minSize: 100,
       maxSize: 250,
       cell: ({ row }) => (
-        <TruncatedCell value={row.getValue("host")} maxLength="host" mono />
+        <ExpandableCell value={row.getValue("host")} />
       ),
     },
     {
@@ -110,7 +78,7 @@ export function createWebSiteColumns({
       minSize: 100,
       maxSize: 300,
       cell: ({ row }) => (
-        <TruncatedCell value={row.getValue("title")} maxLength="title" />
+        <ExpandableCell value={row.getValue("title")} />
       ),
     },
     {
@@ -122,6 +90,7 @@ export function createWebSiteColumns({
       size: 80,
       minSize: 60,
       maxSize: 100,
+      enableResizing: false,
       cell: ({ row }) => {
         const statusCode = row.getValue("statusCode") as number
         if (!statusCode) return "-"
@@ -148,17 +117,7 @@ export function createWebSiteColumns({
       minSize: 150,
       cell: ({ row }) => {
         const tech = row.getValue("tech") as string[]
-        if (!tech || tech.length === 0) return <span className="text-sm text-muted-foreground">-</span>
-
-        return (
-          <div className="flex flex-wrap items-center gap-1.5">
-            {tech.map((technology, index) => (
-              <Badge key={index} variant="outline" className="text-xs">
-                {technology}
-              </Badge>
-            ))}
-          </div>
-        )
+        return <ExpandableTagList items={tech} maxVisible={3} variant="outline" />
       },
     },
     {
@@ -186,7 +145,7 @@ export function createWebSiteColumns({
       minSize: 100,
       maxSize: 300,
       cell: ({ row }) => (
-        <TruncatedCell value={row.getValue("location")} maxLength="location" />
+        <ExpandableCell value={row.getValue("location")} />
       ),
     },
     {
@@ -199,7 +158,7 @@ export function createWebSiteColumns({
       minSize: 80,
       maxSize: 200,
       cell: ({ row }) => (
-        <TruncatedCell value={row.getValue("webserver")} maxLength="webServer" />
+        <ExpandableCell value={row.getValue("webserver")} />
       ),
     },
     {
@@ -212,7 +171,7 @@ export function createWebSiteColumns({
       minSize: 80,
       maxSize: 200,
       cell: ({ row }) => (
-        <TruncatedCell value={row.getValue("contentType")} maxLength="contentType" />
+        <ExpandableCell value={row.getValue("contentType")} />
       ),
     },
     {
@@ -224,7 +183,7 @@ export function createWebSiteColumns({
       size: 350,
       minSize: 250,
       cell: ({ row }) => (
-        <BodyPreviewCell value={row.getValue("bodyPreview")} />
+        <ExpandableCell value={row.getValue("bodyPreview")} />
       ),
     },
     {
@@ -236,6 +195,7 @@ export function createWebSiteColumns({
       size: 80,
       minSize: 60,
       maxSize: 100,
+      enableResizing: false,
       cell: ({ row }) => {
         const vhost = row.getValue("vhost") as boolean | null
         if (vhost === null) return "-"
@@ -255,6 +215,7 @@ export function createWebSiteColumns({
       size: 150,
       minSize: 120,
       maxSize: 200,
+      enableResizing: false,
       cell: ({ row }) => {
         const createdAt = row.getValue("createdAt") as string
         return <div className="text-sm">{createdAt ? formatDate(createdAt) : "-"}</div>

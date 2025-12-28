@@ -93,13 +93,6 @@ export function TargetsDataTable({
     pageSize: pagination.pageSize,
   } : undefined
 
-  // 自定义添加按钮（支持 onAddHover）
-  const addButton = onAddNew ? (
-    <Button onClick={onAddNew} onMouseEnter={onAddHover} size="sm">
-      {addButtonText}
-    </Button>
-  ) : undefined
-
   return (
     <UnifiedDataTable
       data={data}
@@ -115,7 +108,11 @@ export function TargetsDataTable({
       // 批量操作
       onBulkDelete={onBulkDelete}
       bulkDeleteLabel="删除"
-      showAddButton={false}
+      // 添加按钮
+      onAddNew={onAddNew}
+      onAddHover={onAddHover}
+      addButtonLabel={addButtonText}
+      showAddButton={!!onAddNew}
       // 空状态
       emptyMessage="暂无数据"
       // 自定义工具栏
@@ -137,7 +134,6 @@ export function TargetsDataTable({
           </Button>
         </div>
       }
-      toolbarRight={addButton}
     />
   )
 }

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/popover"
 import { DataTableColumnHeader } from "@/components/ui/data-table/column-header"
 import type { IPAddress } from "@/types/ip-address.types"
-import { TruncatedCell } from "@/components/ui/truncated-cell"
+import { ExpandableCell } from "@/components/ui/data-table/expandable-cell"
 
 export function createIPAddressColumns(params: {
   formatDate: (value: string) => string
@@ -57,7 +57,7 @@ export function createIPAddressColumns(params: {
         <DataTableColumnHeader column={column} title="IP Address" />
       ),
       cell: ({ row }) => (
-        <TruncatedCell value={row.original.ip} maxLength="ip" mono />
+        <ExpandableCell value={row.original.ip} />
       ),
     },
     // host 列
@@ -83,7 +83,7 @@ export function createIPAddressColumns(params: {
         return (
           <div className="flex flex-col gap-1">
             {displayHosts.map((host, index) => (
-              <TruncatedCell key={index} value={host} maxLength="host" mono />
+              <ExpandableCell key={index} value={host} maxLines={1} />
             ))}
             {hasMore && (
               <Popover>
@@ -97,7 +97,7 @@ export function createIPAddressColumns(params: {
                     <h4 className="font-medium text-sm">All Hosts ({hosts.length})</h4>
                     <div className="flex flex-col gap-1 max-h-48 overflow-y-auto">
                       {hosts.map((host, index) => (
-                        <span key={index} className="text-sm font-mono break-all">
+                        <span key={index} className="text-sm break-all">
                           {host}
                         </span>
                       ))}
@@ -116,6 +116,7 @@ export function createIPAddressColumns(params: {
       size: 150,
       minSize: 120,
       maxSize: 200,
+      enableResizing: false,
       meta: { title: "Created At" },
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Created At" />

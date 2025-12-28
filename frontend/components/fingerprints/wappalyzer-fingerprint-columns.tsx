@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import React from "react"
 import { ColumnDef } from "@tanstack/react-table"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Badge } from "@/components/ui/badge"
 import { DataTableColumnHeader } from "@/components/ui/data-table/column-header"
+import { ExpandableCell } from "@/components/ui/data-table/expandable-cell"
 import type { WappalyzerFingerprint } from "@/types/fingerprint.types"
 
 interface ColumnOptions {
@@ -12,25 +12,24 @@ interface ColumnOptions {
 }
 
 /**
- * 可展开文本单元格组件
+ * JSON 对象展示单元格 - 显示原始 JSON
  */
-function ExpandableTextCell({ value, maxLength = 80 }: { value: string | null | undefined; maxLength?: number }) {
-  const [expanded, setExpanded] = useState(false)
+function JsonCell({ data }: { data: any }) {
+  const [expanded, setExpanded] = React.useState(false)
   
-  if (!value) return <span className="text-muted-foreground">-</span>
+  if (!data || (typeof data === 'object' && Object.keys(data).length === 0)) {
+    return <span className="text-muted-foreground">-</span>
+  }
   
-  const needsExpand = value.length > maxLength
+  const jsonStr = JSON.stringify(data)
+  const isLong = jsonStr.length > 50
   
   return (
-    <div className="flex flex-col gap-1 overflow-hidden w-full">
-      <div 
-        className={`text-sm text-muted-foreground break-words cursor-pointer hover:text-foreground transition-colors ${!expanded ? 'line-clamp-2' : ''}`}
-        onClick={() => needsExpand && setExpanded(!expanded)}
-        title={needsExpand ? (expanded ? "点击收起" : "点击展开") : undefined}
-      >
-        {value}
+    <div className="flex flex-col gap-1">
+      <div className={`font-mono text-xs ${expanded ? "break-all whitespace-pre-wrap" : "truncate"}`}>
+        {expanded ? JSON.stringify(data, null, 2) : jsonStr}
       </div>
-      {needsExpand && (
+      {isLong && (
         <button
           onClick={() => setExpanded(!expanded)}
           className="text-xs text-primary hover:underline self-start"
@@ -43,23 +42,28 @@ function ExpandableTextCell({ value, maxLength = 80 }: { value: string | null | 
 }
 
 /**
- * 可展开链接单元格组件
+ * 数组展示单元格 - 显示原始数组
  */
-function ExpandableLinkCell({ value, maxLength = 50 }: { value: string | null | undefined; maxLength?: number }) {
-  const [expanded, setExpanded] = useState(false)
+function ArrayCell({ data }: { data: any[] }) {
+  const [expanded, setExpanded] = React.useState(false)
   
-  if (!value) return <span className="text-muted-foreground">-</span>
+  if (!data || data.length === 0) {
+    return <span className="text-muted-foreground">-</span>
+  }
   
-  const needsExpand = value.length > maxLength
+  const displayItems = expanded ? data : data.slice(0, 2)
+  const hasMore = data.length > 2
   
   return (
-    <div className="flex flex-col gap-1 overflow-hidden w-full">
-      <div 
-        className={`text-sm text-muted-foreground break-words ${!expanded ? 'line-clamp-1' : ''}`}
-      >
-        {value}
+    <div className="flex flex-col gap-1">
+      <div className="font-mono text-xs space-y-0.5">
+        {displayItems.map((item, idx) => (
+          <div key={idx} className={expanded ? "break-all" : "truncate"}>
+            {typeof item === 'object' ? JSON.stringify(item) : String(item)}
+          </div>
+        ))}
       </div>
-      {needsExpand && (
+      {hasMore && (
         <button
           onClick={() => setExpanded(!expanded)}
           className="text-xs text-primary hover:underline self-start"
@@ -116,33 +120,97 @@ export function createWappalyzerFingerprintColumns({
       enableResizing: true,
       size: 180,
     },
-    // 分类
+    // 分类 - 直接显示数组
     {
       accessorKey: "cats",
-      meta: { title: "Categories" },
+      meta: { title: "Cats" },
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Categories" />
+        <DataTableColumnHeader column={column} title="Cats" />
       ),
       cell: ({ row }) => {
         const cats = row.getValue("cats") as number[]
         if (!cats || cats.length === 0) return "-"
-        return (
-          <div className="flex flex-wrap gap-1">
-            {cats.slice(0, 3).map((cat) => (
-              <Badge key={cat} variant="secondary" className="text-xs">
-                {cat}
-              </Badge>
-            ))}
-            {cats.length > 3 && (
-              <Badge variant="outline" className="text-xs">
-                +{cats.length - 3}
-              </Badge>
-            )}
-          </div>
-        )
+        return <span className="font-mono text-xs">{JSON.stringify(cats)}</span>
       },
       enableResizing: true,
       size: 120,
+    },
+    // Cookies
+    {
+      accessorKey: "cookies",
+      meta: { title: "Cookies" },
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Cookies" />
+      ),
+      cell: ({ row }) => <JsonCell data={row.getValue("cookies")} />,
+      enableResizing: true,
+      size: 200,
+    },
+    // Headers
+    {
+      accessorKey: "headers",
+      meta: { title: "Headers" },
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Headers" />
+      ),
+      cell: ({ row }) => <JsonCell data={row.getValue("headers")} />,
+      enableResizing: true,
+      size: 200,
+    },
+    // Script Src
+    {
+      accessorKey: "scriptSrc",
+      meta: { title: "ScriptSrc" },
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="ScriptSrc" />
+      ),
+      cell: ({ row }) => <ArrayCell data={row.getValue("scriptSrc")} />,
+      enableResizing: true,
+      size: 200,
+    },
+    // JS
+    {
+      accessorKey: "js",
+      meta: { title: "JS" },
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="JS" />
+      ),
+      cell: ({ row }) => <ArrayCell data={row.getValue("js")} />,
+      enableResizing: true,
+      size: 180,
+    },
+    // Implies
+    {
+      accessorKey: "implies",
+      meta: { title: "Implies" },
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Implies" />
+      ),
+      cell: ({ row }) => <ArrayCell data={row.getValue("implies")} />,
+      enableResizing: true,
+      size: 180,
+    },
+    // Meta
+    {
+      accessorKey: "meta",
+      meta: { title: "Meta" },
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Meta" />
+      ),
+      cell: ({ row }) => <JsonCell data={row.getValue("meta")} />,
+      enableResizing: true,
+      size: 200,
+    },
+    // HTML
+    {
+      accessorKey: "html",
+      meta: { title: "HTML" },
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="HTML" />
+      ),
+      cell: ({ row }) => <ArrayCell data={row.getValue("html")} />,
+      enableResizing: true,
+      size: 200,
     },
     // 描述
     {
@@ -151,7 +219,7 @@ export function createWappalyzerFingerprintColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Description" />
       ),
-      cell: ({ row }) => <ExpandableTextCell value={row.getValue("description")} />,
+      cell: ({ row }) => <ExpandableCell value={row.getValue("description")} maxLines={2} />,
       enableResizing: true,
       size: 250,
     },
@@ -162,37 +230,20 @@ export function createWappalyzerFingerprintColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Website" />
       ),
-      cell: ({ row }) => <ExpandableLinkCell value={row.getValue("website")} />,
+      cell: ({ row }) => <ExpandableCell value={row.getValue("website")} variant="url" maxLines={1} />,
       enableResizing: true,
       size: 200,
     },
-    // 检测方式数量
+    // CPE
     {
-      id: "detectionMethods",
-      meta: { title: "Detection" },
+      accessorKey: "cpe",
+      meta: { title: "CPE" },
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Detection" />
+        <DataTableColumnHeader column={column} title="CPE" />
       ),
       cell: ({ row }) => {
-        const fp = row.original
-        const methods: string[] = []
-        if (fp.cookies && Object.keys(fp.cookies).length > 0) methods.push("cookies")
-        if (fp.headers && Object.keys(fp.headers).length > 0) methods.push("headers")
-        if (fp.scriptSrc && fp.scriptSrc.length > 0) methods.push("script")
-        if (fp.js && fp.js.length > 0) methods.push("js")
-        if (fp.meta && Object.keys(fp.meta).length > 0) methods.push("meta")
-        if (fp.html && fp.html.length > 0) methods.push("html")
-        
-        if (methods.length === 0) return "-"
-        return (
-          <div className="flex flex-wrap gap-1">
-            {methods.map((m) => (
-              <Badge key={m} variant="outline" className="text-xs">
-                {m}
-              </Badge>
-            ))}
-          </div>
-        )
+        const cpe = row.getValue("cpe") as string
+        return cpe ? <span className="font-mono text-xs">{cpe}</span> : "-"
       },
       enableResizing: true,
       size: 180,
@@ -212,7 +263,7 @@ export function createWappalyzerFingerprintColumns({
           </div>
         )
       },
-      enableResizing: true,
+      enableResizing: false,
       size: 160,
     },
   ]
