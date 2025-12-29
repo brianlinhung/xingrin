@@ -206,53 +206,18 @@ auto_fill_docker_env_secrets() {
     success "密钥生成完成"
 }
 
-# 配置 Docker 镜像加速
-configure_docker_mirror() {
-    local xget_mirror="$1"
-    local daemon_json="/etc/docker/daemon.json"
-    local registry_mirror="${xget_mirror}/cr/docker"
-    
-    info "正在配置 Docker 镜像加速..."
-    
-    # 确保 /etc/docker 目录存在
-    mkdir -p /etc/docker
-    
-    if [ ! -f "$daemon_json" ]; then
-        # 文件不存在，直接创建
-        info "创建新的 daemon.json..."
-        cat > "$daemon_json" << EOF
-{
-    "registry-mirrors": ["$registry_mirror"]
-}
-EOF
+# 获取加速后的 Docker 镜像地址
+# 用法: get_accelerated_image "yyhuni/xingrin-worker:v1.0.0"
+# 返回: xget.xi-xu.me/cr/docker/yyhuni/xingrin-worker:v1.0.0（如果启用加速）
+#       或原始镜像地址（如果未启用加速）
+get_accelerated_image() {
+    local image="$1"
+    if [ -n "$XGET_MIRROR" ]; then
+        # 移除末尾斜杠
+        local mirror="${XGET_MIRROR%/}"
+        echo "${mirror}/cr/docker/${image}"
     else
-        # 文件存在，用 jq 合并配置（保留现有设置）
-        info "合并配置到现有 daemon.json..."
-        local temp_file=$(mktemp)
-        
-        # 检查是否已有 registry-mirrors
-        if jq -e '.["registry-mirrors"]' "$daemon_json" >/dev/null 2>&1; then
-            # 已有 registry-mirrors，添加新的镜像地址（如果不存在）
-            if ! jq -e --arg mirror "$registry_mirror" '.["registry-mirrors"] | index($mirror)' "$daemon_json" >/dev/null 2>&1; then
-                jq --arg mirror "$registry_mirror" '.["registry-mirrors"] = [$mirror] + .["registry-mirrors"]' "$daemon_json" > "$temp_file"
-                mv "$temp_file" "$daemon_json"
-            else
-                info "镜像地址已存在于配置中，跳过添加"
-                rm -f "$temp_file"
-            fi
-        else
-            # 没有 registry-mirrors，添加新的
-            jq --arg mirror "$registry_mirror" '. + {"registry-mirrors": [$mirror]}' "$daemon_json" > "$temp_file"
-            mv "$temp_file" "$daemon_json"
-        fi
-    fi
-    
-    # 重启 Docker 使配置生效
-    info "重启 Docker 服务以应用配置..."
-    if systemctl restart docker; then
-        success "Docker 镜像加速配置完成: $registry_mirror"
-    else
-        warn "Docker 服务重启失败，请手动重启 Docker"
+        echo "$image"
     fi
 }
 
@@ -366,11 +331,6 @@ else
     fi
     
     usermod -aG docker "$REAL_USER"
-fi
-
-# 配置 Docker 镜像加速（仅当 XGET_MIRROR 非空时）
-if [ -n "$XGET_MIRROR" ]; then
-    configure_docker_mirror "$XGET_MIRROR"
 fi
 
 # 检查 docker compose
@@ -585,14 +545,23 @@ if [ "$DEV_MODE" = true ]; then
     fi
 else
     info "正在拉取: $WORKER_IMAGE"
+    
+    # 获取加速后的镜像地址
+    PULL_IMAGE=$(get_accelerated_image "$WORKER_IMAGE")
+    
     # 显示加速状态提示
     if [ -n "$XGET_MIRROR" ]; then
-        info "使用 Xget 加速拉取镜像（通过 registry-mirror）"
-    else
-        info "使用默认方式拉取镜像（未启用加速）"
+        info "使用 Xget 加速拉取: $PULL_IMAGE"
     fi
     
-    if docker pull "$WORKER_IMAGE"; then
+    if docker pull "$PULL_IMAGE"; then
+        # 如果使用了加速，需要重新打标签为原始镜像名
+        if [ "$PULL_IMAGE" != "$WORKER_IMAGE" ]; then
+            docker tag "$PULL_IMAGE" "$WORKER_IMAGE"
+            # 删除加速镜像标签（可选，保持镜像列表整洁）
+            docker rmi "$PULL_IMAGE" 2>/dev/null || true
+        fi
+        
         if [ -n "$XGET_MIRROR" ]; then
             success "Worker 镜像拉取完成（通过 Xget 加速）"
         else
