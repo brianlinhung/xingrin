@@ -112,28 +112,42 @@ jobs:
           sbom: false
 
   # 所有镜像构建成功后，更新 VERSION 文件
-  # 只有正式版本（不含 -dev, -alpha, -beta, -rc 等后缀）才更新
+  # 正式版本（不含 -dev, -alpha, -beta, -rc）更新 main 分支
+  # dev 版本（含 -dev）更新 dev 分支
   update-version:
     runs-on: ubuntu-latest
     needs: build
-    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-')
+    if: startsWith(github.ref, 'refs/tags/v')
     steps:
+      - name: Determine target branch
+        id: branch
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/}"
+          if [[ "$VERSION" == *-dev ]]; then
+            echo "BRANCH=dev" >> $GITHUB_OUTPUT
+            echo "IS_DEV=true" >> $GITHUB_OUTPUT
+          else
+            echo "BRANCH=main" >> $GITHUB_OUTPUT
+            echo "IS_DEV=false" >> $GITHUB_OUTPUT
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ steps.branch.outputs.BRANCH }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update VERSION file
         run: |
-          VERSION="${GITHUB_REF#refs/tags/}"
+          VERSION="${{ steps.branch.outputs.VERSION }}"
           echo "$VERSION" > VERSION
-          echo "Updated VERSION to $VERSION"
+          echo "Updated VERSION to $VERSION on branch ${{ steps.branch.outputs.BRANCH }}"
 
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add VERSION
-          git diff --staged --quiet || git commit -m "chore: bump version to ${GITHUB_REF#refs/tags/}"
+          git diff --staged --quiet || git commit -m "chore: bump version to ${{ steps.branch.outputs.VERSION }}"
           git push
