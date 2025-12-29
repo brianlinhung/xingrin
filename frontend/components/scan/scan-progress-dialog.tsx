@@ -21,18 +21,18 @@ import { useTranslations, useLocale } from "next-intl"
 import type { ScanStage, ScanRecord, StageProgress, StageStatus } from "@/types/scan.types"
 
 /**
- * 扫描阶段详情
+ * Scan stage details
  */
 interface StageDetail {
-  stage: ScanStage      // 阶段名称（来自 engine_config key）
+  stage: ScanStage      // Stage name (from engine_config key)
   status: StageStatus
-  duration?: string     // 耗时，如 "2m30s"
-  detail?: string       // 额外信息，如 "发现 120 个子域名"
-  resultCount?: number  // 结果数量
+  duration?: string     // Duration, e.g. "2m30s"
+  detail?: string       // Additional info, e.g. "Found 120 subdomains"
+  resultCount?: number  // Result count
 }
 
 /**
- * 扫描进度数据
+ * Scan progress data
  */
 export interface ScanProgressData {
   id: number
@@ -42,7 +42,7 @@ export interface ScanProgressData {
   progress: number
   currentStage?: ScanStage
   startedAt?: string
-  errorMessage?: string  // 错误信息（失败时有值）
+  errorMessage?: string  // Error message (present when failed)
   stages: StageDetail[]
 }
 
@@ -52,7 +52,7 @@ interface ScanProgressDialogProps {
   data: ScanProgressData | null
 }
 
-/** 扫描状态样式配置 */
+/** Scan status style configuration */
 const SCAN_STATUS_STYLES: Record<string, string> = {
   running: "bg-[#d29922]/10 text-[#d29922] border-[#d29922]/20",
   cancelled: "bg-[#848d97]/10 text-[#848d97] border-[#848d97]/20",
@@ -62,7 +62,7 @@ const SCAN_STATUS_STYLES: Record<string, string> = {
 }
 
 /**
- * 闪烁点动效（与 scan-history 一致）
+ * Pulsing dot animation (consistent with scan-history)
  */
 function PulsingDot({ className }: { className?: string }) {
   return (
@@ -74,7 +74,7 @@ function PulsingDot({ className }: { className?: string }) {
 }
 
 /**
- * 扫描状态图标（用于标题，与 scan-history 状态列动效一致）
+ * Scan status icon (for title, consistent with scan-history status column animation)
  */
 function ScanStatusIcon({ status }: { status: string }) {
   switch (status) {
@@ -94,7 +94,7 @@ function ScanStatusIcon({ status }: { status: string }) {
 }
 
 /**
- * 扫描状态徽章
+ * Scan status badge
  */
 function ScanStatusBadge({ status, t }: { status: string; t: (key: string) => string }) {
   const className = SCAN_STATUS_STYLES[status] || "bg-muted text-muted-foreground"
@@ -107,7 +107,7 @@ function ScanStatusBadge({ status, t }: { status: string; t: (key: string) => st
 }
 
 /**
- * 阶段状态图标
+ * Stage status icon
  */
 function StageStatusIcon({ status }: { status: StageStatus }) {
   switch (status) {
@@ -125,7 +125,7 @@ function StageStatusIcon({ status }: { status: StageStatus }) {
 }
 
 /**
- * 单个阶段行
+ * Single stage row
  */
 function StageRow({ stage, t }: { stage: StageDetail; t: (key: string) => string }) {
   return (
@@ -151,7 +151,7 @@ function StageRow({ stage, t }: { stage: StageDetail; t: (key: string) => string
       </div>
       
       <div className="flex items-center gap-3 text-right">
-        {/* 状态/耗时 */}
+        {/* Status/Duration */}
         {stage.status === "running" && (
           <Badge variant="outline" className="bg-[#d29922]/10 text-[#d29922] border-[#d29922]/20">
             {t("stage_running")}
@@ -181,7 +181,7 @@ function StageRow({ stage, t }: { stage: StageDetail; t: (key: string) => string
 }
 
 /**
- * 扫描进度弹窗
+ * Scan progress dialog
  */
 export function ScanProgressDialog({
   open,
@@ -203,7 +203,7 @@ export function ScanProgressDialog({
           </DialogTitle>
         </DialogHeader>
 
-        {/* 基本信息 */}
+        {/* Basic information */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">{t("target")}</span>
@@ -223,7 +223,7 @@ export function ScanProgressDialog({
             <span className="text-muted-foreground">{t("status")}</span>
             <ScanStatusBadge status={data.status} t={t} />
           </div>
-          {/* 错误信息（失败时显示） */}
+          {/* Error message (shown when failed) */}
           {data.errorMessage && (
             <div className="mt-2 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
               <p className="text-sm text-destructive font-medium">{t("errorReason")}</p>
@@ -234,7 +234,7 @@ export function ScanProgressDialog({
 
         <Separator />
 
-        {/* 总进度 */}
+        {/* Total progress */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium">{t("totalProgress")}</span>
@@ -259,7 +259,7 @@ export function ScanProgressDialog({
 
         <Separator />
 
-        {/* 阶段列表 */}
+        {/* Stage list */}
         <div className="space-y-2 max-h-[300px] overflow-y-auto">
           {data.stages.map((stage) => (
             <StageRow key={stage.stage} stage={stage} t={t} />
@@ -271,7 +271,7 @@ export function ScanProgressDialog({
 }
 
 /**
- * 格式化时长（秒 -> 可读字符串）
+ * Format duration (seconds -> readable string)
  */
 function formatDuration(seconds?: number): string | undefined {
   if (seconds === undefined || seconds === null) return undefined
@@ -283,7 +283,7 @@ function formatDuration(seconds?: number): string | undefined {
 }
 
 /**
- * 格式化日期时间（ISO 字符串 -> 可读格式）
+ * Format date time (ISO string -> readable format)
  */
 function formatDateTime(isoString?: string, locale: string = "zh"): string {
   if (!isoString) return ""
@@ -303,7 +303,7 @@ function formatDateTime(isoString?: string, locale: string = "zh"): string {
   }
 }
 
-/** 从 summary 中获取阶段对应的结果数量 */
+/** Get stage result count from summary */
 function getStageResultCount(stageName: string, summary: ScanRecord["summary"]): number | undefined {
   if (!summary) return undefined
   switch (stageName) {
@@ -328,16 +328,16 @@ function getStageResultCount(stageName: string, summary: ScanRecord["summary"]):
 }
 
 /**
- * 从 ScanRecord 构建 ScanProgressData
+ * Build ScanProgressData from ScanRecord
  * 
- * 阶段名称直接来自 engine_config 的 key，无需映射
- * 阶段顺序按 order 字段排序，与 Flow 执行顺序一致
+ * Stage names come directly from engine_config keys, no mapping needed
+ * Stage order follows the order field, consistent with Flow execution order
  */
 export function buildScanProgressData(scan: ScanRecord): ScanProgressData {
   const stages: StageDetail[] = []
   
   if (scan.stageProgress) {
-    // 按 order 排序后遍历
+    // Sort by order then iterate
     const sortedEntries = Object.entries(scan.stageProgress)
       .sort(([, a], [, b]) => (a.order ?? 0) - (b.order ?? 0))
     

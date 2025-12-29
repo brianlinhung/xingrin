@@ -5,9 +5,9 @@ import { useRouter, usePathname } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import { LoadingState } from "@/components/loading-spinner"
 
-// 不需要登录的公开路由
+// Public routes that don't require authentication
 const PUBLIC_ROUTES = ["/login"]
-// 通过环境变量跳过认证 (pnpm dev:noauth)
+// Skip authentication via environment variable (pnpm dev:noauth)
 const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === 'true'
 
 interface AuthGuardProps {
@@ -15,51 +15,51 @@ interface AuthGuardProps {
 }
 
 /**
- * 认证守卫组件
- * 保护需要登录的路由
+ * Authentication guard component
+ * Protects routes that require login
  */
 export function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter()
   const pathname = usePathname()
   const { data: auth, isLoading } = useAuth()
 
-  // 检查是否是公开路由
+  // Check if it's a public route
   const isPublicRoute = PUBLIC_ROUTES.some((route) => 
     pathname.startsWith(route)
   )
 
   React.useEffect(() => {
-    // 跳过认证模式不处理
+    // Skip processing in skip auth mode
     if (SKIP_AUTH) return
-    // 加载中或公开路由不处理
+    // Skip processing during loading or for public routes
     if (isLoading || isPublicRoute) return
 
-    // 未登录跳转登录页
+    // Redirect to login page if not authenticated
     if (!auth?.authenticated) {
       router.push("/login/")
     }
   }, [auth, isLoading, isPublicRoute, router])
 
-  // 跳过认证模式
+  // Skip auth mode
   if (SKIP_AUTH) {
     return <>{children}</>
   }
 
-  // 加载中显示 loading
+  // Show loading during authentication check
   if (isLoading) {
     return <LoadingState message="loading..." />
   }
 
-  // 公开路由直接渲染
+  // Render public routes directly
   if (isPublicRoute) {
     return <>{children}</>
   }
 
-  // 未登录不渲染内容（等待跳转）
+  // Don't render content if not authenticated (waiting for redirect)
   if (!auth?.authenticated) {
     return <LoadingState message="loading..." />
   }
 
-  // 已登录渲染内容
+  // Render content if authenticated
   return <>{children}</>
 }

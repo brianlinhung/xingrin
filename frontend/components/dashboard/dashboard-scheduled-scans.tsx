@@ -16,12 +16,12 @@ export function DashboardScheduledScans() {
   const router = useRouter()
   const locale = useLocale()
 
-  // 国际化
+  // Internationalization
   const tColumns = React.useMemo(() => useTranslations("columns"), [])
   const tCommon = React.useMemo(() => useTranslations("common"), [])
   const tScan = React.useMemo(() => useTranslations("scan"), [])
 
-  // 构建翻译对象
+  // Build translation object
   const translations = React.useMemo(() => ({
     columns: {
       taskName: tColumns("scheduledScan.taskName"),

@@ -22,7 +22,7 @@ import { DataTableColumnHeader } from "@/components/ui/data-table/column-header"
 import * as yaml from "js-yaml"
 import type { ScanEngine } from "@/types/engine.types"
 
-// 翻译类型定义
+// Translation type definitions
 export interface EngineTranslations {
   columns: {
     engineName: string
@@ -47,7 +47,7 @@ export interface EngineTranslations {
 }
 
 /**
- * 解析引擎的 YAML 配置并检测功能是否启用
+ * Parse engine YAML configuration and detect if features are enabled
  */
 function parseEngineFeatures(engine: ScanEngine) {
   if (engine.configuration) {
@@ -83,7 +83,7 @@ function parseEngineFeatures(engine: ScanEngine) {
 }
 
 /**
- * 功能支持状态组件
+ * Feature support status component
  */
 function FeatureStatus({ enabled }: { enabled?: boolean }) {
   if (enabled) {
@@ -107,7 +107,7 @@ interface CreateColumnsProps {
 }
 
 /**
- * 引擎行操作组件
+ * Engine row actions component
  */
 function EngineRowActions({
   onEdit,
@@ -148,7 +148,7 @@ function EngineRowActions({
 }
 
 /**
- * 创建引擎表格列定义
+ * Create engine table column definitions
  */
 export const createEngineColumns = ({
   handleEdit,

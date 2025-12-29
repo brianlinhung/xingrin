@@ -27,8 +27,8 @@ interface EngineEditDialogProps {
 }
 
 /**
- * 引擎配置编辑弹窗
- * 使用 Monaco Editor 提供 VSCode 级别的编辑体验
+ * Engine configuration edit dialog
+ * Uses Monaco Editor to provide VSCode-level editing experience
  */
 export function EngineEditDialog({
   engine,
@@ -47,40 +47,40 @@ export function EngineEditDialog({
   const { currentTheme } = useColorTheme()
   const editorRef = useRef<any>(null)
 
-  // 生成示例 YAML 配置
+  // Generate sample YAML configuration
   const generateSampleYaml = (engine: ScanEngine) => {
-    return `# 引擎名称: ${engine.name}
+    return `# Engine name: ${engine.name}
 
-# ==================== 子域名发现 ====================
+# ==================== Subdomain Discovery ====================
 subdomain_discovery:
   tools:
     subfinder:
       enabled: true
-      timeout: 600      # 10 分钟（必需）
+      timeout: 600      # 10 minutes (required)
       
     amass_passive:
       enabled: true
-      timeout: 600      # 10 分钟（必需）
+      timeout: 600      # 10 minutes (required)
       
     amass_active:
       enabled: true
-      timeout: 1800     # 30 分钟（必需）
+      timeout: 1800     # 30 minutes (required)
       
     sublist3r:
       enabled: true
-      timeout: 900      # 15 分钟（必需）
+      timeout: 900      # 15 minutes (required)
       
     oneforall:
       enabled: true
-      timeout: 1200     # 20 分钟（必需）
+      timeout: 1200     # 20 minutes (required)
 
 
-# ==================== 端口扫描 ====================
+# ==================== Port Scan ====================
 port_scan:
   tools:
     naabu_active:
       enabled: true
-      timeout: auto     # 自动计算
+      timeout: auto     # Auto calculate
       threads: 5
       top-ports: 100
       rate: 10
@@ -90,28 +90,28 @@ port_scan:
       timeout: auto
 
 
-# ==================== 站点扫描 ====================
+# ==================== Site Scan ====================
 site_scan:
   tools:
     httpx:
       enabled: true
-      timeout: auto         # 自动计算
+      timeout: auto         # Auto calculate
 
 
-# ==================== 目录扫描 ====================
+# ==================== Directory Scan ====================
 directory_scan:
   tools:
     ffuf:
       enabled: true
-      timeout: auto                            # 自动计算超时时间
-      wordlist: ~/Desktop/dirsearch_dicc.txt   # 词表文件路径（必需）
+      timeout: auto                            # Auto calculate timeout
+      wordlist: ~/Desktop/dirsearch_dicc.txt   # Wordlist file path (required)
       delay: 0.1-2.0
       threads: 10
       request_timeout: 10
       match_codes: 200,201,301,302,401,403
 
 
-# ==================== URL 获取 ====================
+# ==================== URL Fetch ====================
 url_fetch:
   tools:
     waymore:
@@ -138,11 +138,11 @@ url_fetch:
 `
   }
 
-  // 当引擎改变时，更新 YAML 内容
+  // When engine changes, update YAML content
   useEffect(() => {
     if (engine && open) {
-      // TODO: 从后端 API 获取实际的 YAML 配置
-      // 如果引擎有配置则使用，否则使用示例配置
+      // TODO: Get actual YAML configuration from backend API
+      // If engine has configuration use it, otherwise use sample configuration
       const content = engine.configuration || generateSampleYaml(engine)
       setYamlContent(content)
       setHasChanges(false)
@@ -150,7 +150,7 @@ url_fetch:
     }
   }, [engine, open])
 
-  // 验证 YAML 语法
+  // Validate YAML syntax
   const validateYaml = (content: string) => {
     if (!content.trim()) {
       setYamlError(null)
@@ -172,7 +172,7 @@ url_fetch:
     }
   }
 
-  // 处理编辑器内容变化
+  // Handle editor content change
   const handleEditorChange = (value: string | undefined) => {
     const newValue = value || ""
     setYamlContent(newValue)
@@ -180,17 +180,17 @@ url_fetch:
     validateYaml(newValue)
   }
 
-  // 处理编辑器挂载
+  // Handle editor mount
   const handleEditorDidMount = (editor: any) => {
     editorRef.current = editor
     setIsEditorReady(true)
   }
 
-  // 处理保存
+  // Handle save
   const handleSave = async () => {
     if (!engine) return
 
-    // YAML 验证
+    // YAML validation
     if (!yamlContent.trim()) {
       toast.error(tToast("configRequired"))
       return
@@ -208,7 +208,7 @@ url_fetch:
       if (onSave) {
         await onSave(engine.id, yamlContent)
       } else {
-        // TODO: 调用实际的 API 保存 YAML 配置
+        // TODO: Call actual API to save YAML configuration
         await new Promise(resolve => setTimeout(resolve, 1000))
       }
 
@@ -227,7 +227,7 @@ url_fetch:
     }
   }
 
-  // 处理关闭
+  // Handle close
   const handleClose = () => {
     if (hasChanges) {
       const confirmed = window.confirm(t("confirmClose"))
@@ -254,7 +254,7 @@ url_fetch:
             <div className="flex flex-col h-full gap-2">
               <div className="flex items-center justify-between">
                 <Label>{t("yamlConfig")}</Label>
-                {/* 语法验证状态 */}
+                {/* Syntax validation status */}
                 <div className="flex items-center gap-2">
                   {yamlContent.trim() && (
                     yamlError ? (
@@ -315,7 +315,7 @@ url_fetch:
                 />
               </div>
 
-              {/* 错误信息显示 */}
+              {/* Error message display */}
               {yamlError && (
                 <div className="flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
                   <AlertCircle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />

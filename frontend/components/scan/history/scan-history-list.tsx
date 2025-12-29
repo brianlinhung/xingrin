@@ -26,8 +26,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { ScanProgressDialog, buildScanProgressData, type ScanProgressData } from "@/components/scan/scan-progress-dialog"
 
 /**
- * 扫描历史列表组件
- * 用于显示和管理扫描历史记录
+ * Scan history list component
+ * Used to display and manage scan history records
  */
 interface ScanHistoryListProps {
   hideToolbar?: boolean
@@ -42,7 +42,7 @@ export function ScanHistoryList({ hideToolbar = false }: ScanHistoryListProps) {
   const [stopDialogOpen, setStopDialogOpen] = useState(false)
   const [scanToStop, setScanToStop] = useState<ScanRecord | null>(null)
 
-  // 国际化
+  // Internationalization
   const tColumns = useTranslations("columns")
   const tCommon = useTranslations("common")
   const tTooltips = useTranslations("tooltips")
@@ -51,7 +51,7 @@ export function ScanHistoryList({ hideToolbar = false }: ScanHistoryListProps) {
   const tConfirm = useTranslations("common.confirm")
   const locale = useLocale()
 
-  // 构建翻译对象
+  // Build translation object
   const translations = useMemo(() => ({
     columns: {
       target: tColumns("scanHistory.target"),
@@ -89,17 +89,17 @@ export function ScanHistoryList({ hideToolbar = false }: ScanHistoryListProps) {
     },
   }), [tColumns, tCommon, tTooltips, tScan])
   
-  // 进度弹窗状态
+  // Progress dialog state
   const [progressDialogOpen, setProgressDialogOpen] = useState(false)
   const [progressData, setProgressData] = useState<ScanProgressData | null>(null)
   
-  // 分页状态
+  // Pagination state
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
   })
 
-  // 搜索状态
+  // Search state
   const [searchQuery, setSearchQuery] = useState("")
   const [isSearching, setIsSearching] = useState(false)
 
@@ -109,53 +109,53 @@ export function ScanHistoryList({ hideToolbar = false }: ScanHistoryListProps) {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }))
   }
   
-  // 获取扫描列表数据
+  // Get scan list data
   const { data, isLoading, isFetching, error } = useScans({
-    page: pagination.pageIndex + 1, // API 页码从 1 开始
+    page: pagination.pageIndex + 1, // API page numbers start from 1
     pageSize: pagination.pageSize,
     search: searchQuery || undefined,
   })
 
-  // 当请求完成时重置搜索状态
+  // Reset search state when request completes
   React.useEffect(() => {
     if (!isFetching && isSearching) {
       setIsSearching(false)
     }
   }, [isFetching, isSearching])
   
-  // 扫描列表数据
+  // Scan list data
   const scans = data?.results || []
   
-  // 删除单个扫描的 mutation
+  // Delete single scan mutation
   const deleteMutation = useMutation({
     mutationFn: deleteScan,
     onSuccess: () => {
-      // 刷新列表数据
+      // Refresh list data
       queryClient.invalidateQueries({ queryKey: ['scans'] })
     },
   })
   
-  // 批量删除的 mutation
+  // Bulk delete mutation
   const bulkDeleteMutation = useMutation({
     mutationFn: bulkDeleteScans,
     onSuccess: () => {
-      // 刷新列表数据
+      // Refresh list data
       queryClient.invalidateQueries({ queryKey: ['scans'] })
-      // 清空选中项
+      // Clear selected items
       setSelectedScans([])
     },
   })
   
-  // 停止扫描的 mutation
+  // Stop scan mutation
   const stopMutation = useMutation({
     mutationFn: stopScan,
     onSuccess: () => {
-      // 刷新列表数据
+      // Refresh list data
       queryClient.invalidateQueries({ queryKey: ['scans'] })
     },
   })
 
-  // 辅助函数 - 格式化日期
+  // Helper function - format date
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleString(getDateLocale(locale), {
       year: "numeric",
@@ -168,19 +168,19 @@ export function ScanHistoryList({ hideToolbar = false }: ScanHistoryListProps) {
     })
   }
 
-  // 导航函数
+  // Navigation function
   const router = useRouter()
   const navigate = (path: string) => {
     router.push(path)
   }
 
-  // 处理删除扫描记录
+  // Handle delete scan record
   const handleDeleteScan = (scan: ScanRecord) => {
     setScanToDelete(scan)
     setDeleteDialogOpen(true)
   }
 
-  // 确认删除扫描记录
+  // Confirm delete scan record
   const confirmDelete = async () => {
     if (!scanToDelete) return
 

@@ -136,7 +136,7 @@ export function QuickScanDialog({ trigger }: QuickScanDialogProps) {
       <DialogTrigger asChild>
         {trigger || (
           <div className="relative group">
-            {/* 边框流光效果 */}
+            {/* Border glow effect */}
             <div className="absolute -inset-[1px] rounded-md overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary to-transparent animate-border-flow" />
             </div>
@@ -163,7 +163,7 @@ export function QuickScanDialog({ trigger }: QuickScanDialogProps) {
         </DialogHeader>
 
         <div className="h-[380px]">
-          {/* 第一步：输入目标 */}
+          {/* Step 1: Enter targets */}
           {step === 1 && (
             <div className="flex flex-col h-full">
               <div className="flex-1 flex overflow-hidden border-t">
@@ -205,7 +205,7 @@ export function QuickScanDialog({ trigger }: QuickScanDialogProps) {
             </div>
           )}
           
-          {/* 第二步：选择引擎 */}
+          {/* Step 2: Select engine */}
           {step === 2 && (
             <div className="flex h-full">
               <div className="w-[260px] border-r flex flex-col shrink-0">
@@ -302,7 +302,7 @@ export function QuickScanDialog({ trigger }: QuickScanDialogProps) {
             </div>
           )}
           
-          {/* 第三步：确认 */}
+          {/* Step 3: Confirm */}
           {step === 3 && (
             <div className="flex h-full">
               <div className="w-[260px] border-r flex flex-col shrink-0">

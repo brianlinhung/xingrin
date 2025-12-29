@@ -12,7 +12,7 @@ import { Suspense } from "react"
 import { useAuth } from "@/hooks/use-auth"
 import { useRouter } from "next/navigation"
 
-// 不需要登录的公开路由
+// Public routes that don't require authentication
 const PUBLIC_ROUTES = ["/login"]
 
 interface AuthLayoutProps {
@@ -20,8 +20,8 @@ interface AuthLayoutProps {
 }
 
 /**
- * 认证布局组件
- * 根据登录状态和路由决定是否显示侧边栏
+ * Authentication layout component
+ * Decides whether to show sidebar based on login status and route
  */
 export function AuthLayout({ children }: AuthLayoutProps) {
   const pathname = usePathname()
@@ -29,19 +29,19 @@ export function AuthLayout({ children }: AuthLayoutProps) {
   const { data: auth, isLoading } = useAuth()
   const tCommon = useTranslations("common")
 
-  // 检查是否是公开路由（登录页）
+  // Check if it's a public route (login page)
   const isPublicRoute = PUBLIC_ROUTES.some((route) => 
     pathname.startsWith(route)
   )
 
-  // 未登录跳转登录页（useEffect 必须在所有条件返回之前）
+  // Redirect to login page if not authenticated (useEffect must be before all conditional returns)
   React.useEffect(() => {
     if (!isLoading && !auth?.authenticated && !isPublicRoute) {
       router.push("/login/")
     }
   }, [auth, isLoading, isPublicRoute, router])
 
-  // 如果是登录页，直接渲染内容（不带侧边栏）
+  // If it's login page, render content directly (without sidebar)
   if (isPublicRoute) {
     return (
       <>
@@ -51,12 +51,12 @@ export function AuthLayout({ children }: AuthLayoutProps) {
     )
   }
 
-  // 加载中或未登录
+  // Loading or not authenticated
   if (isLoading || !auth?.authenticated) {
     return <LoadingState message="loading..." />
   }
 
-  // 已登录显示完整布局（带侧边栏）
+  // Authenticated - show full layout (with sidebar)
   return (
     <SidebarProvider
       style={

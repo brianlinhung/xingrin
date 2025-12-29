@@ -7,19 +7,19 @@ import type { StatisticsHistoryItem } from "@/types/dashboard.types"
 import { useTranslations } from "next-intl"
 
 /**
- * 填充缺失的日期数据，确保始终返回完整的 days 天
- * 以最早一条记录的日期为基准，往前补齐，缺失的日期填充 0
+ * Fill missing date data, ensure always returning complete days
+ * Based on the earliest record date, fill backwards, missing dates filled with 0
  */
 function fillMissingDates(data: StatisticsHistoryItem[] | undefined, days: number): StatisticsHistoryItem[] {
   if (!data || data.length === 0) return []
   
-  // 构建日期到数据的映射
+  // Build mapping from date to data
   const dataMap = new Map(data.map(item => [item.date, item]))
   
-  // 找到最早的日期
+  // Find the earliest date
   const earliestDate = new Date(data[0].date)
   
-  // 生成完整的日期列表（从最早日期往前 days-1 天开始）
+  // Generate complete date list (starting from days-1 days before earliest date)
   const result: StatisticsHistoryItem[] = []
   const startDate = new Date(earliestDate)
   startDate.setDate(startDate.getDate() - (days - data.length))
@@ -33,7 +33,7 @@ function fillMissingDates(data: StatisticsHistoryItem[] | undefined, days: numbe
     if (existing) {
       result.push(existing)
     } else {
-      // 缺失的日期填充 0
+      // Fill missing dates with 0
       result.push({
         date: dateStr,
         totalTargets: 0,
@@ -62,10 +62,10 @@ import {
 } from "@/components/ui/chart"
 import { Skeleton } from "@/components/ui/skeleton"
 
-// 数据系列的 key 类型
+// Data series key type
 type SeriesKey = 'totalSubdomains' | 'totalIps' | 'totalEndpoints' | 'totalWebsites'
 
-// 所有系列
+// All series
 const ALL_SERIES: SeriesKey[] = ['totalSubdomains', 'totalIps', 'totalEndpoints', 'totalWebsites']
 
 export function AssetTrendChart() {
@@ -73,38 +73,38 @@ export function AssetTrendChart() {
   const [activeData, setActiveData] = useState<StatisticsHistoryItem | null>(null)
   const t = useTranslations("dashboard.assetTrend")
   
-  // 动态配置 chartConfig 使用翻译
+  // Dynamically configure chartConfig using translations
   const chartConfig = useMemo(() => ({
     totalSubdomains: {
       label: t("subdomains"),
-      color: "#3b82f6", // 蓝色
+      color: "#3b82f6", // Blue
     },
     totalIps: {
       label: t("ips"),
-      color: "#f97316", // 橙色
+      color: "#f97316", // Orange
     },
     totalEndpoints: {
       label: t("endpoints"),
-      color: "#eab308", // 黄色
+      color: "#eab308", // Yellow
     },
     totalWebsites: {
       label: t("websites"),
-      color: "#22c55e", // 绿色
+      color: "#22c55e", // Green
     },
   } satisfies ChartConfig), [t])
   
-  // 可见系列状态（默认全部显示）
+  // Visible series state (show all by default)
   const [visibleSeries, setVisibleSeries] = useState<Set<SeriesKey>>(new Set(ALL_SERIES))
   
-  // 当前悬停的折线
+  // Currently hovered line
   const [hoveredLine, setHoveredLine] = useState<SeriesKey | null>(null)
   
-  // 切换系列可见性
+  // Toggle series visibility
   const toggleSeries = (key: SeriesKey) => {
     setVisibleSeries(prev => {
       const next = new Set(prev)
       if (next.has(key)) {
-        // 至少保留一个可见
+        // Keep at least one visible
         if (next.size > 1) {
           next.delete(key)
         }
@@ -115,16 +115,16 @@ export function AssetTrendChart() {
     })
   }
 
-  // 填充缺失的日期，确保始终显示7天
+  // Fill missing dates, ensure always showing 7 days
   const data = useMemo(() => fillMissingDates(rawData, 7), [rawData])
 
-  // 格式化日期显示
+  // Format date display
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr)
     return `${date.getMonth() + 1}/${date.getDate()}`
   }
 
-  // 格式化大数字（1K, 1M 等）
+  // Format large numbers (1K, 1M etc.)
   const formatNumber = (value: number) => {
     if (value >= 1000000) {
       return `${(value / 1000000).toFixed(1)}M`
@@ -135,10 +135,10 @@ export function AssetTrendChart() {
     return value.toString()
   }
 
-  // 获取最新数据（使用原始数据中的最新值）
+  // Get latest data (use latest value from raw data)
   const latest = rawData && rawData.length > 0 ? rawData[rawData.length - 1] : null
   
-  // 显示的数据：悬停时显示悬停数据，否则显示最新数据
+  // Display data: show hovered data when hovering, otherwise show latest data
   const displayData = activeData || latest
 
   return (

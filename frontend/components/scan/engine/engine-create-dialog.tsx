@@ -26,7 +26,7 @@ interface EngineCreateDialogProps {
 }
 
 /**
- * 新建引擎弹窗
+ * Create new engine dialog
  */
 export function EngineCreateDialog({
   open,
@@ -44,11 +44,11 @@ export function EngineCreateDialog({
   const { currentTheme } = useColorTheme()
   const editorRef = React.useRef<any>(null)
 
-  // 默认 YAML 模板
-  const defaultYaml = `# 请在此处编写引擎配置 YAML
-# 可以参考 engine_config_example.yaml 文件中的配置示例`;
+  // Default YAML template
+  const defaultYaml = `# Please write engine configuration YAML here
+# You can refer to configuration examples in engine_config_example.yaml file`;
 
-  // 当对话框打开时，重置表单
+  // Reset form when dialog opens
   React.useEffect(() => {
     if (open) {
       setEngineName("")
@@ -57,7 +57,7 @@ export function EngineCreateDialog({
     }
   }, [open])
 
-  // 验证 YAML 语法
+  // Validate YAML syntax
   const validateYaml = (content: string) => {
     if (!content.trim()) {
       setYamlError(null)
@@ -79,28 +79,28 @@ export function EngineCreateDialog({
     }
   }
 
-  // 处理编辑器内容变化
+  // Handle editor content change
   const handleEditorChange = (value: string | undefined) => {
     const newValue = value || ""
     setYamlContent(newValue)
     validateYaml(newValue)
   }
 
-  // 处理编辑器挂载
+  // Handle editor mount
   const handleEditorDidMount = (editor: any) => {
     editorRef.current = editor
     setIsEditorReady(true)
   }
 
-  // 处理保存
+  // Handle save
   const handleSave = async () => {
-    // 验证引擎名称
+    // Validate engine name
     if (!engineName.trim()) {
       toast.error(tToast("engineNameRequired"))
       return
     }
 
-    // YAML 验证
+    // YAML validation
     if (!yamlContent.trim()) {
       toast.error(tToast("configRequired"))
       return
@@ -118,7 +118,7 @@ export function EngineCreateDialog({
       if (onSave) {
         await onSave(engineName, yamlContent)
       } else {
-        // TODO: 调用实际的 API 创建引擎
+        // TODO: Call actual API to create engine
         await new Promise(resolve => setTimeout(resolve, 1000))
       }
       
@@ -136,7 +136,7 @@ export function EngineCreateDialog({
     }
   }
 
-  // 处理关闭
+  // Handle close
   const handleClose = () => {
     if (engineName.trim() || yamlContent !== defaultYaml) {
       const confirmed = window.confirm(t("confirmClose"))
@@ -161,7 +161,7 @@ export function EngineCreateDialog({
 
           <div className="flex-1 overflow-hidden px-6 py-4">
             <div className="flex flex-col h-full gap-4">
-              {/* 引擎名称输入 */}
+              {/* Engine name input */}
               <div className="space-y-2">
                 <Label htmlFor="engine-name">
                   {t("engineName")} <span className="text-destructive">*</span>
@@ -176,11 +176,11 @@ export function EngineCreateDialog({
                 />
               </div>
 
-              {/* YAML 编辑器 */}
+              {/* YAML editor */}
               <div className="flex flex-col flex-1 min-h-0 gap-2">
                 <div className="flex items-center justify-between">
                   <Label>{t("yamlConfig")}</Label>
-                  {/* 语法验证状态 */}
+                  {/* Syntax validation status */}
                   <div className="flex items-center gap-2">
                     {yamlContent.trim() && (
                       yamlError ? (
@@ -241,7 +241,7 @@ export function EngineCreateDialog({
                   />
                 </div>
 
-                {/* 错误信息显示 */}
+                {/* Error message display */}
                 {yamlError && (
                   <div className="flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
                     <AlertCircle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />

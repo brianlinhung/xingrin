@@ -9,17 +9,17 @@ interface ColumnResizerProps<TData> {
 }
 
 /**
- * 统一的列宽调整手柄组件
+ * Unified column width adjustment handle component
  * 
- * 设计规范：
- * - 可点击区域宽度：8px (w-2)
- * - 定位在列右边缘内部
- * - TableHead 需要添加 pr-2 为 resizer 预留空间
- * - 视觉指示线宽度：2px (w-0.5)
- * - 高度：100% 填满表头
- * - 支持 mouse 和 touch 事件
- * - 双击重置列宽
- * - hover 时显示高亮指示线
+ * Design specifications:
+ * - Clickable area width: 8px (w-2)
+ * - Positioned inside the right edge of the column
+ * - TableHead needs to add pr-2 to reserve space for resizer
+ * - Visual indicator line width: 2px (w-0.5)
+ * - Height: 100% fills the table header
+ * - Supports mouse and touch events
+ * - Double-click to reset column width
+ * - Show highlight indicator line on hover
  */
 export function ColumnResizer<TData>({ header, className }: ColumnResizerProps<TData>) {
   if (!header.column.getCanResize()) {
@@ -45,13 +45,13 @@ export function ColumnResizer<TData>({ header, className }: ColumnResizerProps<T
         header.column.resetSize()
       }}
       className={cn(
-        // 可点击区域：8px 宽，定位在列右边缘
+        // Clickable area: 8px wide, positioned at column right edge
         "group absolute right-0 top-0 h-full w-2 cursor-col-resize select-none touch-none z-10",
         "flex items-center justify-center",
         className
       )}
     >
-      {/* 视觉指示线：2px 宽，80% 高，仅在 hover 或拖动时显示 */}
+      {/* Visual indicator line: 2px wide, 80% height, only show on hover or drag */}
       <div 
         className={cn(
           "w-0.5 h-4/5 rounded-full transition-all",

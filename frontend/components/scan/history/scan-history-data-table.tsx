@@ -30,8 +30,8 @@ interface ScanHistoryDataTableProps {
 }
 
 /**
- * 扫描历史数据表格组件
- * 使用 UnifiedDataTable 统一组件
+ * Scan history data table component
+ * Uses UnifiedDataTable unified component
  */
 export function ScanHistoryDataTable({
   data = [],
@@ -54,7 +54,7 @@ export function ScanHistoryDataTable({
   const t = useTranslations("common.status")
   const tScan = useTranslations("scan.history")
   
-  // 搜索本地状态
+  // Search local state
   const [localSearchValue, setLocalSearchValue] = React.useState(searchValue || "")
 
   React.useEffect(() => {
@@ -78,24 +78,24 @@ export function ScanHistoryDataTable({
       data={data}
       columns={columns}
       getRowId={(row) => String(row.id)}
-      // 分页
+      // Pagination
       pagination={externalPagination}
       setPagination={setExternalPagination}
       paginationInfo={paginationInfo}
       onPaginationChange={onPaginationChange}
       hidePagination={hidePagination}
-      // 选择
+      // Selection
       onSelectionChange={onSelectionChange}
-      // 批量操作
+      // Bulk operations
       onBulkDelete={onBulkDelete}
       bulkDeleteLabel="Delete"
       onAddNew={onAddNew}
       addButtonLabel={addButtonText || tScan("title")}
-      // 工具栏
+      // Toolbar
       hideToolbar={hideToolbar}
-      // 空状态
+      // Empty state
       emptyMessage={t("noData")}
-      // 自定义搜索框
+      // Custom search box
       toolbarLeft={
         <div className="flex items-center space-x-2">
           <Input

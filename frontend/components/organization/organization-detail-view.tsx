@@ -26,8 +26,8 @@ import type { Target } from "@/types/target.types"
 import { toast } from "sonner"
 
 /**
- * 组织详情视图组件
- * 显示组织的统计信息和目标列表
+ * Organization detail view component
+ * Displays organization statistics and target list
  */
 export function OrganizationDetailView({
   organizationId
@@ -40,7 +40,7 @@ export function OrganizationDetailView({
   const [targetToDelete, setTargetToDelete] = useState<Target | null>(null)
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false)
 
-  // 国际化
+  // Internationalization
   const tColumns = useTranslations("columns")
   const tCommon = useTranslations("common")
   const tTooltips = useTranslations("tooltips")
@@ -49,7 +49,7 @@ export function OrganizationDetailView({
   const tOrg = useTranslations("organization")
   const locale = useLocale()
 
-  // 构建翻译对象
+  // Build translation object
   const translations = useMemo(() => ({
     columns: {
       targetName: tColumns("target.target"),
@@ -72,13 +72,13 @@ export function OrganizationDetailView({
     },
   }), [tColumns, tCommon, tTooltips, tTarget])
 
-  // 分页状态
+  // Pagination state
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
   })
 
-  // 搜索状态
+  // Search state
   const [searchQuery, setSearchQuery] = useState("")
   const [isSearching, setIsSearching] = useState(false)
 
@@ -88,17 +88,17 @@ export function OrganizationDetailView({
     setPagination((prev) => ({ ...prev, pageIndex: 0 }))
   }
 
-  // 使用解除关联 mutation
+  // Use unlink targets mutation
   const unlinkTargets = useUnlinkTargetsFromOrganization()
 
-  // 使用 React Query 获取组织基本信息
+  // Use React Query to get organization basic info
   const {
     data: organization,
     isLoading: isLoadingOrg,
     error: orgError,
   } = useOrganization(parseInt(organizationId))
 
-  // 使用 React Query 获取组织的目标列表
+  // Use React Query to get organization's target list
   const {
     data: targetsData,
     isLoading: isLoadingTargets,
@@ -114,7 +114,7 @@ export function OrganizationDetailView({
     }
   )
 
-  // 当请求完成时重置搜索状态
+  // Reset search state when request completes
   React.useEffect(() => {
     if (!isFetchingTargets && isSearching) {
       setIsSearching(false)
@@ -124,7 +124,7 @@ export function OrganizationDetailView({
   const isLoading = isLoadingOrg || isLoadingTargets
   const error = orgError || targetsError
 
-  // 辅助函数 - 格式化日期
+  // Helper function - format date
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleString(getDateLocale(locale), {
       year: "numeric",
@@ -137,19 +137,19 @@ export function OrganizationDetailView({
     })
   }
 
-  // 导航函数
+  // Navigation function
   const router = useRouter()
   const navigate = (path: string) => {
     router.push(path)
   }
 
-  // 处理解除关联目标
+  // Handle unlink target
   const handleDeleteTarget = (target: Target) => {
     setTargetToDelete(target)
     setDeleteDialogOpen(true)
   }
 
-  // 确认解除关联目标
+  // Confirm unlink target
   const confirmDelete = async () => {
     if (!targetToDelete) return
 
@@ -157,14 +157,14 @@ export function OrganizationDetailView({
     const targetId = targetToDelete.id
     setTargetToDelete(null)
 
-    // 调用解除关联 API
+    // Call unlink API
     unlinkTargets.mutate({
       organizationId: parseInt(organizationId),
       targetIds: [targetId]
     })
   }
 
-  // 处理批量解除关联
+  // Handle bulk unlink
   const handleBulkDelete = () => {
     if (selectedTargets.length === 0) {
       return
@@ -172,7 +172,7 @@ export function OrganizationDetailView({
     setBulkDeleteDialogOpen(true)
   }
 
-  // 确认批量解除关联
+  // Confirm bulk unlink
   const confirmBulkDelete = async () => {
     if (selectedTargets.length === 0) return
 
@@ -181,31 +181,31 @@ export function OrganizationDetailView({
     setBulkDeleteDialogOpen(false)
     setSelectedTargets([])
 
-    // 调用批量解除关联 API
+    // Call bulk unlink API
     unlinkTargets.mutate({
       organizationId: parseInt(organizationId),
       targetIds
     })
   }
 
-  // 处理添加目标
+  // Handle add target
   const handleAddTarget = () => {
     setIsAddDialogOpen(true)
   }
 
-  // 处理添加成功
+  // Handle add success
   const handleAddSuccess = () => {
     setIsAddDialogOpen(false)
     refetch()
   }
 
-  // 处理分页变化
+  // Handle pagination change
   const handlePaginationChange = (newPagination: { pageIndex: number; pageSize: number }) => {
     setPagination(newPagination)
     setSelectedTargets([])
   }
 
-  // 创建列定义
+  // Create column definitions
   const targetColumns = useMemo(
     () =>
       createTargetColumns({
@@ -217,7 +217,7 @@ export function OrganizationDetailView({
     [formatDate, navigate, handleDeleteTarget, translations]
   )
 
-  // 错误状态
+  // Error state
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
@@ -238,11 +238,11 @@ export function OrganizationDetailView({
     )
   }
 
-  // 加载状态
+  // Loading state
   if (isLoading) {
     return (
       <div className="flex flex-col gap-4 px-4 lg:px-6">
-        {/* 页面头部骨架 */}
+        {/* Page header skeleton */}
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Skeleton className="h-8 w-8 rounded-md" />
@@ -251,7 +251,7 @@ export function OrganizationDetailView({
           <Skeleton className="h-4 w-96" />
         </div>
 
-        {/* 表格骨架 */}
+        {/* Table skeleton */}
         <Skeleton className="h-96 w-full" />
       </div>
     )
@@ -267,14 +267,14 @@ export function OrganizationDetailView({
     )
   }
 
-  // 计算统计数据
+  // Calculate statistics
   const stats = {
     totalTargets: targetsData?.total || 0,
   }
 
   return (
     <>
-      {/* 页面头部 - 简洁版 */}
+      {/* Page header - simplified version */}
       <div className="px-4 lg:px-6">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
@@ -294,7 +294,7 @@ export function OrganizationDetailView({
         </div>
       </div>
 
-      {/* 目标列表 */}
+      {/* Target list */}
       <div className="px-4 lg:px-6">
         <TargetsDataTable
           data={targetsData?.results || []}
@@ -319,7 +319,7 @@ export function OrganizationDetailView({
         />
       </div>
 
-      {/* 添加目标对话框 */}
+      {/* Add target dialog */}
       <AddTargetDialog
         organizationId={parseInt(organizationId)}
         organizationName={organization.name}
@@ -328,7 +328,7 @@ export function OrganizationDetailView({
         onOpenChange={setIsAddDialogOpen}
       />
 
-      {/* 解除关联确认对话框 */}
+      {/* Unlink confirmation dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -349,7 +349,7 @@ export function OrganizationDetailView({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* 批量解除关联确认对话框 */}
+      {/* Bulk unlink confirmation dialog */}
       <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

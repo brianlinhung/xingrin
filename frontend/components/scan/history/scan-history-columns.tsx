@@ -38,7 +38,7 @@ import {
   IconBug,
 } from "@tabler/icons-react"
 
-// 翻译类型定义
+// Translation type definitions
 export interface ScanHistoryTranslations {
   columns: {
     target: string
@@ -77,7 +77,7 @@ export interface ScanHistoryTranslations {
 }
 
 /**
- * 状态徽章组件
+ * Status badge component
  */
 function StatusBadge({ 
   status, 
@@ -152,7 +152,7 @@ function StatusBadge({
   return badge
 }
 
-// 列创建函数的参数类型
+// Column creation function parameter types
 interface CreateColumnsProps {
   formatDate: (dateString: string) => string
   navigate: (path: string) => void
@@ -163,7 +163,7 @@ interface CreateColumnsProps {
 }
 
 /**
- * 创建扫描历史表格列定义
+ * Create scan history table column definitions
  */
 export const createScanHistoryColumns = ({
   formatDate,

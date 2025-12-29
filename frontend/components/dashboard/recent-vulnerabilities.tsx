@@ -27,7 +27,7 @@ import type { VulnerabilitySeverity } from "@/types/vulnerability.types"
 import { useTranslations } from "next-intl"
 import { useLocale } from "next-intl"
 
-// 统一的漏洞严重程度颜色配置（与图表一致）
+// Unified vulnerability severity color configuration (consistent with charts)
 const severityStyles: Record<VulnerabilitySeverity, string> = {
   critical: "bg-[#da3633]/10 text-[#da3633] border border-[#da3633]/20 dark:text-[#f85149]",
   high: "bg-[#d29922]/10 text-[#d29922] border border-[#d29922]/20",

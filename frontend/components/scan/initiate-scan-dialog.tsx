@@ -120,7 +120,7 @@ export function InitiateScanDialog({
         </DialogHeader>
 
         <div className="flex border-t h-[480px]">
-          {/* 左侧引擎列表 */}
+          {/* Left side engine list */}
           <div className="w-[260px] border-r flex flex-col shrink-0">
             <div className="px-4 py-3 border-b bg-muted/30 shrink-0">
               <h3 className="text-sm font-medium">{t("selectEngineTitle")}</h3>
@@ -190,7 +190,7 @@ export function InitiateScanDialog({
             </div>
           </div>
 
-          {/* 右侧引擎详情 */}
+          {/* Right side engine details */}
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
             {selectedEngine ? (
               <>

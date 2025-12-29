@@ -19,14 +19,14 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 
-// 可用的筛选字段定义
+// Available filter field definitions
 export interface FilterField {
   key: string
   label: string
   description: string
 }
 
-// 预定义的字段配置，各页面可以选择使用
+// Predefined field configurations, pages can choose to use
 export const PREDEFINED_FIELDS: Record<string, FilterField> = {
   ip: { key: "ip", label: "IP", description: "IP address" },
   port: { key: "port", label: "Port", description: "Port number" },
@@ -42,7 +42,7 @@ export const PREDEFINED_FIELDS: Record<string, FilterField> = {
   type: { key: "type", label: "Type", description: "Type" },
 }
 
-// 获取翻译后的预定义字段
+// Get translated predefined fields
 export function getTranslatedFields(t: (key: string) => string): Record<string, FilterField> {
   return {
     ip: { key: "ip", label: "IP", description: t("fields.ip") },
@@ -60,14 +60,14 @@ export function getTranslatedFields(t: (key: string) => string): Record<string, 
   }
 }
 
-// 默认字段（IP Addresses 页面）
+// Default fields (IP Addresses page)
 const DEFAULT_FIELDS: FilterField[] = [
   PREDEFINED_FIELDS.ip,
   PREDEFINED_FIELDS.port,
   PREDEFINED_FIELDS.host,
 ]
 
-// 解析筛选表达式 (FOFA 风格)
+// Parse filter expression (FOFA style)
 interface ParsedFilter {
   field: string
   operator: string
@@ -77,9 +77,9 @@ interface ParsedFilter {
 
 function parseFilterExpression(input: string): ParsedFilter[] {
   const filters: ParsedFilter[] = []
-  // 匹配 FOFA 风格: field="value", field=="value", field!="value"
-  // == 精确匹配, = 模糊匹配, != 不等于
-  // 支持逗号分隔多值: port="80,443,8080"
+  // Match FOFA style: field="value", field=="value", field!="value"
+  // == exact match, = fuzzy match, != not equals
+  // Support comma-separated multiple values: port="80,443,8080"
   const regex = /(\w+)(==|!=|=)"([^"]+)"/g
   let match
 
@@ -92,12 +92,12 @@ function parseFilterExpression(input: string): ParsedFilter[] {
 }
 
 interface SmartFilterInputProps {
-  /** 可用的筛选字段，不传则使用默认字段 */
+  /** Available filter fields, uses default fields if not provided */
   fields?: FilterField[]
-  /** 组合示例（使用逻辑运算符拼接的完整示例） */
+  /** Combination examples (complete examples using logical operators) */
   examples?: string[]
   placeholder?: string
-  /** 受控模式：当前过滤值 */
+  /** Controlled mode: current filter value */
   value?: string
   onSearch?: (filters: ParsedFilter[], rawQuery: string) => void
   className?: string
@@ -119,54 +119,54 @@ export function SmartFilterInput({
   const savedScrollTop = React.useRef<number | null>(null)
   const hasInitialized = React.useRef(false)
 
-  // 同步外部 value 变化
+  // Synchronize external value changes
   React.useEffect(() => {
     if (value !== undefined) {
       setInputValue(value)
     }
   }, [value])
 
-  // 当 Popover 打开时，恢复滚动位置（首次打开时滚动到顶部）
+  // When Popover opens, restore scroll position (scroll to top on first open)
   React.useEffect(() => {
     if (open) {
       const restoreScroll = () => {
         if (listRef.current) {
           if (!hasInitialized.current) {
-            // 首次打开，滚动到顶部
+            // First open, scroll to top
             listRef.current.scrollTop = 0
             hasInitialized.current = true
           } else if (savedScrollTop.current !== null) {
-            // 之后恢复保存的滚动位置
+            // Later restore saved scroll position
             listRef.current.scrollTop = savedScrollTop.current
           }
         }
       }
-      // 立即执行一次
+      // Execute immediately
       restoreScroll()
-      // 延迟执行确保 Popover 动画完成
+      // Delayed execution to ensure Popover animation completes
       const timer = setTimeout(restoreScroll, 50)
       return () => clearTimeout(timer)
     } else {
-      // Popover 关闭时保存滚动位置
+      // Save scroll position when Popover closes
       if (listRef.current) {
         savedScrollTop.current = listRef.current.scrollTop
       }
     }
   }, [open])
 
-  // 生成默认 placeholder（使用第一个示例或字段组合）
+  // Generate default placeholder (use first example or field combination)
   const defaultPlaceholder = React.useMemo(() => {
     if (examples && examples.length > 0) {
       return examples[0]
     }
-    // 使用字段生成简单示例
+    // Use fields to generate simple example
     return fields.slice(0, 2).map(f => `${f.key}="..."`).join(" && ")
   }, [fields, examples])
 
-  // 解析当前输入
+  // Parse current input
   const parsedFilters = parseFilterExpression(inputValue)
 
-  // 获取当前正在输入的词
+  // Get current word being typed
   const getCurrentWord = () => {
     const words = inputValue.split(/\s+/)
     return words[words.length - 1] || ""
@@ -174,10 +174,10 @@ export function SmartFilterInput({
 
   const currentWord = getCurrentWord()
 
-  // 判断是否显示字段建议 (FOFA 风格用 = 而不是 :)
+  // Determine whether to show field suggestions (FOFA style uses = instead of :)
   const showFieldSuggestions = !currentWord.includes("=")
 
-  // 处理选择建议 (FOFA 风格: field="")，然后关闭弹窗
+  // Handle selecting suggestion (FOFA style: field=""), then close popover
   const handleSelectSuggestion = (suggestion: string) => {
     const words = inputValue.split(/\s+/)
     words[words.length - 1] = suggestion
@@ -187,13 +187,13 @@ export function SmartFilterInput({
     inputRef.current?.blur()
   }
 
-  // 处理搜索
+  // Handle search
   const handleSearch = () => {
     onSearch?.(parsedFilters, inputValue)
     setOpen(false)
   }
 
-  // 处理键盘事件
+  // Handle keyboard events
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
@@ -204,7 +204,7 @@ export function SmartFilterInput({
     }
   }
 
-  // 附加示例到输入框（而非覆盖），然后关闭弹窗
+  // Append example to input box (not overwrite), then close popover
   const handleAppendExample = (example: string) => {
     const trimmed = inputValue.trim()
     const newValue = trimmed ? `${trimmed} ${example}` : example
@@ -228,12 +228,12 @@ export function SmartFilterInput({
               }}
               onFocus={() => setOpen(true)}
               onBlur={(e) => {
-                // 如果焦点转移到 Popover 内部或输入框自身，不关闭
+                // If focus moves to inside Popover or input itself, don't close
                 const relatedTarget = e.relatedTarget as HTMLElement | null
                 if (relatedTarget?.closest('[data-radix-popper-content-wrapper]')) {
                   return
                 }
-                // 延迟关闭，让 CommandItem 的 onSelect 先执行
+                // Delay close to let CommandItem's onSelect execute first
                 setTimeout(() => setOpen(false), 150)
               }}
               onKeyDown={handleKeyDown}
@@ -254,7 +254,7 @@ export function SmartFilterInput({
           onOpenAutoFocus={(e) => e.preventDefault()}
           onCloseAutoFocus={(e) => e.preventDefault()}
           onPointerDownOutside={(e) => {
-            // 如果点击的是输入框，不关闭弹窗
+            // If clicking on input box, don't close popover
             if (inputRef.current?.contains(e.target as Node)) {
               e.preventDefault()
             }
@@ -262,7 +262,7 @@ export function SmartFilterInput({
         >
           <Command>
             <CommandList ref={listRef}>
-              {/* 已解析的筛选条件预览 */}
+              {/* Preview of parsed filter conditions */}
               {parsedFilters.length > 0 && (
                 <CommandGroup heading={t("groups.activeFilters")}>
                   <div className="flex flex-wrap gap-1 px-2 py-1">
@@ -275,7 +275,7 @@ export function SmartFilterInput({
                 </CommandGroup>
               )}
 
-              {/* 可用字段 */}
+              {/* Available fields */}
               {showFieldSuggestions && (
                 <CommandGroup heading={t("groups.availableFields")}>
                   <div className="flex flex-wrap gap-1 px-2 py-1">
@@ -295,10 +295,10 @@ export function SmartFilterInput({
                 </CommandGroup>
               )}
 
-              {/* 语法帮助 */}
+              {/* Syntax help */}
               <CommandGroup heading={t("groups.syntax")}>
                 <div className="px-2 py-1.5 text-xs text-muted-foreground space-y-2">
-                  {/* 匹配操作符 */}
+                  {/* Match operators */}
                   <div className="space-y-1">
                     <div className="font-medium text-foreground/80">{t("syntax.operators")}</div>
                     <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
@@ -310,7 +310,7 @@ export function SmartFilterInput({
                       <span>{t("syntax.notEquals")}</span>
                     </div>
                   </div>
-                  {/* 逻辑运算符 */}
+                  {/* Logical operators */}
                   <div className="space-y-1 pt-1 border-t border-muted">
                     <div className="font-medium text-foreground/80">{t("syntax.logic")}</div>
                     <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
@@ -323,7 +323,7 @@ export function SmartFilterInput({
                 </div>
               </CommandGroup>
 
-              {/* 示例 */}
+              {/* Examples */}
               {examples && examples.length > 0 && (
                 <CommandGroup heading={t("groups.examples")}>
                   {examples.map((example, i) => (

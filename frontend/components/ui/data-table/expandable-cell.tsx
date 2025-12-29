@@ -104,21 +104,21 @@ export function ExpandableCell({
 }
 
 /**
- * URL 专用的可展开单元格
+ * URL-specific expandable cell
  */
 export function ExpandableUrlCell(props: Omit<ExpandableCellProps, "variant">) {
   return <ExpandableCell {...props} variant="url" />
 }
 
 /**
- * 代码/等宽字体的可展开单元格
+ * Code/monospace font expandable cell
  */
 export function ExpandableMonoCell(props: Omit<ExpandableCellProps, "variant">) {
   return <ExpandableCell {...props} variant="mono" />
 }
 
 // ============================================================================
-// Badge 列表相关组件
+// Badge list related components
 // ============================================================================
 
 export interface BadgeItem {
@@ -127,28 +127,28 @@ export interface BadgeItem {
 }
 
 export interface ExpandableBadgeListProps {
-  /** Badge 项目列表 */
+  /** Badge item list */
   items: BadgeItem[] | null | undefined
-  /** 默认显示的数量，默认 2 */
+  /** Default display count, default 2 */
   maxVisible?: number
-  /** Badge 变体 */
+  /** Badge variant */
   variant?: "default" | "secondary" | "outline" | "destructive"
-  /** 空值时显示的占位符 */
+  /** Placeholder when value is empty */
   placeholder?: string
-  /** 额外的 CSS 类名 */
+  /** Additional CSS class name */
   className?: string
-  /** 点击 Badge 时的回调 */
+  /** Callback when Badge is clicked */
   onItemClick?: (item: BadgeItem) => void
 }
 
 /**
- * 可展开的 Badge 列表组件
+ * Expandable Badge list component
  * 
- * 特性：
- * - 默认显示前 N 个 Badge（可配置）
- * - 超过数量时显示展开按钮
- * - 点击展开按钮显示所有 Badge
- * - 展开后显示收起按钮
+ * Features:
+ * - Default display first N Badges (configurable)
+ * - Show expand button when exceeding count
+ * - Click expand button to show all Badges
+ * - Show collapse button after expansion
  */
 export function ExpandableBadgeList({
   items,
@@ -207,26 +207,26 @@ export function ExpandableBadgeList({
 }
 
 // ============================================================================
-// 字符串列表相关组件
+// String list related components
 // ============================================================================
 
 export interface ExpandableTagListProps {
-  /** 标签列表 */
+  /** Tag list */
   items: string[] | null | undefined
-  /** 默认显示的数量，默认 3 */
+  /** Default display count, default 3 */
   maxVisible?: number
-  /** Badge 变体 */
+  /** Badge variant */
   variant?: "default" | "secondary" | "outline" | "destructive"
-  /** 空值时显示的占位符 */
+  /** Placeholder when value is empty */
   placeholder?: string
-  /** 额外的 CSS 类名 */
+  /** Additional CSS class name */
   className?: string
 }
 
 /**
- * 可展开的标签列表组件（用于字符串数组）
+ * Expandable tag list component (for string arrays)
  * 
- * 适用于 tech 列表、tags 列表等场景
+ * Suitable for tech lists, tags lists and other scenarios
  */
 export function ExpandableTagList({
   items,

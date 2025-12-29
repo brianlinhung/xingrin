@@ -27,8 +27,8 @@ export type AssetType = 'endpoint' | 'website' | 'directory'
 interface BulkAddUrlsDialogProps {
   targetId: number
   assetType: AssetType
-  targetName?: string      // 目标名称（用于 URL 匹配校验）
-  targetType?: TargetType  // 目标类型（domain/ip/cidr）
+  targetName?: string      // Target name (used for URL matching validation)
+  targetType?: TargetType  // Target type (domain/ip/cidr)
   open?: boolean
   onOpenChange?: (open: boolean) => void
   onSuccess?: () => void
@@ -36,28 +36,28 @@ interface BulkAddUrlsDialogProps {
 
 const ASSET_TYPE_LABELS: Record<AssetType, { title: string; description: string; placeholder: string }> = {
   endpoint: {
-    title: '批量添加端点',
-    description: '输入端点 URL 列表，每行一个。',
-    placeholder: `请输入端点 URL，每行一个
-例如：
+    title: 'Bulk Add Endpoints',
+    description: 'Enter endpoint URL list, one per line.',
+    placeholder: `Please enter endpoint URLs, one per line
+Example:
 https://example.com/api/v1
 https://example.com/api/v2
 https://example.com/login`,
   },
   website: {
-    title: '批量添加网站',
-    description: '输入网站 URL 列表，每行一个。',
-    placeholder: `请输入网站 URL，每行一个
-例如：
+    title: 'Bulk Add Websites',
+    description: 'Enter website URL list, one per line.',
+    placeholder: `Please enter website URLs, one per line
+Example:
 https://example.com
 https://www.example.com
 https://api.example.com`,
   },
   directory: {
-    title: '批量添加目录',
-    description: '输入目录 URL 列表，每行一个。',
-    placeholder: `请输入目录 URL，每行一个
-例如：
+    title: 'Bulk Add Directories',
+    description: 'Enter directory URL list, one per line.',
+    placeholder: `Please enter directory URLs, one per line
+Example:
 https://example.com/admin
 https://example.com/api
 https://example.com/uploads`,
@@ -65,10 +65,10 @@ https://example.com/uploads`,
 }
 
 /**
- * 批量添加 URL 弹窗组件
+ * Bulk add URLs dialog component
  * 
- * 支持 Endpoints、Websites、Directories 三种资产类型。
- * 提供带行号的文本输入框，支持实时验证和错误提示。
+ * Supports three asset types: Endpoints, Websites, Directories.
+ * Provides text input with line numbers, supports real-time validation and error hints.
  */
 export function BulkAddUrlsDialog({
   targetId,
@@ -81,15 +81,15 @@ export function BulkAddUrlsDialog({
 }: BulkAddUrlsDialogProps) {
   const tBulkAdd = useTranslations("bulkAdd.common")
   
-  // 对话框开关状态
+  // Dialog open/close state
   const [internalOpen, setInternalOpen] = useState(false)
   const open = externalOpen !== undefined ? externalOpen : internalOpen
   const setOpen = externalOnOpenChange || setInternalOpen
 
-  // 表单数据状态
+  // Form data state
   const [inputText, setInputText] = useState("")
 
-  // 验证结果状态
+  // Validation result state
   const [validationResult, setValidationResult] = useState<{
     validCount: number
     invalidCount: number
@@ -99,16 +99,16 @@ export function BulkAddUrlsDialog({
     firstMismatch?: { index: number; url: string }
   } | null>(null)
 
-  // 行号列和输入框的 ref（用于同步滚动）
+  // Line number column and textarea refs (for synchronized scrolling)
   const lineNumbersRef = useRef<HTMLDivElement | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
-  // 使用批量创建 mutation
+  // Use bulk create mutations
   const bulkCreateEndpoints = useBulkCreateEndpoints()
   const bulkCreateWebsites = useBulkCreateWebsites()
   const bulkCreateDirectories = useBulkCreateDirectories()
 
-  // 根据资产类型选择对应的 mutation
+  // Select corresponding mutation based on asset type
   const getMutation = () => {
     switch (assetType) {
       case 'endpoint':
@@ -123,11 +123,11 @@ export function BulkAddUrlsDialog({
   const mutation = getMutation()
   const labels = ASSET_TYPE_LABELS[assetType]
 
-  // 处理输入变化
+  // Handle input changes
   const handleInputChange = (value: string) => {
     setInputText(value)
 
-    // 解析并验证
+    // Parse and validate
     const parsed = URLValidator.parse(value)
     if (parsed.length === 0) {
       setValidationResult(null)
@@ -156,14 +156,14 @@ export function BulkAddUrlsDialog({
     })
   }
 
-  // 处理表单提交
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!inputText.trim()) return
     if (!validationResult || validationResult.validCount === 0) return
 
-    // 解析有效的 URL
+    // Parse valid URLs
     const parsed = URLValidator.parse(inputText)
     const result = URLValidator.validateBatch(parsed)
 
@@ -171,19 +171,19 @@ export function BulkAddUrlsDialog({
       { targetId, urls: result.urls },
       {
         onSuccess: () => {
-          // 重置表单
+          // Reset form
           setInputText("")
           setValidationResult(null)
-          // 关闭对话框
+          // Close dialog
           setOpen(false)
-          // 调用外部回调
+          // Call external callback
           onSuccess?.()
         },
       }
     )
   }
 
-  // 处理对话框关闭
+  // Handle dialog close
   const handleOpenChange = (newOpen: boolean) => {
     if (!mutation.isPending) {
       setOpen(newOpen)
@@ -194,20 +194,20 @@ export function BulkAddUrlsDialog({
     }
   }
 
-  // 同步滚动
+  // Synchronized scrolling
   const handleTextareaScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
     if (lineNumbersRef.current) {
       lineNumbersRef.current.scrollTop = e.currentTarget.scrollTop
     }
   }
 
-  // 计算行数
+  // Calculate line count
   const lineCount = Math.max(inputText.split("\n").length, 8)
 
-  // 表单验证：有效数量 > 0，无效数量 = 0，不匹配数量 = 0（CIDR 类型除外）
+  // Form validation: valid count > 0, invalid count = 0, mismatch count = 0 (except CIDR type)
   const hasMismatchError = validationResult !== null && 
     validationResult.mismatchedCount > 0 && 
-    targetType !== 'cidr'  // CIDR 类型前端无法校验，不阻止提交
+    targetType !== 'cidr'  // CIDR type cannot be validated on frontend, don't block submission
   
   const isFormValid =
     inputText.trim().length > 0 &&
@@ -222,7 +222,7 @@ export function BulkAddUrlsDialog({
         <DialogTrigger asChild>
           <Button size="sm" variant="outline">
             <Plus className="h-4 w-4" />
-            批量添加
+            Bulk Add
           </Button>
         </DialogTrigger>
       )}
@@ -242,10 +242,10 @@ export function BulkAddUrlsDialog({
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="urls">
-                URL 列表 <span className="text-destructive">*</span>
+                URL List <span className="text-destructive">*</span>
               </Label>
               <div className="flex border rounded-md overflow-hidden h-[220px]">
-                {/* 行号列 */}
+                {/* Line number column */}
                 <div className="flex-shrink-0 w-12 border-r bg-muted/50">
                   <div
                     ref={lineNumbersRef}
@@ -258,7 +258,7 @@ export function BulkAddUrlsDialog({
                     ))}
                   </div>
                 </div>
-                {/* 输入框 */}
+                {/* Input box */}
                 <div className="flex-1 overflow-hidden">
                   <Textarea
                     ref={textareaRef}
@@ -274,30 +274,30 @@ export function BulkAddUrlsDialog({
                 </div>
               </div>
 
-              {/* 验证摘要 */}
+              {/* Validation summary */}
               {validationResult && (
                 <div className="text-xs space-y-1">
                   <div className="text-muted-foreground">
-                    有效: {validationResult.validCount} 个
+                    Valid: {validationResult.validCount} items
                     {validationResult.duplicateCount > 0 && (
                       <span className="text-yellow-600 ml-2">
-                        重复: {validationResult.duplicateCount} 个
+                        Duplicate: {validationResult.duplicateCount} items
                       </span>
                     )}
                     {validationResult.invalidCount > 0 && (
                       <span className="text-destructive ml-2">
-                        无效: {validationResult.invalidCount} 个
+                        Invalid: {validationResult.invalidCount} items
                       </span>
                     )}
                     {validationResult.mismatchedCount > 0 && (
                       <span className="text-destructive ml-2">
-                        不匹配: {validationResult.mismatchedCount} 个
+                        Mismatched: {validationResult.mismatchedCount} items
                       </span>
                     )}
                   </div>
                   {validationResult.firstError && (
                     <div className="text-destructive">
-                      第 {validationResult.firstError.index + 1} 行: &quot;
+                      Line {validationResult.firstError.index + 1}: &quot;
                       {validationResult.firstError.url.length > 50 
                         ? validationResult.firstError.url.substring(0, 50) + '...'
                         : validationResult.firstError.url}&quot; -{" "}
@@ -306,11 +306,11 @@ export function BulkAddUrlsDialog({
                   )}
                   {validationResult.firstMismatch && !validationResult.firstError && (
                     <div className="text-destructive">
-                      第 {validationResult.firstMismatch.index + 1} 行: &quot;
+                      Line {validationResult.firstMismatch.index + 1}: &quot;
                       {validationResult.firstMismatch.url.length > 50 
                         ? validationResult.firstMismatch.url.substring(0, 50) + '...'
                         : validationResult.firstMismatch.url}&quot; - 
-                      URL 不属于目标 {targetName}，请移除后再提交
+                      URL does not belong to target {targetName}, please remove before submitting
                     </div>
                   )}
                 </div>
@@ -325,7 +325,7 @@ export function BulkAddUrlsDialog({
               onClick={() => handleOpenChange(false)}
               disabled={mutation.isPending}
             >
-              取消
+              Cancel
             </Button>
             <Button
               type="submit"
@@ -334,12 +334,12 @@ export function BulkAddUrlsDialog({
               {mutation.isPending ? (
                 <>
                   <LoadingSpinner />
-                  创建中...
+                  Creating...
                 </>
               ) : (
                 <>
                   <Plus className="h-4 w-4" />
-                  批量添加
+                  Bulk Add
                 </>
               )}
             </Button>

@@ -19,7 +19,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { useTranslations } from "next-intl"
 
-// 使用 CSS 变量，跟随主题变化
+// Use CSS variables, follow theme changes
 const COLORS = {
   subdomain: "var(--chart-1)",
   ip: "var(--chart-2)",

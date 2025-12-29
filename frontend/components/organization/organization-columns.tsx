@@ -24,7 +24,7 @@ import Link from "next/link"
 
 import type { Organization } from "@/types/organization.types"
 
-// 翻译类型定义
+// Translation type definitions
 export interface OrganizationTranslations {
   columns: {
     organization: string
@@ -46,7 +46,7 @@ export interface OrganizationTranslations {
   }
 }
 
-// 列创建函数的参数类型
+// Column creation function parameter types
 interface CreateColumnsProps {
   formatDate: (dateString: string) => string
   navigate: (path: string) => void
@@ -58,7 +58,7 @@ interface CreateColumnsProps {
 }
 
 /**
- * 组织行操作组件
+ * Organization row actions component
  */
 function OrganizationRowActions({ 
   onScheduleScan,
@@ -105,7 +105,7 @@ function OrganizationRowActions({
 }
 
 /**
- * 创建组织表格列定义
+ * Create organization table column definitions
  */
 export const createOrganizationColumns = ({
   formatDate,

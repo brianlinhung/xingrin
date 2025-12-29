@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { UnifiedDataTable } from "@/components/ui/data-table"
 import type { ScanEngine } from "@/types/engine.types"
 
-// 组件属性类型定义
+// Component props type definitions
 interface EngineDataTableProps {
   data: ScanEngine[]
   columns: ColumnDef<ScanEngine>[]
@@ -18,8 +18,8 @@ interface EngineDataTableProps {
 }
 
 /**
- * 扫描引擎数据表格组件
- * 使用 UnifiedDataTable 统一组件
+ * Scan engine data table component
+ * Uses UnifiedDataTable unified component
  */
 export function EngineDataTable({
   data = [],
@@ -31,10 +31,10 @@ export function EngineDataTable({
   const t = useTranslations("common.status")
   const tEngine = useTranslations("scan.engine")
   
-  // 本地搜索状态
+  // Local search state
   const [searchValue, setSearchValue] = React.useState("")
 
-  // 过滤数据（本地过滤）
+  // Filter data (local filtering)
   const filteredData = React.useMemo(() => {
     if (!searchValue) return data
     return data.filter((item) => {
