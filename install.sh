@@ -207,14 +207,20 @@ auto_fill_docker_env_secrets() {
 }
 
 # 配置 Docker 镜像加速
-# 使用国内公共镜像源，无需注册
+# 使用国内公共镜像源（pull-through cache 模式，首次拉取会从 Docker Hub 同步）
 configure_docker_mirror() {
     local daemon_json="/etc/docker/daemon.json"
     
-    # 国内可用的 Docker 镜像源（按优先级排序）
+    # 这些镜像源采用 pull-through cache 模式：
+    # - 首次拉取：从 Docker Hub 获取并缓存
+    # - 后续拉取：直接从缓存返回
+    # - 支持所有公开镜像，包括用户上传的最新镜像
     local mirrors='[
         "https://docker.1ms.run",
-        "https://docker.xuanyuan.me"
+        "https://docker.1panel.live",
+        "https://hub.rat.dev",
+        "https://docker.m.daocloud.io",
+        "https://dockerproxy.net"
     ]'
     
     info "配置 Docker 镜像加速..."
