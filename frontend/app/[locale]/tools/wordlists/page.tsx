@@ -34,7 +34,7 @@ export default function WordlistsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [wordlistToDelete, setWordlistToDelete] = useState<Wordlist | null>(null)
 
-  // 国际化
+  // Internationalization
   const tCommon = useTranslations("common")
   const tConfirm = useTranslations("common.confirm")
   const tNav = useTranslations("nav")
@@ -44,7 +44,7 @@ export default function WordlistsPage() {
   const { data, isLoading } = useWordlists({ page: 1, pageSize: 1000 })
   const deleteMutation = useDeleteWordlist()
 
-  // 过滤字典列表
+  // Filter wordlist list
   const filteredWordlists = useMemo(() => {
     if (!data?.results) return []
     if (!searchQuery.trim()) return data.results
@@ -56,7 +56,7 @@ export default function WordlistsPage() {
     )
   }, [data?.results, searchQuery])
 
-  // 选中的字典
+  // Selected wordlist
   const selectedWordlist = useMemo(() => {
     if (!selectedId || !data?.results) return null
     return data.results.find((w) => w.id === selectedId) || null
@@ -97,14 +97,14 @@ export default function WordlistsPage() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   }
 
-  // 加载状态
+  // Loading state
   if (isLoading) {
     return <MasterDetailSkeleton title={tNav("wordlists")} listItemCount={5} />
   }
 
   return (
     <div className="flex flex-col h-full">
-      {/* 顶部：标题 + 搜索 + 上传按钮 */}
+      {/* Top: Title + Search + Upload button */}
       <div className="flex items-center justify-between gap-4 px-4 py-4 lg:px-6">
         <h1 className="text-2xl font-bold shrink-0">{t("title")}</h1>
         <div className="flex items-center gap-2 flex-1 max-w-md">
@@ -123,9 +123,9 @@ export default function WordlistsPage() {
 
       <Separator />
 
-      {/* 主体：左侧列表 + 右侧详情 */}
+      {/* Main: Left list + Right details */}
       <div className="flex flex-1 min-h-0">
-        {/* 左侧：字典列表 */}
+        {/* Left: Wordlist list */}
         <div className="w-72 lg:w-80 border-r flex flex-col">
           <div className="px-4 py-3 border-b">
             <h2 className="text-sm font-medium text-muted-foreground">
@@ -165,11 +165,11 @@ export default function WordlistsPage() {
           </ScrollArea>
         </div>
 
-        {/* 右侧：字典详情 */}
+        {/* Right: Wordlist details */}
         <div className="flex-1 flex flex-col min-w-0">
           {selectedWordlist ? (
             <>
-              {/* 详情头部 */}
+              {/* Details header */}
               <div className="px-6 py-4 border-b">
                 <div className="flex items-start gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 shrink-0">
@@ -188,10 +188,10 @@ export default function WordlistsPage() {
                 </div>
               </div>
 
-              {/* 详情内容 */}
+              {/* Details content */}
               <ScrollArea className="flex-1">
                 <div className="p-6 space-y-6">
-                  {/* 基本信息 */}
+                  {/* Basic information */}
                   <div className="rounded-lg border">
                     <div className="grid grid-cols-2 divide-x">
                       <div className="p-4">
@@ -232,7 +232,7 @@ export default function WordlistsPage() {
                 </div>
               </ScrollArea>
 
-              {/* 操作按钮 */}
+              {/* Action buttons */}
               <div className="px-6 py-4 border-t flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -256,7 +256,7 @@ export default function WordlistsPage() {
               </div>
             </>
           ) : (
-            // 未选中状态
+            // Unselected state
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center text-muted-foreground">
                 <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
@@ -267,14 +267,14 @@ export default function WordlistsPage() {
         </div>
       </div>
 
-      {/* 编辑弹窗 */}
+      {/* Edit dialog */}
       <WordlistEditDialog
         wordlist={editingWordlist}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
       />
 
-      {/* 删除确认弹窗 */}
+      {/* Delete confirmation dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

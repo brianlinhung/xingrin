@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils"
 import type { ScanEngine } from "@/types/engine.types"
 import { MasterDetailSkeleton } from "@/components/ui/master-detail-skeleton"
 
-/** 功能配置项定义 - 与 YAML 配置结构对应 */
+/** Feature configuration item definition - corresponds to YAML configuration structure */
 const FEATURE_LIST = [
   { key: "subdomain_discovery" },
   { key: "port_scan" },
@@ -40,7 +40,7 @@ const FEATURE_LIST = [
 
 type FeatureKey = typeof FEATURE_LIST[number]["key"]
 
-/** 解析引擎配置获取启用的功能 */
+/** Parse engine configuration to get enabled features */
 function parseEngineFeatures(engine: ScanEngine): Record<FeatureKey, boolean> {
   const defaultFeatures: Record<FeatureKey, boolean> = {
     subdomain_discovery: false,
@@ -72,14 +72,14 @@ function parseEngineFeatures(engine: ScanEngine): Record<FeatureKey, boolean> {
   }
 }
 
-/** 计算启用的功能数量 */
+/** Calculate the number of enabled features */
 function countEnabledFeatures(engine: ScanEngine) {
   const features = parseEngineFeatures(engine)
   return Object.values(features).filter(Boolean).length
 }
 
 /**
- * 扫描引擎页面
+ * Scan engine page
  */
 export default function ScanEnginePage() {
   const [selectedId, setSelectedId] = useState<number | null>(null)
@@ -92,7 +92,7 @@ export default function ScanEnginePage() {
 
   const { currentTheme } = useColorTheme()
   
-  // 国际化
+  // Internationalization
   const tCommon = useTranslations("common")
   const tConfirm = useTranslations("common.confirm")
   const tNav = useTranslations("nav")
@@ -104,20 +104,20 @@ export default function ScanEnginePage() {
   const updateEngineMutation = useUpdateEngine()
   const deleteEngineMutation = useDeleteEngine()
 
-  // 过滤引擎列表
+  // Filter engine list
   const filteredEngines = useMemo(() => {
     if (!searchQuery.trim()) return engines
     const query = searchQuery.toLowerCase()
     return engines.filter((e) => e.name.toLowerCase().includes(query))
   }, [engines, searchQuery])
 
-  // 选中的引擎
+  // Selected engine
   const selectedEngine = useMemo(() => {
     if (!selectedId) return null
     return engines.find((e) => e.id === selectedId) || null
   }, [selectedId, engines])
 
-  // 选中引擎的功能状态
+  // Selected engine's feature status
   const selectedFeatures = useMemo(() => {
     if (!selectedEngine) return null
     return parseEngineFeatures(selectedEngine)
@@ -160,14 +160,14 @@ export default function ScanEnginePage() {
     })
   }
 
-  // 加载状态
+  // Loading state
   if (isLoading) {
     return <MasterDetailSkeleton title={tNav("scanEngine")} listItemCount={4} />
   }
 
   return (
     <div className="flex flex-col h-full">
-      {/* 顶部：标题 + 搜索 + 新建按钮 */}
+      {/* Top: Title + Search + Create button */}
       <div className="flex items-center justify-between gap-4 px-4 py-4 lg:px-6">
         <h1 className="text-2xl font-bold shrink-0">{tNav("scanEngine")}</h1>
         <div className="flex items-center gap-2 flex-1 max-w-md">
@@ -189,9 +189,9 @@ export default function ScanEnginePage() {
 
       <Separator />
 
-      {/* 主体：左侧列表 + 右侧详情 */}
+      {/* Main: Left list + Right details */}
       <div className="flex flex-1 min-h-0">
-        {/* 左侧：引擎列表 */}
+        {/* Left: Engine list */}
         <div className="w-72 lg:w-80 border-r flex flex-col">
           <div className="px-4 py-3 border-b">
             <h2 className="text-sm font-medium text-muted-foreground">
@@ -231,11 +231,11 @@ export default function ScanEnginePage() {
           </ScrollArea>
         </div>
 
-        {/* 右侧：引擎详情 */}
+        {/* Right: Engine details */}
         <div className="flex-1 flex flex-col min-w-0">
           {selectedEngine && selectedFeatures ? (
             <>
-              {/* 详情头部 */}
+              {/* Details header */}
               <div className="px-6 py-4 border-b">
                 <div className="flex items-start gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 shrink-0">
@@ -255,9 +255,9 @@ export default function ScanEnginePage() {
                 </div>
               </div>
 
-              {/* 详情内容 */}
+              {/* Details content */}
               <div className="flex-1 flex flex-col min-h-0 p-6 gap-6">
-                {/* 功能状态 */}
+                {/* Feature status */}
                 <div className="shrink-0">
                   <h3 className="text-sm font-medium mb-3">{tEngine("enabledFeatures")}</h3>
                   <div className="rounded-lg border">
@@ -285,7 +285,7 @@ export default function ScanEnginePage() {
                   </div>
                 </div>
 
-                {/* 配置预览 */}
+                {/* Configuration preview */}
                 {selectedEngine.configuration && (
                   <div className="flex-1 flex flex-col min-h-0">
                     <h3 className="text-sm font-medium mb-3 shrink-0">{tEngine("configPreview")}</h3>
@@ -312,7 +312,7 @@ export default function ScanEnginePage() {
                 )}
               </div>
 
-              {/* 操作按钮 */}
+              {/* Action buttons */}
               <div className="px-6 py-4 border-t flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -336,7 +336,7 @@ export default function ScanEnginePage() {
               </div>
             </>
           ) : (
-            // 未选中状态
+            // Unselected state
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center text-muted-foreground">
                 <Settings className="h-12 w-12 mx-auto mb-3 opacity-50" />
@@ -347,7 +347,7 @@ export default function ScanEnginePage() {
         </div>
       </div>
 
-      {/* 编辑引擎弹窗 */}
+      {/* Edit engine dialog */}
       <EngineEditDialog
         engine={editingEngine}
         open={isEditDialogOpen}
@@ -355,14 +355,14 @@ export default function ScanEnginePage() {
         onSave={handleSaveYaml}
       />
 
-      {/* 新建引擎弹窗 */}
+      {/* Create engine dialog */}
       <EngineCreateDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
         onSave={handleCreateEngine}
       />
 
-      {/* 删除确认弹窗 */}
+      {/* Delete confirmation dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

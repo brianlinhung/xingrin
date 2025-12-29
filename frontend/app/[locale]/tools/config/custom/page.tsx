@@ -1,8 +1,8 @@
 /**
- * 自定义工具页面
- * 展示和管理自定义扫描脚本和工具
+ * Custom tools page
+ * Display and manage custom scanning scripts and tools
  */
 export default function CustomToolsPage() {
-  // 工具配置功能已下线，此页面保留占位避免历史链接报错
+  // Tool configuration feature has been deprecated, this page is kept as placeholder to avoid broken historical links
   return null
 }

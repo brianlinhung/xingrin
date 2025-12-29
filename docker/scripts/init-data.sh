@@ -121,7 +121,7 @@ init_fingerprints() {
 # 初始化 Nuclei 模板仓库
 init_nuclei_templates() {
     log_step "初始化 Nuclei 模板仓库..."
-    # 只创建数据库记录，git clone 由 install.sh 在容器外完成（支持 xget 加速）
+    # 只创建数据库记录，git clone 由 install.sh 在容器外完成（支持 Git 加速）
     docker compose exec -T server python backend/manage.py init_nuclei_templates
     log_info "Nuclei 模板仓库初始化完成"
 }

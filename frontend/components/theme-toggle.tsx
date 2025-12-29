@@ -8,7 +8,7 @@ import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 
 /**
- * 主题切换组件 - 滑动开关样式 + 圆形扩展动画
+ * Theme toggle component - Sliding switch style + circular expansion animation
  */
 export function ThemeToggle() {
   const { setTheme, resolvedTheme } = useTheme()
@@ -31,7 +31,7 @@ export function ThemeToggle() {
     const newIsDark = !isToggled
     const newTheme = newIsDark ? "dark" : "light"
 
-    // 不支持 View Transitions 或用户偏好减少动画，直接切换
+    // Don't support View Transitions or user prefers reduced motion, switch directly
     if (
       !buttonRef.current ||
       !('startViewTransition' in document) ||
@@ -42,13 +42,13 @@ export function ThemeToggle() {
       return
     }
 
-    // 1. 先让滑块滑动（不触发主题切换）
+    // 1. First let the slider slide (without triggering theme switch)
     setIsToggled(newIsDark)
 
-    // 2. 等待滑块动画完成（100ms）
+    // 2. Wait for slider animation to complete (100ms)
     await new Promise(r => setTimeout(r, 100))
 
-    // 获取按钮位置
+    // Get button position
     const { top, left, width, height } = buttonRef.current.getBoundingClientRect()
     const x = left + width / 2
     const y = top + height / 2
@@ -56,7 +56,7 @@ export function ThemeToggle() {
     const bottom = window.innerHeight - top
     const maxRadius = Math.hypot(Math.max(left, right), Math.max(top, bottom))
 
-    // 禁用默认的 View Transition 动画
+    // Disable default View Transition animation
     const style = document.createElement('style')
     style.textContent = `
       ::view-transition-old(root),
@@ -67,7 +67,7 @@ export function ThemeToggle() {
     `
     document.head.appendChild(style)
 
-    // 3. 滑块滑完后，启动 View Transition 切换主题
+    // 3. After slider finishes, start View Transition to switch theme
     const transition = (document as any).startViewTransition(() => {
       flushSync(() => {
         setTheme(newTheme)

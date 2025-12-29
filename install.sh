@@ -12,7 +12,7 @@ set -e
 # 解析参数
 START_ARGS=""
 DEV_MODE=false
-XGET_MIRROR=""
+GIT_MIRROR=""
 for arg in "$@"; do
     case $arg in
         --dev) 
@@ -23,10 +23,10 @@ for arg in "$@"; do
             START_ARGS="$START_ARGS --no-frontend" 
             ;;
         --mirror)
-            XGET_MIRROR="https://xget.xi-xu.me"
+            GIT_MIRROR="https://gh-proxy.org"
             ;;
         --mirror=*)
-            XGET_MIRROR="${arg#*=}"
+            GIT_MIRROR="${arg#*=}"
             ;;
     esac
 done
@@ -124,8 +124,8 @@ header "XingRin 一键安装脚本 (Ubuntu)"
 info "当前用户: ${BOLD}$REAL_USER${RESET}"
 info "项目路径: ${BOLD}$ROOT_DIR${RESET}"
 info "安装版本: ${BOLD}$APP_VERSION${RESET}"
-if [ -n "$XGET_MIRROR" ]; then
-    info "Xget 加速: ${BOLD}${GREEN}已启用${RESET} - $XGET_MIRROR"
+if [ -n "$GIT_MIRROR" ]; then
+    info "Git 加速: ${BOLD}${GREEN}已启用${RESET} - $GIT_MIRROR"
 fi
 
 # ==============================================================================
@@ -355,7 +355,7 @@ else
     info "正在安装 Docker..."
     
     # 根据是否启用加速选择下载方式
-    if [ -n "$XGET_MIRROR" ]; then
+    if [ -n "$GIT_MIRROR" ]; then
         # 使用阿里云 Docker 安装脚本（国内加速）
         info "使用国内镜像安装 Docker..."
         if curl -fsSL https://get.docker.com | sh -s -- --mirror Aliyun; then
@@ -383,15 +383,15 @@ else
     usermod -aG docker "$REAL_USER"
     
     # 配置 Docker 镜像加速（仅当启用 --mirror 时）
-    if [ -n "$XGET_MIRROR" ]; then
+    if [ -n "$GIT_MIRROR" ]; then
         configure_docker_mirror
     fi
 fi
 
 # 如果 Docker 已安装但启用了 --mirror，也配置镜像加速
-if [ -n "$XGET_MIRROR" ] && command -v docker &>/dev/null; then
-    # 检查是否已配置正确的镜像加速（不是 xget）
-    if [ ! -f "/etc/docker/daemon.json" ] || grep -q "xget" /etc/docker/daemon.json 2>/dev/null || ! grep -q "registry-mirrors" /etc/docker/daemon.json 2>/dev/null; then
+if [ -n "$GIT_MIRROR" ] && command -v docker &>/dev/null; then
+    # 检查是否已配置镜像加速
+    if [ ! -f "/etc/docker/daemon.json" ] || ! grep -q "registry-mirrors" /etc/docker/daemon.json 2>/dev/null; then
         configure_docker_mirror
     fi
 fi
@@ -468,10 +468,10 @@ if [ -f "$DOCKER_DIR/.env.example" ]; then
     update_env_var "$DOCKER_DIR/.env" "IMAGE_TAG" "$APP_VERSION"
     success "已锁定版本: IMAGE_TAG=$APP_VERSION"
     
-    # 写入 XGET_MIRROR 环境变量（供后端服务使用）
-    if [ -n "$XGET_MIRROR" ]; then
-        update_env_var "$DOCKER_DIR/.env" "XGET_MIRROR" "$XGET_MIRROR"
-        success "已配置 Xget 加速: XGET_MIRROR=$XGET_MIRROR"
+    # 写入 GIT_MIRROR 环境变量（供后端服务使用）
+    if [ -n "$GIT_MIRROR" ]; then
+        update_env_var "$DOCKER_DIR/.env" "GIT_MIRROR" "$GIT_MIRROR"
+        success "已配置 Git 加速: GIT_MIRROR=$GIT_MIRROR"
     fi
     
     # 开发模式：开启调试日志
@@ -612,7 +612,7 @@ else
     # 镜像加速通过 daemon.json 的 registry-mirrors 实现
     PULL_IMAGE="$WORKER_IMAGE"
     
-    if [ -n "$XGET_MIRROR" ]; then
+    if [ -n "$GIT_MIRROR" ]; then
         info "已配置 Docker 镜像加速，拉取将自动走加速通道"
     fi
     
@@ -622,7 +622,7 @@ else
         error "Worker 镜像拉取失败，无法继续安装"
         error "镜像地址: $WORKER_IMAGE"
         echo
-        if [ -z "$XGET_MIRROR" ]; then
+        if [ -z "$GIT_MIRROR" ]; then
             warn "如果您在中国大陆，建议使用 --mirror 参数启用加速："
             echo -e "   ${BOLD}sudo ./install.sh --mirror${RESET}"
         else
@@ -637,7 +637,7 @@ else
 fi
 
 # ==============================================================================
-# 预下载 Nuclei 模板仓库（在容器外执行，支持 xget 加速）
+# 预下载 Nuclei 模板仓库（在容器外执行，支持 Git 加速）
 # ==============================================================================
 step "预下载 Nuclei 模板仓库..."
 NUCLEI_TEMPLATES_DIR="/opt/xingrin/nuclei-repos/nuclei-templates"
@@ -649,10 +649,10 @@ mkdir -p /opt/xingrin/nuclei-repos
 if [ -d "$NUCLEI_TEMPLATES_DIR/.git" ]; then
     info "Nuclei 模板仓库已存在，跳过下载"
 else
-    # 构建 clone URL（如果启用了 xget 加速）
-    if [ -n "$XGET_MIRROR" ]; then
-        CLONE_URL="${XGET_MIRROR}/gh/${NUCLEI_TEMPLATES_REPO}"
-        info "使用 Xget 加速下载: $CLONE_URL"
+    # 构建 clone URL（如果启用了 Git 加速）
+    if [ -n "$GIT_MIRROR" ]; then
+        CLONE_URL="${GIT_MIRROR}/${NUCLEI_TEMPLATES_REPO}"
+        info "使用 Git 加速下载: $CLONE_URL"
     else
         CLONE_URL="$NUCLEI_TEMPLATES_REPO"
     fi

@@ -27,8 +27,8 @@ import { EndpointService } from "@/services/endpoint.service"
 import { toast } from "sonner"
 
 /**
- * 目标端点详情视图组件
- * 用于显示和管理目标下的端点列表
+ * Target endpoint detail view component
+ * Used to display and manage the endpoint list under a target
  */
 export function EndpointsDetailView({
   targetId,
@@ -42,7 +42,7 @@ export function EndpointsDetailView({
   const [selectedEndpoints, setSelectedEndpoints] = useState<Endpoint[]>([])
   const [bulkAddDialogOpen, setBulkAddDialogOpen] = useState(false)
 
-  // 分页状态管理
+  // Pagination state management
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10
@@ -51,14 +51,14 @@ export function EndpointsDetailView({
   const [filterQuery, setFilterQuery] = useState("")
   const [isSearching, setIsSearching] = useState(false)
 
-  // 国际化
+  // Internationalization
   const tColumns = useTranslations("columns")
   const tCommon = useTranslations("common")
   const tToast = useTranslations("toast")
   const tConfirm = useTranslations("common.confirm")
   const locale = useLocale()
 
-  // 构建翻译对象
+  // Build translation object
   const translations = useMemo(() => ({
     columns: {
       url: tColumns("common.url"),
@@ -81,7 +81,7 @@ export function EndpointsDetailView({
     },
   }), [tColumns, tCommon])
 
-  // 获取目标信息（用于 URL 匹配校验）
+  // Get target info (for URL matching validation)
   const { data: target } = useTarget(targetId || 0, { enabled: !!targetId })
 
   const handleFilterChange = (value: string) => {
@@ -90,10 +90,10 @@ export function EndpointsDetailView({
     setPagination((prev) => ({ ...prev, pageIndex: 0 }))
   }
 
-  // 删除相关 hooks
+  // Delete related hooks
   const deleteEndpoint = useDeleteEndpoint()
 
-  // 使用 React Query 获取端点数据：优先按 targetId，其次按 scanId（历史快照）
+  // Use React Query to fetch endpoint data: prioritize by targetId, then by scanId (historical snapshot)
   const targetEndpointsQuery = useTargetEndpoints(targetId || 0, {
     page: pagination.pageIndex + 1,
     pageSize: pagination.pageSize,
@@ -124,7 +124,7 @@ export function EndpointsDetailView({
     }
   }, [isFetching, isSearching])
 
-  // 辅助函数 - 格式化日期
+  // Helper function - format date
   const formatDate = React.useCallback((dateString: string): string => {
     return new Date(dateString).toLocaleString(getDateLocale(locale), {
       year: "numeric",
@@ -138,7 +138,7 @@ export function EndpointsDetailView({
   }, [locale])
 
 
-  // 确认删除端点
+  // Confirm delete endpoint
   const confirmDelete = async () => {
     if (!endpointToDelete) return
 
@@ -148,7 +148,7 @@ export function EndpointsDetailView({
     deleteEndpoint.mutate(endpointToDelete.id)
   }
 
-  // 处理分页变化
+  // Handle pagination change
   const handlePaginationChange = (newPagination: { pageIndex: number; pageSize: number }) => {
     setPagination(newPagination)
   }
@@ -157,7 +157,7 @@ export function EndpointsDetailView({
     setSelectedEndpoints(selectedRows)
   }, [])
 
-  // 创建列定义
+  // Create column definitions
   const endpointColumns = useMemo(
     () =>
       createEndpointColumns({
@@ -167,7 +167,7 @@ export function EndpointsDetailView({
     [formatDate, translations]
   )
 
-  // 格式化日期为 YYYY-MM-DD HH:MM:SS（与后端一致）
+  // Format date as YYYY-MM-DD HH:MM:SS (consistent with backend)
   const formatDateForCSV = (dateString: string): string => {
     if (!dateString) return ''
     const date = new Date(dateString)
@@ -180,7 +180,7 @@ export function EndpointsDetailView({
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
   }
 
-  // CSV 转义
+  // CSV escape
   const escapeCSV = (value: string | number | boolean | null | undefined): string => {
     if (value === null || value === undefined) return ''
     const str = String(value)
@@ -190,13 +190,13 @@ export function EndpointsDetailView({
     return str
   }
 
-  // 格式化数组为逗号分隔字符串
+  // Format array as comma-separated string
   const formatArrayForCSV = (arr: string[] | undefined): string => {
     if (!arr || arr.length === 0) return ''
     return arr.join(',')
   }
 
-  // 生成 CSV 内容
+  // Generate CSV content
   const generateCSV = (items: Endpoint[]): string => {
     const BOM = '\ufeff'
     const headers = [
@@ -223,7 +223,7 @@ export function EndpointsDetailView({
     return BOM + [headers.join(','), ...rows].join('\n')
   }
 
-  // 下载所有端点 URL
+  // Download all endpoint URLs
   const handleDownloadAll = async () => {
     try {
       let blob: Blob | null = null
@@ -255,12 +255,12 @@ export function EndpointsDetailView({
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
     } catch (error) {
-      console.error("下载端点列表失败", error)
+      console.error("Failed to download endpoint list", error)
       toast.error(tToast("downloadFailed"))
     }
   }
 
-  // 下载选中的端点 URL
+  // Download selected endpoint URLs
   const handleDownloadSelected = () => {
     if (selectedEndpoints.length === 0) {
       return
@@ -278,7 +278,7 @@ export function EndpointsDetailView({
     URL.revokeObjectURL(url)
   }
 
-  // 错误状态
+  // Error state
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
@@ -299,7 +299,7 @@ export function EndpointsDetailView({
     )
   }
 
-  // 加载状态（仅首次加载时显示骨架屏）
+  // Loading state (only show skeleton on first load)
   if (isLoading && !data) {
     return (
       <DataTableSkeleton
@@ -328,7 +328,7 @@ export function EndpointsDetailView({
         onBulkAdd={targetId ? () => setBulkAddDialogOpen(true) : undefined}
       />
 
-      {/* 批量添加弹窗 */}
+      {/* Bulk add dialog */}
       {targetId && (
         <BulkAddUrlsDialog
           targetId={targetId}
@@ -341,7 +341,7 @@ export function EndpointsDetailView({
         />
       )}
 
-      {/* 删除确认对话框 */}
+      {/* Delete confirmation dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

@@ -1,8 +1,8 @@
 import type React from "react"
 
 /**
- * 根布局组件
- * 这是最外层的布局，实际内容由 [locale]/layout.tsx 处理
+ * Root layout component
+ * This is the outermost layout, actual content is handled by [locale]/layout.tsx
  */
 export default function RootLayout({
   children,

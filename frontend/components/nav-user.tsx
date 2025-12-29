@@ -1,63 +1,63 @@
-"use client" // 标记为客户端组件，可以使用浏览器 API 和交互功能
+"use client" // Mark as client component, can use browser APIs and interactive features
 
 import React from "react"
-// 导入图标组件
+// Import icon components
 import {
-  IconDotsVertical,  // 垂直三点图标
-  IconKey,           // 钥匙图标
-  IconLogout,        // 登出图标
+  IconDotsVertical,  // Vertical three-dot icon
+  IconKey,           // Key icon
+  IconLogout,        // Logout icon
 } from "@tabler/icons-react"
 
-// 导入头像相关组件
+// Import avatar related components
 import {
-  Avatar,        // 头像容器
-  AvatarFallback, // 头像备用显示
-  AvatarImage,   // 头像图片
+  Avatar,        // Avatar container
+  AvatarFallback, // Avatar fallback display
+  AvatarImage,   // Avatar image
 } from '@/components/ui/avatar'
-// 导入下拉菜单相关组件
+// Import dropdown menu related components
 import {
-  DropdownMenu,          // 下拉菜单容器
-  DropdownMenuContent,   // 下拉菜单内容
-  DropdownMenuItem,      // 下拉菜单项
-  DropdownMenuLabel,     // 下拉菜单标签
-  DropdownMenuSeparator, // 下拉菜单分隔线
-  DropdownMenuTrigger,   // 下拉菜单触发器
+  DropdownMenu,          // Dropdown menu container
+  DropdownMenuContent,   // Dropdown menu content
+  DropdownMenuItem,      // Dropdown menu item
+  DropdownMenuLabel,     // Dropdown menu label
+  DropdownMenuSeparator, // Dropdown menu separator
+  DropdownMenuTrigger,   // Dropdown menu trigger
 } from '@/components/ui/dropdown-menu'
-// 导入侧边栏相关组件
+// Import sidebar related components
 import {
-  SidebarMenu,       // 侧边栏菜单
-  SidebarMenuButton, // 侧边栏菜单按钮
-  SidebarMenuItem,   // 侧边栏菜单项
-  useSidebar,        // 侧边栏Hook
+  SidebarMenu,       // Sidebar menu
+  SidebarMenuButton, // Sidebar menu button
+  SidebarMenuItem,   // Sidebar menu item
+  useSidebar,        // Sidebar Hook
 } from '@/components/ui/sidebar'
 import { useAuth, useLogout } from '@/hooks/use-auth'
 import { ChangePasswordDialog } from '@/components/auth/change-password-dialog'
 
 /**
- * 用户导航组件
- * 显示用户信息和用户相关的操作菜单
+ * User navigation component
+ * Displays user information and user-related action menu
  * 
- * @param {Object} props - 组件属性
- * @param {Object} props.user - 用户信息
- * @param {string} props.user.name - 用户名称
- * @param {string} props.user.email - 用户邮箱
- * @param {string} props.user.avatar - 用户头像URL
+ * @param {Object} props - Component properties
+ * @param {Object} props.user - User information
+ * @param {string} props.user.name - User name
+ * @param {string} props.user.email - User email
+ * @param {string} props.user.avatar - User avatar URL
  */
 export function NavUser({
   user,
 }: {
   user: {
-    name: string   // 用户名称
-    email: string  // 用户邮箱
-    avatar: string // 用户头像URL
+    name: string   // User name
+    email: string  // User email
+    avatar: string // User avatar URL
   }
 }) {
-  const { isMobile } = useSidebar() // 获取移动端状态
+  const { isMobile } = useSidebar() // Get mobile state
   const { data: auth } = useAuth()
   const { mutate: logout, isPending: isLoggingOut } = useLogout()
   const [showChangePassword, setShowChangePassword] = React.useState(false)
   
-  // 使用真实用户名（如果已登录）
+  // Use real username (if logged in)
   const displayName = auth?.user?.username || user.name
 
   return (
@@ -68,68 +68,68 @@ export function NavUser({
     />
     <SidebarMenu>
       <SidebarMenuItem>
-        {/* 用户下拉菜单 */}
+        {/* User dropdown menu */}
         <DropdownMenu>
-          {/* 下拉菜单触发器 */}
+          {/* Dropdown menu trigger */}
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
-              size="lg"                                                    // 大尺寸
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground" // 打开时的样式
+              size="lg"                                                    // Large size
+              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground" // Style when open
             >
-              {/* 用户头像 */}
-              <Avatar className="h-8 w-8 rounded-lg grayscale">         {/* 8x8尺寸，圆角，灰度 */}
-                <AvatarImage src={user.avatar} alt={user.name} />       {/* 用户头像图片 */}
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback> {/* 备用显示 */}
+              {/* User avatar */}
+              <Avatar className="h-8 w-8 rounded-lg grayscale">         {/* 8x8 size, rounded, grayscale */}
+                <AvatarImage src={user.avatar} alt={user.name} />       {/* User avatar image */}
+                <AvatarFallback className="rounded-lg">CN</AvatarFallback> {/* Fallback display */}
               </Avatar>
-              {/* 用户信息区域 */}
+              {/* User information area */}
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{displayName}</span>  {/* 用户名称 */}
-                <span className="text-muted-foreground truncate text-xs">  {/* 用户邮箱 */}
+                <span className="truncate font-medium">{displayName}</span>  {/* User name */}
+                <span className="text-muted-foreground truncate text-xs">  {/* User email */}
                   {/* {user.email} */}
                 </span>
               </div>
-              {/* 三点菜单图标 */}
-              <IconDotsVertical className="ml-auto size-4" />           {/* 自动左边距，4x4尺寸 */}
+              {/* Three-dot menu icon */}
+              <IconDotsVertical className="ml-auto size-4" />           {/* Auto left margin, 4x4 size */}
             </SidebarMenuButton>
           </DropdownMenuTrigger>
-          {/* 下拉菜单内容 */}
+          {/* Dropdown menu content */}
           <DropdownMenuContent
-            className="rounded-lg"                                     // 圆角
-            side={isMobile ? "bottom" : "right"}                        // 移动端下方，桌面端右侧
-            align="end"                                                 // 端对齐
-            sideOffset={4}                                             // 偏移4像素
+            className="rounded-lg"                                     // Rounded corners
+            side={isMobile ? "bottom" : "right"}                        // Bottom on mobile, right on desktop
+            align="end"                                                 // End alignment
+            sideOffset={4}                                             // 4px offset
           >
-            {/* 用户信息标签 */}
-            <DropdownMenuLabel className="p-0 font-normal">           {/* 无内边距，正常字体 */}
+            {/* User information label */}
+            <DropdownMenuLabel className="p-0 font-normal">           {/* No padding, normal font */}
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                {/* 用户头像 */}
+                {/* User avatar */}
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />     {/* 用户头像图片 */}
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback> {/* 备用显示 */}
+                  <AvatarImage src={user.avatar} alt={user.name} />     {/* User avatar image */}
+                  <AvatarFallback className="rounded-lg">CN</AvatarFallback> {/* Fallback display */}
                 </Avatar>
-                {/* 用户信息 */}
+                {/* User information */}
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{displayName}</span>  {/* 用户名称 */}
-                  <span className="text-muted-foreground truncate text-xs">  {/* 用户邮箱 */}
+                  <span className="truncate font-medium">{displayName}</span>  {/* User name */}
+                  <span className="text-muted-foreground truncate text-xs">  {/* User email */}
                     {/* {user.email} */}
                   </span>
                 </div>
               </div>
             </DropdownMenuLabel>
-            {/* 分隔线 */}
+            {/* Separator */}
             <DropdownMenuSeparator />
-            {/* 修改密码 */}
+            {/* Change password */}
             <DropdownMenuItem onClick={() => setShowChangePassword(true)}>
               <IconKey />
-              修改密码
+              Change Password
             </DropdownMenuItem>
-            {/* 登出选项 */}
+            {/* Logout option */}
             <DropdownMenuItem 
               onClick={() => logout()}
               disabled={isLoggingOut}
             >
               <IconLogout />
-              {isLoggingOut ? '登出中...' : '退出登录'}
+              {isLoggingOut ? 'Logging out...' : 'Logout'}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

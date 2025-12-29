@@ -7,14 +7,14 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 
 /**
- * 工具概览页面
- * 显示开源工具和自定义工具的入口
+ * Tools overview page
+ * Displays entry points for open source tools and custom tools
  */
 export default function ToolsPage() {
   const t = useTranslations("pages.tools")
   const tCommon = useTranslations("common")
 
-  // 功能模块
+  // Feature modules
   const modules = [
     {
       title: t("wordlists.title"),
@@ -42,7 +42,7 @@ export default function ToolsPage() {
 
   return (
     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-      {/* 页面头部 */}
+      {/* Page header */}
       <div className="flex items-center justify-between px-4 lg:px-6">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">{t("title")}</h2>
@@ -52,7 +52,7 @@ export default function ToolsPage() {
         </div>
       </div>
 
-      {/* 统计卡片 */}
+      {/* Statistics cards */}
       <div className="px-4 lg:px-6">
         <div className="grid gap-4 md:grid-cols-2">
           {modules.map((module) => (
@@ -73,7 +73,7 @@ export default function ToolsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {/* 统计信息 */}
+                  {/* Statistics information */}
                   <div className="flex items-center gap-6 text-sm">
                     <div>
                       <span className="text-muted-foreground">{t("stats.total")}</span>
@@ -85,7 +85,7 @@ export default function ToolsPage() {
                     </div>
                   </div>
 
-                  {/* 操作按钮 */}
+                  {/* Action buttons */}
                   {module.status === "available" ? (
                     <Link href={module.href}>
                       <Button className="w-full">
@@ -105,7 +105,7 @@ export default function ToolsPage() {
         </div>
       </div>
 
-      {/* 快速操作 */}
+      {/* Quick actions */}
       <div className="px-4 lg:px-6">
         <Card>
           <CardHeader>

@@ -39,7 +39,7 @@ export default function ScanHistoryLayout({
     "ip-addresses": `${basePath}/ip-addresses/`,
   }
 
-  // 从扫描数据中获取各个tab的数量
+  // Get counts for each tab from scan data
   const counts = {
     subdomain: scanData?.summary?.subdomains || 0,
     endpoints: scanData?.summary?.endpoints || 0,

@@ -398,6 +398,6 @@ class WorkerNodeViewSet(viewsets.ModelViewSet):
                 'enableCommandLogging': os.getenv('ENABLE_COMMAND_LOGGING', 'true').lower() == 'true',
             },
             'debug': settings.DEBUG,
-            # Xget 加速配置（用于 Git clone 加速，如 Nuclei 模板仓库）
-            'xgetMirror': os.getenv('XGET_MIRROR', ''),
+            # Git 加速配置（用于 Git clone 加速，如 Nuclei 模板仓库）
+            'gitMirror': os.getenv('GIT_MIRROR', ''),
         })

@@ -8,7 +8,7 @@ import { DataTableColumnHeader } from "@/components/ui/data-table/column-header"
 import { ExpandableCell } from "@/components/ui/data-table/expandable-cell"
 import type { Directory } from "@/types/directory.types"
 
-// 翻译类型定义
+// Translation type definitions
 export interface DirectoryTranslations {
   columns: {
     url: string
@@ -32,7 +32,7 @@ interface CreateColumnsProps {
 }
 
 /**
- * HTTP 状态码徽章组件
+ * HTTP status code badge component
  */
 function StatusBadge({ status }: { status: number | null }) {
   if (!status) return <span className="text-muted-foreground">-</span>
@@ -57,7 +57,7 @@ function StatusBadge({ status }: { status: number | null }) {
 }
 
 /**
- * 格式化持续时间（纳秒转毫秒）
+ * Format duration (nanoseconds to milliseconds)
  */
 function formatDuration(nanoseconds: number | null): string {
   if (nanoseconds === null) return "-"
@@ -66,7 +66,7 @@ function formatDuration(nanoseconds: number | null): string {
 }
 
 /**
- * 创建目录表格列定义
+ * Create directory table column definitions
  */
 export function createDirectoryColumns({
   formatDate,

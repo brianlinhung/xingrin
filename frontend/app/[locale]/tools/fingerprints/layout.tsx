@@ -16,16 +16,16 @@ import {
 import { useFingerprintStats } from "@/hooks/use-fingerprints"
 import { useTranslations } from "next-intl"
 
-// 指纹库说明
+// Fingerprint library description
 const FINGERPRINT_HELP = `
-• EHole: 红队重点资产识别工具，支持关键词、favicon hash 等方式识别
-• Goby: 攻击面测绘工具，包含大量 Web 应用和设备指纹
-• Wappalyzer: 浏览器扩展，可识别网站使用的技术栈
+• EHole: Red team key asset identification tool, supports keyword, favicon hash and other identification methods
+• Goby: Attack surface mapping tool, contains a large number of web applications and device fingerprints
+• Wappalyzer: Browser extension that can identify the technology stack used by websites
 `.trim()
 
 /**
- * 指纹管理布局
- * 提供 Tab 导航切换不同指纹库
+ * Fingerprint management layout
+ * Provides tab navigation to switch between different fingerprint libraries
  */
 export default function FingerprintsLayout({
   children,
@@ -36,7 +36,7 @@ export default function FingerprintsLayout({
   const { data: stats, isLoading } = useFingerprintStats()
   const t = useTranslations("tools.fingerprints")
 
-  // 获取当前激活的 Tab
+  // Get currently active tab
   const getActiveTab = () => {
     if (pathname.includes("/ehole")) return "ehole"
     if (pathname.includes("/goby")) return "goby"
@@ -44,7 +44,7 @@ export default function FingerprintsLayout({
     return "ehole"
   }
 
-  // Tab 路径映射
+  // Tab path mapping
   const basePath = "/tools/fingerprints"
   const tabPaths = {
     ehole: `${basePath}/ehole/`,
@@ -52,7 +52,7 @@ export default function FingerprintsLayout({
     wappalyzer: `${basePath}/wappalyzer/`,
   }
 
-  // 各指纹库数量
+  // Fingerprint library counts
   const counts = {
     ehole: stats?.ehole || 0,
     goby: stats?.goby || 0,
@@ -77,7 +77,7 @@ export default function FingerprintsLayout({
 
   return (
     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-      {/* 页面头部 */}
+      {/* Page header */}
       <div className="flex items-center justify-between px-4 lg:px-6">
         <div>
           <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
@@ -88,7 +88,7 @@ export default function FingerprintsLayout({
         </div>
       </div>
 
-      {/* Tabs 导航 */}
+      {/* Tabs navigation */}
       <div className="flex items-center justify-between px-4 lg:px-6">
         <div className="flex items-center gap-3">
           <Tabs value={getActiveTab()} className="w-full">
@@ -139,7 +139,7 @@ export default function FingerprintsLayout({
         </div>
       </div>
 
-      {/* 子页面内容 */}
+      {/* Sub-page content */}
       {children}
     </div>
   )

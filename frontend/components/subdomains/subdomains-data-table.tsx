@@ -28,17 +28,17 @@ interface SubdomainsDataTableProps {
   onBulkAdd?: () => void
   onBulkDelete?: () => void
   onSelectionChange?: (selectedRows: Subdomain[]) => void
-  // 智能过滤
+  // Smart filter
   filterValue?: string
   onFilterChange?: (value: string) => void
   isSearching?: boolean
   addButtonText?: string
-  // 下载回调函数
+  // Download callback functions
   onDownloadAll?: () => void
   onDownloadInteresting?: () => void
   onDownloadImportant?: () => void
   onDownloadSelected?: () => void
-  // 服务端分页支持
+  // Server-side pagination support
   pagination?: { pageIndex: number; pageSize: number }
   setPagination?: React.Dispatch<React.SetStateAction<{ pageIndex: number; pageSize: number }>>
   paginationInfo?: PaginationInfo
@@ -109,32 +109,32 @@ export function SubdomainsDataTable({
       data={data}
       columns={columns}
       getRowId={(row) => String(row.id)}
-      // 分页
+      // Pagination
       pagination={externalPagination}
       setPagination={setExternalPagination}
       paginationInfo={paginationInfo}
       onPaginationChange={onPaginationChange}
-      // 智能过滤
+      // Smart filter
       searchMode="smart"
       searchValue={filterValue}
       onSearch={handleSmartSearch}
       isSearching={isSearching}
       filterFields={SUBDOMAIN_FILTER_FIELDS}
       filterExamples={SUBDOMAIN_FILTER_EXAMPLES}
-      // 选择
+      // Selection
       onSelectionChange={onSelectionChange}
-      // 批量操作
+      // Bulk operations
       onBulkDelete={onBulkDelete}
       bulkDeleteLabel="Delete"
-      // 添加按钮
+      // Add button
       onAddNew={onAddNew}
       addButtonLabel={addButtonText}
-      // 批量添加按钮
+      // Bulk add button
       onBulkAdd={onBulkAdd}
       bulkAddLabel={tActions("add")}
-      // 下载
+      // Download
       downloadOptions={downloadOptions.length > 0 ? downloadOptions : undefined}
-      // 空状态
+      // Empty state
       emptyMessage={t("noData")}
     />
   )

@@ -4,8 +4,8 @@ import React from "react"
 import { OrganizationDetailView } from "@/components/organization/organization-detail-view"
 
 /**
- * 组织详情页面
- * 显示组织的统计信息和资产列表
+ * Organization detail page
+ * Displays organization statistics and asset list
  */
 export default function OrganizationDetailPage({
   params,

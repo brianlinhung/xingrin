@@ -9,14 +9,14 @@ import type { IPAddress } from "@/types/ip-address.types"
 import type { PaginationInfo } from "@/types/common.types"
 import type { DownloadOption } from "@/types/data-table.types"
 
-// IP 地址页面的过滤字段配置
+// IP address page filter field configuration
 const IP_ADDRESS_FILTER_FIELDS: FilterField[] = [
   PREDEFINED_FIELDS.ip,
   PREDEFINED_FIELDS.port,
   PREDEFINED_FIELDS.host,
 ]
 
-// IP 地址页面的示例
+// IP address page filter examples
 const IP_ADDRESS_FILTER_EXAMPLES = [
   'ip="192.168.1.*" && port="80"',
   'port="443" || port="8443"',
@@ -55,12 +55,12 @@ export function IPAddressesDataTable({
   const t = useTranslations("common.status")
   const tDownload = useTranslations("common.download")
   
-  // 智能搜索处理
+  // Smart search handler
   const handleSmartSearch = (rawQuery: string) => {
     onFilterChange?.(rawQuery)
   }
 
-  // 下载选项
+  // Download options
   const downloadOptions: DownloadOption[] = []
   if (onDownloadAll) {
     downloadOptions.push({
@@ -83,26 +83,26 @@ export function IPAddressesDataTable({
       data={data}
       columns={columns}
       getRowId={(row) => row.ip}
-      // 分页
+      // Pagination
       pagination={pagination}
       setPagination={setPagination}
       paginationInfo={paginationInfo}
       onPaginationChange={onPaginationChange}
-      // 智能过滤
+      // Smart filter
       searchMode="smart"
       searchValue={filterValue}
       onSearch={handleSmartSearch}
       filterFields={IP_ADDRESS_FILTER_FIELDS}
       filterExamples={IP_ADDRESS_FILTER_EXAMPLES}
-      // 选择
+      // Selection
       onSelectionChange={onSelectionChange}
-      // 批量操作
+      // Bulk operations
       onBulkDelete={onBulkDelete}
       bulkDeleteLabel="Delete"
       showAddButton={false}
-      // 下载
+      // Download
       downloadOptions={downloadOptions.length > 0 ? downloadOptions : undefined}
-      // 空状态
+      // Empty state
       emptyMessage={t("noData")}
     />
   )

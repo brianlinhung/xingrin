@@ -9,7 +9,7 @@ export default function AllTargetsPage() {
 
   return (
     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-      {/* 页面头部 */}
+      {/* Page header */}
       <div className="flex items-center justify-between px-4 lg:px-6">
         <div>
           <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
@@ -22,7 +22,7 @@ export default function AllTargetsPage() {
         </div>
       </div>
 
-      {/* 内容区域 */}
+      {/* Content area */}
       <div className="px-4 lg:px-6">
         <AllTargetsDetailView />
       </div>

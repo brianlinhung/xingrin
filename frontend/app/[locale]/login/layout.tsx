@@ -16,8 +16,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 /**
- * 登录页面布局
- * 不包含侧边栏和头部
+ * Login page layout
+ * Does not include sidebar and header
  */
 export default function LoginLayout({
   children,

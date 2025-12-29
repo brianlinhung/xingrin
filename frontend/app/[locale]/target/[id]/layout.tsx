@@ -11,8 +11,8 @@ import { useTarget } from "@/hooks/use-targets"
 import { useTranslations } from "next-intl"
 
 /**
- * 目标详情布局
- * 为所有子页面提供共享的目标信息和导航
+ * Target detail layout
+ * Provides shared target information and navigation for all sub-pages
  */
 export default function TargetLayout({
   children,
@@ -23,14 +23,14 @@ export default function TargetLayout({
   const pathname = usePathname()
   const t = useTranslations("pages.targetDetail")
 
-  // 使用 React Query 获取目标数据
+  // Use React Query to get target data
   const {
     data: target,
     isLoading,
     error
   } = useTarget(Number(id))
 
-  // 获取当前激活的 Tab
+  // Get currently active tab
   const getActiveTab = () => {
     if (pathname.includes("/subdomain")) return "subdomain"
     if (pathname.includes("/endpoints")) return "endpoints"
@@ -41,7 +41,7 @@ export default function TargetLayout({
     return ""
   }
 
-  // Tab 路径映射
+  // Tab path mapping
   const basePath = `/target/${id}`
   const tabPaths = {
     subdomain: `${basePath}/subdomain/`,
@@ -52,7 +52,7 @@ export default function TargetLayout({
     "ip-addresses": `${basePath}/ip-addresses/`,
   }
 
-  // 从目标数据中获取各个tab的数量
+  // Get counts for each tab from target data
   const counts = {
     subdomain: (target as any)?.summary?.subdomains || 0,
     endpoints: (target as any)?.summary?.endpoints || 0,
@@ -62,11 +62,11 @@ export default function TargetLayout({
     "ip-addresses": (target as any)?.summary?.ips || 0,
   }
 
-  // 加载状态
+  // Loading state
   if (isLoading) {
     return (
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-        {/* 页面头部骨架 */}
+        {/* Page header skeleton */}
         <div className="flex items-center justify-between px-4 lg:px-6">
           <div className="w-full max-w-xl space-y-2">
             <div className="flex items-center gap-2">
@@ -77,7 +77,7 @@ export default function TargetLayout({
           </div>
         </div>
 
-        {/* Tabs 导航骨架 */}
+        {/* Tabs navigation skeleton */}
         <div className="flex items-center justify-between px-4 lg:px-6">
           <div className="flex gap-2">
             <Skeleton className="h-9 w-20" />
@@ -88,7 +88,7 @@ export default function TargetLayout({
     )
   }
 
-  // 错误状态
+  // Error state
   if (error) {
     return (
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
@@ -123,7 +123,7 @@ export default function TargetLayout({
 
   return (
     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-      {/* 页面头部 */}
+      {/* Page header */}
       <div className="flex items-center justify-between px-4 lg:px-6">
         <div>
           <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
@@ -134,7 +134,7 @@ export default function TargetLayout({
         </div>
       </div>
 
-      {/* Tabs 导航 - 使用 Link 确保触发进度条 */}
+      {/* Tabs navigation - Use Link to ensure progress bar is triggered */}
       <div className="flex items-center justify-between px-4 lg:px-6">
         <Tabs value={getActiveTab()} className="w-full">
           <TabsList>
@@ -202,7 +202,7 @@ export default function TargetLayout({
         </Tabs>
       </div>
 
-      {/* 子页面内容 */}
+      {/* Sub-page content */}
       {children}
     </div>
   )

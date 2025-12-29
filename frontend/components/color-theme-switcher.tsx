@@ -12,7 +12,7 @@ import { IconPalette, IconCheck } from "@tabler/icons-react"
 import { useTranslations } from "next-intl"
 
 /**
- * 颜色主题切换器
+ * Color theme switcher
  */
 export function ColorThemeSwitcher() {
   const { theme, setTheme, mounted } = useColorTheme()
@@ -39,12 +39,12 @@ export function ColorThemeSwitcher() {
           <DropdownMenuItem
             key={t.id}
             onClick={() => {
-              console.log('切换主题到:', t.id)
+              console.log('Switching theme to:', t.id)
               setTheme(t.id as ColorThemeId)
             }}
             className="flex items-center gap-2"
           >
-            {/* 颜色预览色块 */}
+            {/* Color preview blocks */}
             <div className="flex items-center gap-1">
               {t.colors.map((c, i) => (
                 <span

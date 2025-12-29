@@ -1,5 +1,5 @@
 /**
- * Provider Components - 统一导出
+ * Provider Components - Unified exports
  */
 export { ThemeProvider } from './theme-provider'
 export { QueryProvider } from './query-provider'

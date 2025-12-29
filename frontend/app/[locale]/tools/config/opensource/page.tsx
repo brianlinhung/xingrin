@@ -1,8 +1,8 @@
 /**
- * 开源工具页面
- * 展示和管理开源扫描工具
+ * Open source tools page
+ * Display and manage open source scanning tools
  */
 export default function OpensourceToolsPage() {
-  // 工具配置功能已下线，此页面保留占位避免历史链接报错
+  // Tool configuration feature has been deprecated, this page is kept as placeholder to avoid broken historical links
   return null
 }

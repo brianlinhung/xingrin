@@ -27,7 +27,7 @@ export function IPAddressesView({
   const [selectedIPAddresses, setSelectedIPAddresses] = useState<IPAddress[]>([])
   const [filterQuery, setFilterQuery] = useState("")
 
-  // 国际化
+  // Internationalization
   const tColumns = useTranslations("columns")
   const tCommon = useTranslations("common")
   const tTooltips = useTranslations("tooltips")
@@ -35,7 +35,7 @@ export function IPAddressesView({
   const tStatus = useTranslations("common.status")
   const locale = useLocale()
 
-  // 构建翻译对象
+  // Build translation object
   const translations = useMemo(() => ({
     columns: {
       ipAddress: tColumns("ipAddress.ipAddress"),
@@ -118,7 +118,7 @@ export function IPAddressesView({
     setSelectedIPAddresses(selectedRows)
   }, [])
 
-  // 处理下载所有 IP 地址
+  // Handle download all IP addresses
   const handleDownloadAll = async () => {
     try {
       let blob: Blob | null = null
@@ -131,7 +131,7 @@ export function IPAddressesView({
         if (!ipAddresses || ipAddresses.length === 0) {
           return
         }
-        // 前端生成 CSV（无 scanId/targetId 时的 fallback）
+        // Frontend CSV generation (fallback when no scanId/targetId)
         const csvContent = generateCSV(ipAddresses)
         blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" })
       }
@@ -148,12 +148,12 @@ export function IPAddressesView({
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
     } catch (error) {
-      console.error("下载 IP 地址列表失败", error)
+      console.error("Failed to download IP address list", error)
       toast.error(tToast("downloadFailed"))
     }
   }
 
-  // 格式化日期为 YYYY-MM-DD HH:MM:SS（与后端一致）
+  // Format date as YYYY-MM-DD HH:MM:SS (consistent with backend)
   const formatDateForCSV = (dateString: string): string => {
     if (!dateString) return ''
     const date = new Date(dateString)
@@ -166,7 +166,7 @@ export function IPAddressesView({
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
   }
 
-  // 生成 CSV 内容（原始格式：每个 host+port 组合一行）
+  // Generate CSV content (original format: one row per host+port combination)
   const generateCSV = (items: IPAddress[]): string => {
     const BOM = '\ufeff'
     const headers = ['ip', 'host', 'port', 'created_at']
@@ -178,7 +178,7 @@ export function IPAddressesView({
       return value
     }
     
-    // 展开聚合数据为原始格式：每个 (ip, host, port) 组合一行
+    // Expand aggregated data to original format: one row per (ip, host, port) combination
     const rows: string[] = []
     for (const item of items) {
       for (const host of item.hosts) {
@@ -196,7 +196,7 @@ export function IPAddressesView({
     return BOM + [headers.join(','), ...rows].join('\n')
   }
 
-  // 处理下载选中的 IP 地址
+  // Handle download selected IP addresses
   const handleDownloadSelected = () => {
     if (selectedIPAddresses.length === 0) {
       return

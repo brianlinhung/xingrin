@@ -8,7 +8,7 @@ import type { FilterField } from "@/components/common/smart-filter-input"
 import type { DownloadOption, PaginationState } from "@/types/data-table.types"
 import type { PaginationInfo } from "@/types/common.types"
 
-// 端点页面的过滤字段配置
+// Endpoint page filter field configuration
 const ENDPOINT_FILTER_FIELDS: FilterField[] = [
   { key: "url", label: "URL", description: "Endpoint URL" },
   { key: "host", label: "Host", description: "Hostname" },
@@ -16,7 +16,7 @@ const ENDPOINT_FILTER_FIELDS: FilterField[] = [
   { key: "status", label: "Status", description: "HTTP status code" },
 ]
 
-// 端点页面的示例
+// Endpoint page filter examples
 const ENDPOINT_FILTER_EXAMPLES = [
   'url="/api/*" && status="200"',
   'host="api.example.com" || host="admin.example.com"',
@@ -26,7 +26,7 @@ const ENDPOINT_FILTER_EXAMPLES = [
 interface EndpointsDataTableProps<TData extends { id: number | string }, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
-  // 智能过滤
+  // Smart filter
   filterValue?: string
   onFilterChange?: (value: string) => void
   isSearching?: boolean
@@ -70,14 +70,14 @@ export function EndpointsDataTable<TData extends { id: number | string }, TValue
 
   const pagination = externalPagination || internalPagination
 
-  // 处理智能过滤搜索
+  // Handle smart filter search
   const handleSmartSearch = (rawQuery: string) => {
     if (onFilterChange) {
       onFilterChange(rawQuery)
     }
   }
 
-  // 处理分页变化
+  // Handle pagination change
   const handlePaginationChange = (newPagination: PaginationState) => {
     if (onPaginationChange) {
       onPaginationChange(newPagination)
@@ -86,7 +86,7 @@ export function EndpointsDataTable<TData extends { id: number | string }, TValue
     }
   }
 
-  // 构建 paginationInfo
+  // Build paginationInfo
   const paginationInfo: PaginationInfo | undefined = externalPagination && totalCount ? {
     total: totalCount,
     totalPages: totalPages || Math.ceil(totalCount / pagination.pageSize),
@@ -94,7 +94,7 @@ export function EndpointsDataTable<TData extends { id: number | string }, TValue
     pageSize: pagination.pageSize,
   } : undefined
 
-  // 下载选项
+  // Download options
   const downloadOptions: DownloadOption[] = []
   if (onDownloadAll) {
     downloadOptions.push({
@@ -117,30 +117,30 @@ export function EndpointsDataTable<TData extends { id: number | string }, TValue
       data={data}
       columns={columns as ColumnDef<TData>[]}
       getRowId={(row) => String(row.id)}
-      // 分页
+      // Pagination
       pagination={pagination}
       setPagination={onPaginationChange ? undefined : setInternalPagination}
       paginationInfo={paginationInfo}
       onPaginationChange={handlePaginationChange}
-      // 智能过滤
+      // Smart filter
       searchMode="smart"
       searchValue={filterValue}
       onSearch={handleSmartSearch}
       isSearching={isSearching}
       filterFields={ENDPOINT_FILTER_FIELDS}
       filterExamples={ENDPOINT_FILTER_EXAMPLES}
-      // 选择
+      // Selection
       onSelectionChange={onSelectionChange}
-      // 批量操作
+      // Bulk operations
       showBulkDelete={false}
       onAddNew={onAddNew}
       addButtonLabel={addButtonText}
-      // 批量添加按钮
+      // Bulk add button
       onBulkAdd={onBulkAdd}
       bulkAddLabel={tActions("add")}
-      // 下载
+      // Download
       downloadOptions={downloadOptions.length > 0 ? downloadOptions : undefined}
-      // 空状态
+      // Empty state
       emptyMessage={t("noData")}
     />
   )

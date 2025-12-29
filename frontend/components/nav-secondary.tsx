@@ -1,54 +1,54 @@
-"use client" // 标记为客户端组件，可以使用浏览器 API 和交互功能
+"use client" // Mark as client component, can use browser APIs and interactive features
 
-// 导入 React 库
+// Import React library
 import * as React from "react"
-// 导入图标类型
+// Import icon type
 import { type Icon } from "@tabler/icons-react"
 
-// 导入侧边栏相关组件
+// Import sidebar related components
 import {
-  SidebarGroup,        // 侧边栏组
-  SidebarGroupContent, // 侧边栏组内容
-  SidebarMenu,         // 侧边栏菜单
-  SidebarMenuButton,   // 侧边栏菜单按钮
-  SidebarMenuItem,     // 侧边栏菜单项
+  SidebarGroup,        // Sidebar group
+  SidebarGroupContent, // Sidebar group content
+  SidebarMenu,         // Sidebar menu
+  SidebarMenuButton,   // Sidebar menu button
+  SidebarMenuItem,     // Sidebar menu item
 } from '@/components/ui/sidebar'
 
 /**
- * 次要导航组件
- * 显示次要的导航菜单项，通常用于设置、帮助等功能
+ * Secondary navigation component
+ * Displays secondary navigation menu items, typically used for settings, help, etc.
  * 
- * @param {Object} props - 组件属性
- * @param {Array} props.items - 导航项数组
- * @param {string} props.items[].title - 导航项标题
- * @param {string} props.items[].url - 导航项链接
- * @param {Icon} props.items[].icon - 导航项图标
- * @param {...any} props - 其他传递给 SidebarGroup 的属性
+ * @param {Object} props - Component properties
+ * @param {Array} props.items - Navigation items array
+ * @param {string} props.items[].title - Navigation item title
+ * @param {string} props.items[].url - Navigation item link
+ * @param {Icon} props.items[].icon - Navigation item icon
+ * @param {...any} props - Other properties passed to SidebarGroup
  */
 export function NavSecondary({
   items,
-  ...props  // 其他属性传递给 SidebarGroup
+  ...props  // Other properties passed to SidebarGroup
 }: {
   items: {
-    title: string  // 导航项标题
-    url: string    // 导航项URL
-    icon: Icon     // 导航项图标
+    title: string  // Navigation item title
+    url: string    // Navigation item URL
+    icon: Icon     // Navigation item icon
   }[]
 } & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
   return (
-    <SidebarGroup {...props}>  {/* 传递所有其他属性 */}
-      {/* 侧边栏组内容 */}
+    <SidebarGroup {...props}>  {/* Pass all other properties */}
+      {/* Sidebar group content */}
       <SidebarGroupContent>
-        {/* 侧边栏菜单 */}
+        {/* Sidebar menu */}
         <SidebarMenu>
-          {/* 遍历次要导航项 */}
+          {/* Iterate through secondary navigation items */}
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              {/* 导航菜单按钮，使用 asChild 渲染为链接 */}
+              {/* Navigation menu button, rendered as link using asChild */}
               <SidebarMenuButton asChild>
-                <a href={item.url}>              {/* 导航链接 */}
-                  <item.icon />                   {/* 导航项图标 */}
-                  <span>{item.title}</span>       {/* 导航项标题 */}
+                <a href={item.url}>              {/* Navigation link */}
+                  <item.icon />                   {/* Navigation item icon */}
+                  <span>{item.title}</span>       {/* Navigation item title */}
                 </a>
               </SidebarMenuButton>
             </SidebarMenuItem>

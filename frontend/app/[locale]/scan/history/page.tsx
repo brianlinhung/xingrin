@@ -6,15 +6,15 @@ import { ScanHistoryList } from "@/components/scan/history/scan-history-list"
 import { ScanHistoryStatCards } from "@/components/scan/history/scan-history-stat-cards"
 
 /**
- * 扫描历史页面
- * 显示所有扫描任务的历史记录
+ * Scan history page
+ * Displays historical records of all scan tasks
  */
 export default function ScanHistoryPage() {
   const t = useTranslations("scan.history")
 
   return (
     <div className="@container/main flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-      {/* 页面标题 */}
+      {/* Page title */}
       <div className="flex items-center gap-3 px-4 lg:px-6">
         <IconRadar className="size-8 text-primary" />
         <div>
@@ -23,12 +23,12 @@ export default function ScanHistoryPage() {
         </div>
       </div>
 
-      {/* 统计卡片 */}
+      {/* Statistics cards */}
       <div className="px-4 lg:px-6">
         <ScanHistoryStatCards />
       </div>
 
-      {/* 扫描历史列表 */}
+      {/* Scan history list */}
       <div className="px-4 lg:px-6">
         <ScanHistoryList />
       </div>

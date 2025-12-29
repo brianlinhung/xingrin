@@ -9,7 +9,7 @@ import type { WebSite } from "@/types/website.types"
 import type { PaginationInfo } from "@/types/common.types"
 import type { DownloadOption } from "@/types/data-table.types"
 
-// 网站页面的过滤字段配置
+// Website page filter field configuration
 const WEBSITE_FILTER_FIELDS: FilterField[] = [
   { key: "url", label: "URL", description: "Full URL" },
   { key: "host", label: "Host", description: "Hostname" },
@@ -17,7 +17,7 @@ const WEBSITE_FILTER_FIELDS: FilterField[] = [
   { key: "status", label: "Status", description: "HTTP status code" },
 ]
 
-// 网站页面的示例
+// Website page filter examples
 const WEBSITE_FILTER_EXAMPLES = [
   'host="api.example.com" && status="200"',
   'title="Login" || title="Admin"',
@@ -27,7 +27,7 @@ const WEBSITE_FILTER_EXAMPLES = [
 interface WebSitesDataTableProps {
   data: WebSite[]
   columns: ColumnDef<WebSite>[]
-  // 智能过滤
+  // Smart filter
   filterValue?: string
   onFilterChange?: (value: string) => void
   isSearching?: boolean
@@ -62,14 +62,14 @@ export function WebSitesDataTable({
   const tActions = useTranslations("common.actions")
   const tDownload = useTranslations("common.download")
   
-  // 处理智能过滤搜索
+  // Handle smart filter search
   const handleSmartSearch = (rawQuery: string) => {
     if (onFilterChange) {
       onFilterChange(rawQuery)
     }
   }
 
-  // 下载选项
+  // Download options
   const downloadOptions: DownloadOption[] = []
   if (onDownloadAll) {
     downloadOptions.push({
@@ -92,30 +92,30 @@ export function WebSitesDataTable({
       data={data}
       columns={columns}
       getRowId={(row) => String(row.id)}
-      // 分页
+      // Pagination
       pagination={pagination}
       setPagination={setPagination}
       paginationInfo={paginationInfo}
       onPaginationChange={onPaginationChange}
-      // 智能过滤
+      // Smart filter
       searchMode="smart"
       searchValue={filterValue}
       onSearch={handleSmartSearch}
       isSearching={isSearching}
       filterFields={WEBSITE_FILTER_FIELDS}
       filterExamples={WEBSITE_FILTER_EXAMPLES}
-      // 选择
+      // Selection
       onSelectionChange={onSelectionChange}
-      // 批量操作
+      // Bulk operations
       onBulkDelete={onBulkDelete}
       bulkDeleteLabel="Delete"
       showAddButton={false}
-      // 批量添加按钮
+      // Bulk add button
       onBulkAdd={onBulkAdd}
       bulkAddLabel={tActions("add")}
-      // 下载
+      // Download
       downloadOptions={downloadOptions.length > 0 ? downloadOptions : undefined}
-      // 空状态
+      // Empty state
       emptyMessage={t("noData")}
     />
   )

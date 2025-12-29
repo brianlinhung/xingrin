@@ -9,13 +9,13 @@ import type { Directory } from "@/types/directory.types"
 import type { PaginationInfo } from "@/types/common.types"
 import type { DownloadOption } from "@/types/data-table.types"
 
-// 目录页面的过滤字段配置
+// Directory page filter field configuration
 const DIRECTORY_FILTER_FIELDS: FilterField[] = [
   { key: "url", label: "URL", description: "Directory URL" },
   { key: "status", label: "Status", description: "HTTP status code" },
 ]
 
-// 目录页面的示例
+// Directory page filter examples
 const DIRECTORY_FILTER_EXAMPLES = [
   'url="/admin" && status="200"',
   'url="/api/*" || url="/config/*"',
@@ -25,7 +25,7 @@ const DIRECTORY_FILTER_EXAMPLES = [
 interface DirectoriesDataTableProps {
   data: Directory[]
   columns: ColumnDef<Directory>[]
-  // 智能过滤
+  // Smart filter
   filterValue?: string
   onFilterChange?: (value: string) => void
   isSearching?: boolean
@@ -35,7 +35,7 @@ interface DirectoriesDataTableProps {
   onPaginationChange?: (pagination: { pageIndex: number; pageSize: number }) => void
   onBulkDelete?: () => void
   onSelectionChange?: (selectedRows: Directory[]) => void
-  // 下载回调函数
+  // Download callback functions
   onDownloadAll?: () => void
   onDownloadSelected?: () => void
   onBulkAdd?: () => void
@@ -62,20 +62,20 @@ export function DirectoriesDataTable({
   const tDownload = useTranslations("common.download")
   const [selectedRows, setSelectedRows] = React.useState<Directory[]>([])
 
-  // 处理智能过滤搜索
+  // Handle smart filter search
   const handleSmartSearch = (rawQuery: string) => {
     if (onFilterChange) {
       onFilterChange(rawQuery)
     }
   }
 
-  // 处理选中行变化
+  // Handle selection change
   const handleSelectionChange = (rows: Directory[]) => {
     setSelectedRows(rows)
     onSelectionChange?.(rows)
   }
 
-  // 下载选项
+  // Download options
   const downloadOptions: DownloadOption[] = []
   if (onDownloadAll) {
     downloadOptions.push({
@@ -98,30 +98,30 @@ export function DirectoriesDataTable({
       data={data}
       columns={columns}
       getRowId={(row) => String(row.id)}
-      // 分页
+      // Pagination
       pagination={pagination}
       setPagination={setPagination}
       paginationInfo={paginationInfo}
       onPaginationChange={onPaginationChange}
-      // 智能过滤
+      // Smart filter
       searchMode="smart"
       searchValue={filterValue}
       onSearch={handleSmartSearch}
       isSearching={isSearching}
       filterFields={DIRECTORY_FILTER_FIELDS}
       filterExamples={DIRECTORY_FILTER_EXAMPLES}
-      // 选择
+      // Selection
       onSelectionChange={handleSelectionChange}
-      // 批量操作
+      // Bulk operations
       onBulkDelete={onBulkDelete}
       bulkDeleteLabel="Delete"
       showAddButton={false}
-      // 批量添加按钮
+      // Bulk add button
       onBulkAdd={onBulkAdd}
       bulkAddLabel={tActions("add")}
-      // 下载
+      // Download
       downloadOptions={downloadOptions.length > 0 ? downloadOptions : undefined}
-      // 空状态
+      // Empty state
       emptyMessage={t("noData")}
     />
   )

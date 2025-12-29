@@ -5,15 +5,15 @@ import { useTranslations } from "next-intl"
 import { VulnerabilitiesDetailView } from "@/components/vulnerabilities"
 
 /**
- * 全部漏洞页面
- * 显示系统中所有漏洞
+ * All vulnerabilities page
+ * Displays all vulnerabilities in the system
  */
 export default function VulnerabilitiesPage() {
   const t = useTranslations("vulnerabilities")
 
   return (
     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-      {/* 页面头部 */}
+      {/* Page header */}
       <div className="flex items-center justify-between px-4 lg:px-6">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">{t("title")}</h2>
@@ -21,7 +21,7 @@ export default function VulnerabilitiesPage() {
         </div>
       </div>
 
-      {/* 漏洞列表 */}
+      {/* Vulnerability list */}
       <div className="px-4 lg:px-6">
         <VulnerabilitiesDetailView />
       </div>

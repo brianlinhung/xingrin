@@ -13,8 +13,8 @@ import { Button } from '@/components/ui/button'
 import { IconLanguage, IconCheck } from '@tabler/icons-react'
 
 /**
- * 语言切换组件
- * 显示当前语言，点击后可切换到其他支持的语言
+ * Language switcher component
+ * Displays current language, click to switch to other supported languages
  */
 export function LanguageSwitcher() {
   const locale = useLocale() as Locale

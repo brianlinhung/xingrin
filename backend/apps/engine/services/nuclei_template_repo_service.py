@@ -186,7 +186,7 @@ class NucleiTemplateRepoService:
             RuntimeError: Git 命令执行失败
         """
         import subprocess
-        from apps.common.utils.xget_proxy import get_xget_proxy_url
+        from apps.common.utils.git_proxy import get_git_proxy_url
 
         obj = self._get_repo_obj(repo_id)
 
@@ -197,10 +197,10 @@ class NucleiTemplateRepoService:
         cmd: List[str]
         action: str
 
-        # 获取代理后的 URL（如果启用了 xget 加速）
-        proxied_url = get_xget_proxy_url(obj.repo_url)
+        # 获取代理后的 URL（如果启用了 Git 加速）
+        proxied_url = get_git_proxy_url(obj.repo_url)
         if proxied_url != obj.repo_url:
-            logger.info("使用 Xget 加速: %s -> %s", obj.repo_url, proxied_url)
+            logger.info("使用 Git 加速: %s -> %s", obj.repo_url, proxied_url)
 
         # 判断是 clone 还是 pull
         if git_dir.is_dir():

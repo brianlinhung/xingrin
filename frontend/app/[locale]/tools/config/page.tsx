@@ -1,10 +1,10 @@
 "use client"
 
 /**
- * 工具配置页面
- * 展示和管理扫描工具集（开源工具和自定义工具）
+ * Tool configuration page
+ * Display and manage scanning tool sets (open source tools and custom tools)
  */
 export default function ToolConfigPage() {
-  // 工具配置功能已下线，此页面保留占位避免历史链接报错
+  // Tool configuration feature has been deprecated, this page is kept as placeholder to avoid broken historical links
   return null
 }

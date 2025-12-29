@@ -33,14 +33,14 @@ export function DirectoriesView({
   const [filterQuery, setFilterQuery] = useState("")
   const [isSearching, setIsSearching] = useState(false)
 
-  // 国际化
+  // Internationalization
   const tColumns = useTranslations("columns")
   const tCommon = useTranslations("common")
   const tToast = useTranslations("toast")
   const tStatus = useTranslations("common.status")
   const locale = useLocale()
 
-  // 构建翻译对象
+  // Build translation object
   const translations = useMemo(() => ({
     columns: {
       url: tColumns("common.url"),
@@ -58,7 +58,7 @@ export function DirectoriesView({
     },
   }), [tColumns, tCommon])
 
-  // 获取目标信息（用于 URL 匹配校验）
+  // Get target info (for URL matching validation)
   const { data: target } = useTarget(targetId || 0, { enabled: !!targetId })
 
   const handleFilterChange = (value: string) => {
@@ -135,7 +135,7 @@ export function DirectoriesView({
     setSelectedDirectories(selectedRows)
   }, [])
 
-  // 格式化日期为 YYYY-MM-DD HH:MM:SS（与后端一致）
+  // Format date as YYYY-MM-DD HH:MM:SS (consistent with backend)
   const formatDateForCSV = (dateString: string): string => {
     if (!dateString) return ''
     const date = new Date(dateString)
@@ -148,7 +148,7 @@ export function DirectoriesView({
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
   }
 
-  // CSV 转义
+  // CSV escape
   const escapeCSV = (value: string | number | boolean | null | undefined): string => {
     if (value === null || value === undefined) return ''
     const str = String(value)
@@ -158,13 +158,13 @@ export function DirectoriesView({
     return str
   }
 
-  // 将纳秒转换为毫秒
+  // Convert nanoseconds to milliseconds
   const formatDurationNsToMs = (durationNs: number | null | undefined): string => {
     if (durationNs === null || durationNs === undefined) return ''
     return String(Math.floor(durationNs / 1_000_000))
   }
 
-  // 生成 CSV 内容
+  // Generate CSV content
   const generateCSV = (items: Directory[]): string => {
     const BOM = '\ufeff'
     const headers = [
@@ -186,7 +186,7 @@ export function DirectoriesView({
     return BOM + [headers.join(','), ...rows].join('\n')
   }
 
-  // 处理下载所有目录
+  // Handle download all directories
   const handleDownloadAll = async () => {
     try {
       let blob: Blob | null = null
@@ -217,12 +217,12 @@ export function DirectoriesView({
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
     } catch (error) {
-      console.error("下载目录列表失败", error)
+      console.error("Failed to download directory list", error)
       toast.error(tToast("downloadFailed"))
     }
   }
 
-  // 处理下载选中的目录
+  // Handle download selected directories
   const handleDownloadSelected = () => {
     if (selectedDirectories.length === 0) {
       return
@@ -283,7 +283,7 @@ export function DirectoriesView({
         onBulkAdd={targetId ? () => setBulkAddDialogOpen(true) : undefined}
       />
 
-      {/* 批量添加弹窗 */}
+      {/* Bulk add dialog */}
       {targetId && (
         <BulkAddUrlsDialog
           targetId={targetId}

@@ -36,7 +36,7 @@ interface FlattenedNode extends NucleiTemplateTreeNode {
   level: number
 }
 
-/** 解析 YAML 内容提取模板信息 */
+/** Parse YAML content to extract template information */
 function parseTemplateInfo(content: string) {
   const info: {
     id?: string
@@ -46,7 +46,7 @@ function parseTemplateInfo(content: string) {
     author?: string
   } = {}
 
-  // 简单正则提取，不用完整 YAML 解析
+  // Simple regex extraction, no full YAML parsing
   const idMatch = content.match(/^id:\s*(.+)$/m)
   if (idMatch) info.id = idMatch[1].trim()
 
@@ -65,7 +65,7 @@ function parseTemplateInfo(content: string) {
   return info
 }
 
-/** 严重程度对应的颜色 */
+/** Severity level corresponding colors */
 function getSeverityColor(severity?: string) {
   switch (severity) {
     case "critical":
@@ -103,7 +103,7 @@ export default function NucleiRepoDetailPage() {
   const { data: repoDetail } = useNucleiRepo(numericRepoId)
   const refreshMutation = useRefreshNucleiRepo()
 
-  // 展开的节点和过滤后的节点
+  // Expanded nodes and filtered nodes
   const nodes: FlattenedNode[] = useMemo(() => {
     const result: FlattenedNode[] = []
     const expandedSet = new Set(expandedPaths)
@@ -121,7 +121,7 @@ export default function NucleiRepoDetailPage() {
           continue
         }
 
-        // 搜索过滤
+        // Search filter
         if (query && isFile && !item.name.toLowerCase().includes(query)) {
           continue
         }
@@ -129,7 +129,7 @@ export default function NucleiRepoDetailPage() {
         result.push({ ...item, level })
 
         if (isFolder && item.children && item.children.length > 0) {
-          // 搜索时展开所有文件夹，否则按 expandedPaths
+          // Expand all folders when searching, otherwise follow expandedPaths
           if (query || expandedSet.has(item.path)) {
             visit(item.children, level + 1)
           }
@@ -170,7 +170,7 @@ export default function NucleiRepoDetailPage() {
 
   const repoDisplayName = repoDetail?.name || t("repoName", { id: repoId })
 
-  // 解析当前模板信息
+  // Parse current template information
   const templateInfo = useMemo(() => {
     if (!templateContent?.content) return null
     return parseTemplateInfo(templateContent.content)
@@ -178,7 +178,7 @@ export default function NucleiRepoDetailPage() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* 顶部：返回 + 标题 + 搜索 + 同步 */}
+      {/* Top: Back + Title + Search + Sync */}
       <div className="flex items-center gap-4 px-4 py-4 lg:px-6">
         <Link href="/tools/nuclei/">
           <Button variant="ghost" size="sm" className="gap-1.5">
@@ -211,9 +211,9 @@ export default function NucleiRepoDetailPage() {
 
       <Separator />
 
-      {/* 主体：左侧目录 + 右侧内容 */}
+      {/* Main: Left directory + Right content */}
       <div className="flex flex-1 min-h-0">
-        {/* 左侧：模板目录 */}
+        {/* Left: Template directory */}
         <div className="w-72 lg:w-80 border-r flex flex-col">
           <div className="px-4 py-3 border-b">
             <h2 className="text-sm font-medium text-muted-foreground">
@@ -280,11 +280,11 @@ export default function NucleiRepoDetailPage() {
           </ScrollArea>
         </div>
 
-        {/* 右侧：模板内容 */}
+        {/* Right: Template content */}
         <div className="flex-1 flex flex-col min-w-0">
           {selectedPath && templateContent ? (
             <>
-              {/* 模板头部 */}
+              {/* Template header */}
               <div className="px-6 py-4 border-b">
                 <div className="flex items-start gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 shrink-0">
@@ -309,7 +309,7 @@ export default function NucleiRepoDetailPage() {
                 </div>
               </div>
 
-              {/* 代码编辑器 */}
+              {/* Code editor */}
               <div className="flex-1 min-h-0">
                 <Editor
                   height="100%"
@@ -328,7 +328,7 @@ export default function NucleiRepoDetailPage() {
                 />
               </div>
 
-              {/* 模板信息 */}
+              {/* Template information */}
               {templateInfo && (templateInfo.tags || templateInfo.author) && (
                 <div className="px-6 py-3 border-t flex items-center gap-4 text-sm">
                   {templateInfo.tags && templateInfo.tags.length > 0 && (
@@ -358,7 +358,7 @@ export default function NucleiRepoDetailPage() {
               )}
             </>
           ) : (
-            // 未选中状态
+            // Unselected state
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center text-muted-foreground">
                 <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />

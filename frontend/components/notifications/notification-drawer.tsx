@@ -20,11 +20,11 @@ import { useMarkAllAsRead, useNotifications } from "@/hooks/use-notifications"
 import type { Notification, NotificationType, NotificationSeverity } from "@/types/notification.types"
 
 /**
- * 通知抽屉组件
- * 从右侧滑出的侧边面板，显示详细的通知信息
+ * Notification drawer component
+ * A side panel that slides out from the right, displaying detailed notification information
  */
 
-/** 连接状态指示器 */
+/** Connection status indicator */
 function ConnectionStatus({ isConnected, t }: { isConnected: boolean, t: ReturnType<typeof useTranslations> }) {
   return (
     <div className="flex items-center gap-1.5">
@@ -44,7 +44,7 @@ function ConnectionStatus({ isConnected, t }: { isConnected: boolean, t: ReturnT
   )
 }
 
-/** 通知骨架屏 */
+/** Notification skeleton screen */
 function NotificationSkeleton() {
   return (
     <div className="space-y-2">
@@ -64,7 +64,7 @@ function NotificationSkeleton() {
   )
 }
 
-/** 时间分组辅助函数 */
+/** Time grouping helper function */
 function getTimeGroup(dateStr?: string): 'today' | 'yesterday' | 'earlier' {
   if (!dateStr) return 'earlier'
   const date = new Date(dateStr)
@@ -85,7 +85,7 @@ export function NotificationDrawer() {
   const { data: notificationResponse, isLoading: isHistoryLoading } = useNotifications(queryParams)
   const { mutate: markAllAsRead, isPending: isMarkingAll } = useMarkAllAsRead()
 
-  // 筛选标签配置
+  // Filter tab configuration
   const filterTabs: { value: NotificationType | 'all'; label: string; icon?: React.ReactNode }[] = [
     { value: 'all', label: t("filters.all") },
     { value: 'scan', label: t("filters.scan"), icon: <Activity className="h-3 w-3" /> },
@@ -94,7 +94,7 @@ export function NotificationDrawer() {
     { value: 'system', label: t("filters.system"), icon: <Info className="h-3 w-3" /> },
   ]
 
-  // 分类标题映射
+  // Category title mapping
   const categoryTitleMap: Record<NotificationType, string> = {
     scan: t("categories.scan"),
     vulnerability: t("categories.vulnerability"),
@@ -102,14 +102,14 @@ export function NotificationDrawer() {
     system: t("categories.system"),
   }
 
-  // 时间分组标签
+  // Time group labels
   const timeGroupLabels = {
     today: t("timeGroups.today"),
     yesterday: t("timeGroups.yesterday"),
     earlier: t("timeGroups.earlier"),
   }
 
-  // SSE 实时通知
+  // SSE real-time notifications
   const { notifications: sseNotifications, isConnected, markNotificationsAsRead } = useNotificationSSE()
 
   const [historyNotifications, setHistoryNotifications] = React.useState<Notification[]>([])
@@ -120,7 +120,7 @@ export function NotificationDrawer() {
     setHistoryNotifications(backendNotifications.map(transformBackendNotification))
   }, [notificationResponse])
 
-  // 合并 SSE 和 API 通知，SSE 优先
+  // Merge SSE and API notifications, SSE takes priority
   const allNotifications = React.useMemo(() => {
     const seen = new Set<number>()
     const merged: Notification[] = []
@@ -146,7 +146,7 @@ export function NotificationDrawer() {
     })
   }, [historyNotifications, sseNotifications])
 
-  // 未读通知数量
+  // Unread notification count
   const unreadCount = allNotifications.filter(n => n.unread).length
 
   const unreadByType = React.useMemo<Record<NotificationType | 'all', number>>(() => {
@@ -169,13 +169,13 @@ export function NotificationDrawer() {
     return counts
   }, [allNotifications])
 
-  // 筛选后的通知列表
+  // Filtered notification list
   const filteredNotifications = React.useMemo(() => {
     if (activeFilter === 'all') return allNotifications
     return allNotifications.filter(n => n.type === activeFilter)
   }, [allNotifications, activeFilter])
 
-  // 获取通知图标
+  // Get notification icon
   const severityIconClassMap: Record<NotificationSeverity, string> = {
     critical: "text-[#da3633] dark:text-[#f85149]",
     high: "text-[#d29922]",
@@ -216,15 +216,15 @@ export function NotificationDrawer() {
     if (allNotifications.length === 0 || isMarkingAll) return
     markAllAsRead(undefined, {
       onSuccess: () => {
-        // 更新历史通知状态
+        // Update history notification status
         setHistoryNotifications(prev => prev.map(notification => ({ ...notification, unread: false })))
-        // 更新 SSE 实时通知状态
+        // Update SSE real-time notification status
         markNotificationsAsRead()
       },
     })
   }, [allNotifications.length, isMarkingAll, markAllAsRead, markNotificationsAsRead])
 
-  // 按时间分组通知
+  // Group notifications by time
   const groupedNotifications = React.useMemo(() => {
     const groups: Record<'today' | 'yesterday' | 'earlier', Notification[]> = {
       today: [],
@@ -240,7 +240,7 @@ export function NotificationDrawer() {
     return groups
   }, [filteredNotifications])
 
-  // 渲染单个通知卡片
+  // Render single notification card
   const renderNotificationCard = (notification: Notification) => (
     <div
       key={notification.id}
@@ -264,7 +264,7 @@ export function NotificationDrawer() {
           {getNotificationIcon(notification.type, notification.severity)}
         </div>
         <div className="flex-1 min-w-0 overflow-hidden">
-          {/* 分类标题 + 时间 */}
+          {/* Category title + time */}
           <div className="flex items-center justify-between gap-2 mb-1">
             <span className="text-xs font-medium text-muted-foreground">
               {categoryTitleMap[notification.type]}
@@ -273,11 +273,11 @@ export function NotificationDrawer() {
               {notification.time}
             </span>
           </div>
-          {/* 通知标题 */}
+          {/* Notification title */}
           <p className="text-sm font-semibold leading-snug truncate">
             {notification.title}
           </p>
-          {/* 通知描述 - 支持换行显示 */}
+          {/* Notification description - supports line breaks */}
           <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line break-all line-clamp-4">
             {notification.description}
           </p>
@@ -286,7 +286,7 @@ export function NotificationDrawer() {
     </div>
   )
 
-  // 渲染通知列表（带时间分组）
+  // Render notification list (with time grouping)
   const renderNotificationList = () => {
     const hasAny = filteredNotifications.length > 0
     
@@ -356,7 +356,7 @@ export function NotificationDrawer() {
           </div>
         </SheetHeader>
 
-        {/* 分类筛选标签 */}
+        {/* Category filter tabs */}
         <div className="flex gap-1 px-3 py-1.5 border-b overflow-x-auto">
           {filterTabs.map((tab) => (
             <button

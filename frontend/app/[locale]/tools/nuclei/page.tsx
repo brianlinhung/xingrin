@@ -33,7 +33,7 @@ import { cn } from "@/lib/utils"
 import { MasterDetailSkeleton } from "@/components/ui/master-detail-skeleton"
 import { getDateLocale } from "@/lib/date-utils"
 
-/** 格式化时间显示 */
+/** Format time display */
 function formatDateTime(isoString: string | null, locale: string) {
   if (!isoString) return "-"
   try {
@@ -56,7 +56,7 @@ export default function NucleiReposPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [repoToDelete, setRepoToDelete] = useState<NucleiRepo | null>(null)
 
-  // 国际化
+  // Internationalization
   const tCommon = useTranslations("common")
   const tConfirm = useTranslations("common.confirm")
   const t = useTranslations("pages.nuclei")
@@ -69,7 +69,7 @@ export default function NucleiReposPage() {
   const refreshMutation = useRefreshNucleiRepo()
   const updateMutation = useUpdateNucleiRepo()
 
-  // 过滤仓库列表
+  // Filter repository list
   const filteredRepos = useMemo(() => {
     if (!repos) return []
     if (!searchQuery.trim()) return repos
@@ -81,7 +81,7 @@ export default function NucleiReposPage() {
     )
   }, [repos, searchQuery])
 
-  // 选中的仓库
+  // Selected repository
   const selectedRepo = useMemo(() => {
     if (!selectedId || !repos) return null
     return repos.find((r) => r.id === selectedId) || null
@@ -159,14 +159,14 @@ export default function NucleiReposPage() {
     )
   }
 
-  // 加载状态
+  // Loading state
   if (isLoading) {
     return <MasterDetailSkeleton title={t("title")} listItemCount={3} />
   }
 
   return (
     <div className="flex flex-col h-full">
-      {/* 顶部：标题 + 搜索 + 新增按钮 */}
+      {/* Top: Title + Search + Add button */}
       <div className="flex items-center justify-between gap-4 px-4 py-4 lg:px-6">
         <h1 className="text-2xl font-bold shrink-0">{t("title")}</h1>
         <div className="flex items-center gap-2 flex-1 max-w-md">
@@ -188,9 +188,9 @@ export default function NucleiReposPage() {
 
       <Separator />
 
-      {/* 主体：左侧列表 + 右侧详情 */}
+      {/* Main: Left list + Right details */}
       <div className="flex flex-1 min-h-0">
-        {/* 左侧：仓库列表 */}
+        {/* Left: Repository list */}
         <div className="w-72 lg:w-80 border-r flex flex-col">
           <div className="px-4 py-3 border-b">
             <h2 className="text-sm font-medium text-muted-foreground">
@@ -245,11 +245,11 @@ export default function NucleiReposPage() {
           </ScrollArea>
         </div>
 
-        {/* 右侧：仓库详情 */}
+        {/* Right: Repository details */}
         <div className="flex-1 flex flex-col min-w-0">
           {selectedRepo ? (
             <>
-              {/* 详情头部 */}
+              {/* Details header */}
               <div className="px-6 py-4 border-b">
                 <div className="flex items-start gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 shrink-0">
@@ -272,10 +272,10 @@ export default function NucleiReposPage() {
                 </div>
               </div>
 
-              {/* 详情内容 */}
+              {/* Details content */}
               <ScrollArea className="flex-1">
                 <div className="p-6 space-y-6">
-                  {/* 统计信息 */}
+                  {/* Statistics information */}
                   <div className="rounded-lg border">
                     <div className="grid grid-cols-2 divide-x">
                       <div className="p-4">
@@ -322,7 +322,7 @@ export default function NucleiReposPage() {
                 </div>
               </ScrollArea>
 
-              {/* 操作按钮 */}
+              {/* Action buttons */}
               <div className="px-6 py-4 border-t flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -361,7 +361,7 @@ export default function NucleiReposPage() {
               </div>
             </>
           ) : (
-            // 未选中状态
+            // Unselected state
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center text-muted-foreground">
                 <GitBranch className="h-12 w-12 mx-auto mb-3 opacity-50" />
@@ -405,7 +405,7 @@ export default function NucleiReposPage() {
               />
             </div>
 
-            {/* 目前只支持公开仓库，这里不再提供认证方式和凭据配置 */}
+            {/* Currently only public repositories are supported, no authentication method and credential configuration provided here */}
 
             <DialogFooter>
               <Button
@@ -457,7 +457,7 @@ export default function NucleiReposPage() {
               />
             </div>
 
-            {/* 编辑时也不再支持配置认证方式/凭据，仅允许修改 Git 地址 */}
+            {/* Editing also no longer supports configuring authentication method/credentials, only allows modifying Git address */}
 
             <DialogFooter>
               <Button
@@ -479,7 +479,7 @@ export default function NucleiReposPage() {
         </DialogContent>
       </Dialog>
 
-      {/* 删除确认弹窗 */}
+      {/* Delete confirmation dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

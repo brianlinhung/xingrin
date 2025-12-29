@@ -13,7 +13,7 @@ import { DataTableColumnHeader } from "@/components/ui/data-table/column-header"
 import type { IPAddress } from "@/types/ip-address.types"
 import { ExpandableCell } from "@/components/ui/data-table/expandable-cell"
 
-// 翻译类型定义
+// Translation type definitions
 export interface IPAddressTranslations {
   columns: {
     ipAddress: string

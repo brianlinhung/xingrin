@@ -5,13 +5,13 @@ import { getMessages, setRequestLocale, getTranslations } from 'next-intl/server
 import { notFound } from 'next/navigation'
 import { locales, localeHtmlLang, type Locale } from '@/i18n/config'
 
-// 导入全局样式文件
+// Import global style files
 import "../globals.css"
-// 导入思源黑体（Noto Sans SC）本地字体
+// Import Noto Sans SC local font
 import "@fontsource/noto-sans-sc/400.css"
 import "@fontsource/noto-sans-sc/500.css"
 import "@fontsource/noto-sans-sc/700.css"
-// 导入颜色主题
+// Import color themes
 import "@/styles/themes/bubblegum.css"
 import "@/styles/themes/quantum-rose.css"
 import "@/styles/themes/clean-slate.css"
@@ -25,12 +25,12 @@ import Script from "next/script"
 import { QueryProvider } from "@/components/providers/query-provider"
 import { ThemeProvider } from "@/components/providers/theme-provider"
 
-// 导入公共布局组件
+// Import common layout components
 import { RoutePrefetch } from "@/components/route-prefetch"
 import { RouteProgress } from "@/components/route-progress"
 import { AuthLayout } from "@/components/auth/auth-layout"
 
-// 动态生成元数据
+// Dynamically generate metadata
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'metadata' })
@@ -54,7 +54,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   }
 }
 
-// 使用思源黑体 + 系统字体回退，完全本地加载
+// Use Noto Sans SC + system font fallback, fully loaded locally
 const fontConfig = {
   className: "font-sans",
   style: {
@@ -62,7 +62,7 @@ const fontConfig = {
   }
 }
 
-// 生成静态参数，支持所有语言
+// Generate static parameters, support all languages
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }))
 }
@@ -73,8 +73,8 @@ interface Props {
 }
 
 /**
- * 语言布局组件
- * 包装所有页面，提供国际化上下文
+ * Language layout component
+ * Wraps all pages, provides internationalization context
  */
 export default async function LocaleLayout({
   children,
@@ -82,44 +82,44 @@ export default async function LocaleLayout({
 }: Props) {
   const { locale } = await params
 
-  // 验证 locale 有效性
+  // Validate locale validity
   if (!locales.includes(locale as Locale)) {
     notFound()
   }
 
-  // 启用静态渲染
+  // Enable static rendering
   setRequestLocale(locale)
 
-  // 加载翻译消息
+  // Load translation messages
   const messages = await getMessages()
 
   return (
     <html lang={localeHtmlLang[locale as Locale]} suppressHydrationWarning>
       <body className={fontConfig.className} style={fontConfig.style}>
-        {/* 加载外部脚本 */}
+        {/* Load external scripts */}
         <Script
           src="https://tweakcn.com/live-preview.min.js"
           strategy="beforeInteractive"
           crossOrigin="anonymous"
         />
-        {/* 路由加载进度条 */}
+        {/* Route loading progress bar */}
         <Suspense fallback={null}>
           <RouteProgress />
         </Suspense>
-        {/* ThemeProvider 提供主题切换功能 */}
+        {/* ThemeProvider provides theme switching functionality */}
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >
-          {/* NextIntlClientProvider 提供国际化上下文 */}
+          {/* NextIntlClientProvider provides internationalization context */}
           <NextIntlClientProvider messages={messages}>
-            {/* QueryProvider 提供 React Query 功能 */}
+            {/* QueryProvider provides React Query functionality */}
             <QueryProvider>
-              {/* 路由预加载 */}
+              {/* Route prefetch */}
               <RoutePrefetch />
-              {/* AuthLayout 处理认证和侧边栏显示 */}
+              {/* AuthLayout handles authentication and sidebar display */}
               <AuthLayout>
                 {children}
               </AuthLayout>

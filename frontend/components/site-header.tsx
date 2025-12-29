@@ -1,51 +1,51 @@
 import { Button } from "@/components/ui/button"
-// 导入分隔线组件
+// Import separator component
 import { Separator } from "@/components/ui/separator"
-// 导入侧边栏触发器组件
+// Import sidebar trigger component
 import { SidebarTrigger } from "@/components/ui/sidebar"
-// 导入通知抽屉组件
+// Import notification drawer component
 import { NotificationDrawer } from "@/components/notifications"
-// 导入颜色主题切换组件
+// Import color theme switcher component
 import { ColorThemeSwitcher } from "@/components/color-theme-switcher"
-// 导入快速扫描组件
+// Import quick scan component
 import { QuickScanDialog } from "@/components/scan/quick-scan-dialog"
-// 导入语言切换组件
+// Import language switcher component
 import { LanguageSwitcher } from "@/components/language-switcher"
 
 /**
- * 网站头部组件
- * 显示在页面顶部,包含侧边栏切换按钮、页面标题和外部链接
+ * Site header component
+ * Displayed at the top of the page, contains sidebar toggle button, page title and external links
  */
 export function SiteHeader() {
   return (
-    // header 元素,使用 flex 布局水平排列内容
+    // header element, uses flex layout to arrange content horizontally
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
-      {/* 内容容器,占据整个宽度 */}
+      {/* Content container, takes full width */}
       <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
-        {/* 侧边栏切换按钮,带有负左边距以对齐 */}
+        {/* Sidebar toggle button, with negative left margin for alignment */}
         <SidebarTrigger className="-ml-1" />
 
-        {/* 右侧按钮区域,使用 ml-auto 推到最右边 */}
+        {/* Right button area, using ml-auto to push to the right */}
         <div className="ml-auto flex items-center gap-2">
-          {/* 快速扫描按钮 */}
+          {/* Quick scan button */}
           <QuickScanDialog />
           
-          {/* 通知抽屉按钮 */}
+          {/* Notification drawer button */}
           <NotificationDrawer />
           
-          {/* 颜色主题切换按钮 */}
+          {/* Color theme switcher button */}
           <ColorThemeSwitcher />
           
-          {/* 语言切换按钮 */}
+          {/* Language switcher button */}
           <LanguageSwitcher />
           
-          {/* GitHub 链接按钮,在小屏幕上隐藏 */}
+          {/* GitHub link button, hidden on small screens */}
           <Button variant="ghost" asChild size="sm" className="hidden sm:flex">
             <a
               href="https://github.com/yyhuni/xingrin"
-              rel="noopener noreferrer" // 安全属性,防止新窗口访问原窗口
-              target="_blank" // 在新标签页打开
-              className="dark:text-foreground" // 深色模式下的文字颜色
+              rel="noopener noreferrer" // Security attribute, prevents new window from accessing original window
+              target="_blank" // Open in new tab
+              className="dark:text-foreground" // Text color in dark mode
             >
               GitHub
             </a>

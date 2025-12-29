@@ -8,7 +8,7 @@ import { DataTableColumnHeader } from "@/components/ui/data-table/column-header"
 import type { WebSite } from "@/types/website.types"
 import { ExpandableCell, ExpandableTagList } from "@/components/ui/data-table/expandable-cell"
 
-// 翻译类型定义
+// Translation type definitions
 export interface WebsiteTranslations {
   columns: {
     url: string

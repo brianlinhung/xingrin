@@ -5,9 +5,9 @@ import { usePathname, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 
 /**
- * 路由加载进度条组件
+ * Route loading progress bar component
  * 
- * 监听 Next.js App Router 的路由变化，显示顶部进度条动画
+ * Monitors Next.js App Router route changes and displays top progress bar animation
  */
 export function RouteProgress() {
   const pathname = usePathname()
@@ -22,12 +22,12 @@ export function RouteProgress() {
     setIsVisible(true)
     setProgress(0)
     
-    // 使用 interval 平滑递增
+    // Use interval for smooth increment
     let currentProgress = 0
     intervalRef.current = setInterval(() => {
-      currentProgress += Math.random() * 10 + 5 // 每次增加 5-15%
+      currentProgress += Math.random() * 10 + 5 // Increase by 5-15% each time
       if (currentProgress >= 90) {
-        currentProgress = 90 // 最多到 90%，等待完成
+        currentProgress = 90 // Max 90%, wait for completion
         if (intervalRef.current) {
           clearInterval(intervalRef.current)
           intervalRef.current = null
@@ -38,14 +38,14 @@ export function RouteProgress() {
   }, [])
 
   const completeProgress = useCallback(() => {
-    // 清除进行中的 interval
+    // Clear ongoing interval
     if (intervalRef.current) {
       clearInterval(intervalRef.current)
       intervalRef.current = null
     }
     
     setProgress(100)
-    // 完成后短暂显示 100%，然后隐藏
+    // Show 100% briefly after completion, then hide
     setTimeout(() => {
       setIsVisible(false)
       setProgress(0)
@@ -53,16 +53,16 @@ export function RouteProgress() {
   }, [])
 
   useEffect(() => {
-    // 跳过首次渲染
+    // Skip first render
     if (isFirstRender.current) {
       isFirstRender.current = false
       return
     }
 
-    // 路由变化时触发进度条
+    // Trigger progress bar on route change
     startProgress()
     
-    // 页面加载完成后结束进度条
+    // End progress bar after page load completes
     const timer = setTimeout(() => completeProgress(), 300)
     
     return () => {
@@ -83,10 +83,10 @@ export function RouteProgress() {
         "pointer-events-none"
       )}
     >
-      {/* 进度条背景 */}
+      {/* Progress bar background */}
       <div className="absolute inset-0 bg-primary/10" />
       
-      {/* 进度条 */}
+      {/* Progress bar */}
       <div
         className={cn(
           "h-full bg-primary transition-all duration-200 ease-out",
@@ -95,7 +95,7 @@ export function RouteProgress() {
         style={{ width: `${progress}%` }}
       />
       
-      {/* 发光效果 */}
+      {/* Glow effect */}
       <div
         className={cn(
           "absolute top-0 right-0 h-full w-24",

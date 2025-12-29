@@ -10,12 +10,12 @@ interface LoadingSpinnerProps {
 }
 
 /**
- * 统一的加载动画组件
+ * Unified loading animation component
  * 
- * 特性：
- * - 三种尺寸：sm(16px), md(24px), lg(32px)
- * - 支持自定义样式
- * - 使用 Tailwind CSS 动画
+ * Features:
+ * - Three sizes: sm(16px), md(24px), lg(32px)
+ * - Supports custom styles
+ * - Uses Tailwind CSS animations
  */
 export function LoadingSpinner({ size = "sm", className }: LoadingSpinnerProps) {
   const sizeMap = {
@@ -34,9 +34,9 @@ interface LoadingStateProps {
 }
 
 /**
- * 带文字的加载状态组件
+ * Loading state component with text
  * 
- * 用于页面级别的加载状态显示
+ * Used for page-level loading state display
  */
 export function LoadingState({ 
   message, 
@@ -67,9 +67,9 @@ interface LoadingOverlayProps {
 }
 
 /**
- * 加载遮罩组件
+ * Loading overlay component
  * 
- * 在现有内容上显示加载遮罩
+ * Displays loading overlay on existing content
  */
 export function LoadingOverlay({ 
   isLoading, 

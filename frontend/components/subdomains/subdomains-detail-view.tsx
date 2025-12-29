@@ -73,7 +73,7 @@ export function SubdomainsDetailView({
   const targetSubdomainsQuery = useTargetSubdomains(
     targetId || 0,
     {
-      page: pagination.pageIndex + 1, // 转换为 1-based
+      page: pagination.pageIndex + 1, // Convert to 1-based
       pageSize: pagination.pageSize,
       filter: filterQuery || undefined,
     },
@@ -82,7 +82,7 @@ export function SubdomainsDetailView({
   const scanSubdomainsQuery = useScanSubdomains(
     scanId || 0,
     {
-      page: pagination.pageIndex + 1, // 转换为 1-based
+      page: pagination.pageIndex + 1, // Convert to 1-based
       pageSize: pagination.pageSize,
       filter: filterQuery || undefined,
     },
@@ -127,7 +127,7 @@ export function SubdomainsDetailView({
     setPagination(newPagination)
   }
 
-  // 格式化日期为 YYYY-MM-DD HH:MM:SS（与后端一致）
+  // Format date as YYYY-MM-DD HH:MM:SS (consistent with backend)
   const formatDateForCSV = (dateString: string): string => {
     if (!dateString) return ''
     const date = new Date(dateString)
@@ -140,7 +140,7 @@ export function SubdomainsDetailView({
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
   }
 
-  // CSV 转义
+  // CSV escape
   const escapeCSV = (value: string | number | null | undefined): string => {
     if (value === null || value === undefined) return ''
     const str = String(value)
@@ -150,7 +150,7 @@ export function SubdomainsDetailView({
     return str
   }
 
-  // 生成 CSV 内容
+  // Generate CSV content
   const generateCSV = (items: Subdomain[]): string => {
     const BOM = '\ufeff'
     const headers = ['name', 'created_at']
@@ -163,7 +163,7 @@ export function SubdomainsDetailView({
     return BOM + [headers.join(','), ...rows].join('\n')
   }
 
-  // 处理下载所有子域名
+  // Handle download all subdomains
   const handleDownloadAll = async () => {
     try {
       let blob: Blob | null = null
@@ -194,11 +194,11 @@ export function SubdomainsDetailView({
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
     } catch (error) {
-      console.error("下载子域名失败", error)
+      console.error("Failed to download subdomains", error)
     }
   }
 
-  // 处理下载选中的子域名
+  // Handle download selected subdomains
   const handleDownloadSelected = () => {
     if (selectedSubdomains.length === 0) {
       return
@@ -215,7 +215,7 @@ export function SubdomainsDetailView({
     URL.revokeObjectURL(url)
   }
 
-  // 创建列定义
+  // Create column definitions
   const subdomainColumns = useMemo(
     () =>
       createSubdomainColumns({
@@ -225,18 +225,18 @@ export function SubdomainsDetailView({
     [formatDate, translations]
   )
 
-  // 转换后端数据格式为前端 Subdomain 类型（必须在条件渲染之前调用）
-  // 注意：后端使用 djangorestframework-camel-case 自动转换字段名为 camelCase
+  // Convert backend data format to frontend Subdomain type (must be called before conditional rendering)
+  // Note: Backend uses djangorestframework-camel-case to automatically convert field names to camelCase
   const subdomains: Subdomain[] = useMemo(() => {
     if (!subdomainsData?.results) return []
     return subdomainsData.results.map((item: any) => ({
       id: item.id,
       name: item.name,
-      createdAt: item.createdAt,  // 创建时间（后端已转换为 camelCase）
+      createdAt: item.createdAt,  // Created time (already converted to camelCase by backend)
     }))
   }, [subdomainsData])
 
-  // 错误状态
+  // Error state
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
@@ -257,7 +257,7 @@ export function SubdomainsDetailView({
     )
   }
 
-  // 加载状态（仅首次加载时显示骨架屏，搜索时不显示）
+  // Loading state (only show skeleton on first load, not during search)
   if (isLoading && !subdomainsData) {
     return (
       <DataTableSkeleton
@@ -291,7 +291,7 @@ export function SubdomainsDetailView({
         onBulkAdd={targetId ? () => setBulkAddOpen(true) : undefined}
       />
       
-      {/* 批量添加子域名弹窗 */}
+      {/* Bulk add subdomains dialog */}
       {targetId && (
         <BulkAddSubdomainsDialog
           targetId={targetId}

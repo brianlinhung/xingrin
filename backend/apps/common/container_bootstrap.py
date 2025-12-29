@@ -66,10 +66,10 @@ def fetch_config_and_setup_django():
         os.environ.setdefault("ENABLE_COMMAND_LOGGING", str(config['logging']['enableCommandLogging']).lower())
         os.environ.setdefault("DEBUG", str(config['debug']))
         
-        # Xget 加速配置（用于 Git clone 加速）
-        xget_mirror = config.get('xgetMirror', '')
-        if xget_mirror:
-            os.environ.setdefault("XGET_MIRROR", xget_mirror)
+        # Git 加速配置（用于 Git clone 加速）
+        git_mirror = config.get('gitMirror', '')
+        if git_mirror:
+            os.environ.setdefault("GIT_MIRROR", git_mirror)
         
         print(f"[CONFIG] ✓ 配置获取成功")
         print(f"[CONFIG]   DB_HOST: {db_host}")
@@ -77,8 +77,8 @@ def fetch_config_and_setup_django():
         print(f"[CONFIG]   DB_NAME: {db_name}")
         print(f"[CONFIG]   DB_USER: {db_user}")
         print(f"[CONFIG]   REDIS_URL: {config['redisUrl']}")
-        if xget_mirror:
-            print(f"[CONFIG]   XGET_MIRROR: {xget_mirror}")
+        if git_mirror:
+            print(f"[CONFIG]   GIT_MIRROR: {git_mirror}")
         
     except Exception as e:
         print(f"[ERROR] 获取配置失败: {config_url} - {e}", file=sys.stderr)

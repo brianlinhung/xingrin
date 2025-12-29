@@ -109,9 +109,9 @@ export default function NotificationSettingsPage() {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            {/* 推送渠道 Tab */}
+            {/* Push channels tab */}
             <TabsContent value="channels" className="space-y-4 mt-4">
-              {/* Discord 卡片 */}
+              {/* Discord card */}
               <Card>
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
@@ -166,7 +166,7 @@ export default function NotificationSettingsPage() {
                 )}
               </Card>
 
-              {/* 邮件 - 即将支持 */}
+              {/* Email - Coming soon */}
               <Card className="opacity-60">
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
@@ -187,7 +187,7 @@ export default function NotificationSettingsPage() {
                 </CardHeader>
               </Card>
 
-              {/* 飞书/钉钉/企微 - 即将支持 */}
+              {/* Feishu/DingTalk/WeCom - Coming soon */}
               <Card className="opacity-60">
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
@@ -209,7 +209,7 @@ export default function NotificationSettingsPage() {
               </Card>
             </TabsContent>
 
-            {/* 通知偏好 Tab */}
+            {/* Notification preferences tab */}
             <TabsContent value="preferences" className="mt-4">
               <Card>
                 <CardHeader>
@@ -252,7 +252,7 @@ export default function NotificationSettingsPage() {
               </Card>
             </TabsContent>
 
-            {/* 保存按钮 */}
+            {/* Save button */}
             <div className="flex justify-end mt-6">
               <Button type="submit" disabled={updateMutation.isPending || isLoading}>
                 {t("saveSettings")}

@@ -1,31 +1,31 @@
-"use client" // 标记为客户端组件,可以使用浏览器 API 和交互功能
+"use client" // Mark as client component, can use browser APIs and interactive features
 
-// 导入 React 库
+// Import React library
 import type * as React from "react"
-// 导入 Tabler Icons 图标库中的各种图标
+// Import various icons from Tabler Icons library
 import {
-  IconDashboard, // 仪表板图标
-  IconHelp, // 帮助图标
-  IconListDetails, // 列表详情图标
-  IconSettings, // 设置图标
-  IconUsers, // 用户图标
-  IconChevronRight, // 右箭头图标
-  IconRadar, // 雷达扫描图标
-  IconTool, // 工具图标
-  IconServer, // 服务器图标
-  IconTerminal2, // 终端图标
-  IconBug, // 漏洞图标
+  IconDashboard, // Dashboard icon
+  IconHelp, // Help icon
+  IconListDetails, // List details icon
+  IconSettings, // Settings icon
+  IconUsers, // Users icon
+  IconChevronRight, // Right arrow icon
+  IconRadar, // Radar scan icon
+  IconTool, // Tool icon
+  IconServer, // Server icon
+  IconTerminal2, // Terminal icon
+  IconBug, // Vulnerability icon
 } from "@tabler/icons-react"
-// 导入国际化 hook
+// Import internationalization hook
 import { useTranslations } from 'next-intl'
-// 导入国际化导航组件
+// Import internationalization navigation components
 import { Link, usePathname } from '@/i18n/navigation'
 
-// 导入自定义导航组件
+// Import custom navigation components
 import { NavSystem } from "@/components/nav-system"
 import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
-// 导入侧边栏 UI 组件
+// Import sidebar UI components
 import {
   Sidebar,
   SidebarContent,
@@ -42,7 +42,7 @@ import {
   SidebarGroupLabel,
   SidebarRail,
 } from "@/components/ui/sidebar"
-// 导入折叠组件
+// Import collapsible component
 import {
   Collapsible,
   CollapsibleContent,
@@ -50,10 +50,10 @@ import {
 } from "@/components/ui/collapsible"
 
 /**
- * 应用侧边栏组件
- * 显示应用的主要导航菜单,包括用户信息、主菜单、文档和次要菜单
- * 支持子菜单的展开和折叠功能
- * @param props - Sidebar 组件的所有属性
+ * Application sidebar component
+ * Displays the main navigation menu of the application, including user info, main menu, documents and secondary menu
+ * Supports expand and collapse functionality for submenus
+ * @param props - All properties of the Sidebar component
  */
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const t = useTranslations('navigation')
@@ -61,14 +61,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const normalize = (p: string) => (p !== "/" && p.endsWith("/") ? p.slice(0, -1) : p)
   const current = normalize(pathname)
 
-  // 用户信息
+  // User information
   const user = {
     name: "admin",
     email: "admin@admin.com",
     avatar: "",
   }
 
-  // 主导航菜单项 - 使用翻译
+  // Main navigation menu items - using translations
   const navMain = [
     {
       title: t('dashboard'),
@@ -130,7 +130,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
   ]
 
-  // 次要导航菜单项
+  // Secondary navigation menu items
   const navSecondary = [
     {
       title: t('help'),
@@ -139,7 +139,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
   ]
 
-  // 系统设置相关菜单项
+  // System settings related menu items
   const documents = [
     {
       name: t('workers'),
@@ -159,9 +159,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   ]
 
   return (
-    // collapsible="icon" 表示侧边栏可以折叠为仅图标模式
+    // collapsible="icon" means the sidebar can be collapsed to icon-only mode
     <Sidebar collapsible="icon" {...props}>
-      {/* 侧边栏头部 */}
+      {/* Sidebar header */}
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -178,9 +178,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
 
-      {/* 侧边栏主要内容区域 */}
+      {/* Sidebar main content area */}
       <SidebarContent>
-        {/* 主导航菜单 */}
+        {/* Main navigation menu */}
         <SidebarGroup>
           <SidebarGroupLabel>{t('mainFeatures')}</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -245,13 +245,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroupContent>
         </SidebarGroup>
         
-        {/* 系统设置导航菜单 */}
+        {/* System settings navigation menu */}
         <NavSystem items={documents} />
-        {/* 次要导航菜单,使用 mt-auto 推到底部 */}
+        {/* Secondary navigation menu, using mt-auto to push to bottom */}
         <NavSecondary items={navSecondary} className="mt-auto" />
       </SidebarContent>
 
-      {/* 侧边栏底部 */}
+      {/* Sidebar footer */}
       <SidebarFooter>
         <NavUser user={user} />
       </SidebarFooter>

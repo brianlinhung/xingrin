@@ -25,8 +25,8 @@ import type { ScheduledScan } from "@/types/scheduled-scan.types"
 import { DataTableSkeleton } from "@/components/ui/data-table-skeleton"
 
 /**
- * 定时扫描页面
- * 管理定时扫描任务配置
+ * Scheduled scan page
+ * Manage scheduled scan task configuration
  */
 export default function ScheduledScanPage() {
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false)
@@ -35,13 +35,13 @@ export default function ScheduledScanPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
   const [deletingScheduledScan, setDeletingScheduledScan] = React.useState<ScheduledScan | null>(null)
   
-  // 国际化
+  // Internationalization
   const tColumns = useTranslations("columns")
   const tCommon = useTranslations("common")
   const tScan = useTranslations("scan")
   const tConfirm = useTranslations("common.confirm")
 
-  // 构建翻译对象
+  // Build translation object
   const translations = React.useMemo(() => ({
     columns: {
       taskName: tColumns("scheduledScan.taskName"),
@@ -74,11 +74,11 @@ export default function ScheduledScanPage() {
     },
   }), [tColumns, tCommon, tScan])
   
-  // 分页状态
+  // Pagination state
   const [page, setPage] = React.useState(1)
   const [pageSize, setPageSize] = React.useState(10)
 
-  // 搜索状态
+  // Search state
   const [searchQuery, setSearchQuery] = React.useState("")
   const [isSearching, setIsSearching] = React.useState(false)
 
@@ -88,10 +88,10 @@ export default function ScheduledScanPage() {
     setPage(1)
   }
   
-  // 使用实际 API
+  // Use actual API
   const { data, isLoading, isFetching, refetch } = useScheduledScans({ page, pageSize, search: searchQuery || undefined })
 
-  // 当请求完成时重置搜索状态
+  // Reset search state when request completes
   React.useEffect(() => {
     if (!isFetching && isSearching) {
       setIsSearching(false)
@@ -104,7 +104,7 @@ export default function ScheduledScanPage() {
   const total = data?.total || 0
   const totalPages = data?.totalPages || 1
 
-  // 格式化日期
+  // Format date
   const formatDate = React.useCallback((dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleString("zh-CN", {
@@ -116,19 +116,19 @@ export default function ScheduledScanPage() {
     })
   }, [])
 
-  // 编辑任务
+  // Edit task
   const handleEdit = React.useCallback((scan: ScheduledScan) => {
     setEditingScheduledScan(scan)
     setEditDialogOpen(true)
   }, [])
 
-  // 删除任务（打开确认弹窗）
+  // Delete task (open confirmation dialog)
   const handleDelete = React.useCallback((scan: ScheduledScan) => {
     setDeletingScheduledScan(scan)
     setDeleteDialogOpen(true)
   }, [])
 
-  // 确认删除任务
+  // Confirm delete task
   const confirmDelete = React.useCallback(() => {
     if (deletingScheduledScan) {
       deleteScheduledScan(deletingScheduledScan.id)
@@ -137,28 +137,28 @@ export default function ScheduledScanPage() {
     }
   }, [deletingScheduledScan, deleteScheduledScan])
 
-  // 切换任务启用状态
+  // Toggle task enabled status
   const handleToggleStatus = React.useCallback((scan: ScheduledScan, enabled: boolean) => {
     toggleScheduledScan({ id: scan.id, isEnabled: enabled })
   }, [toggleScheduledScan])
 
-  // 页码变化处理
+  // Page change handler
   const handlePageChange = React.useCallback((newPage: number) => {
     setPage(newPage)
   }, [])
 
-  // 每页数量变化处理
+  // Page size change handler
   const handlePageSizeChange = React.useCallback((newPageSize: number) => {
     setPageSize(newPageSize)
-    setPage(1) // 重置到第一页
+    setPage(1) // Reset to first page
   }, [])
 
-  // 添加新任务
+  // Add new task
   const handleAddNew = React.useCallback(() => {
     setCreateDialogOpen(true)
   }, [])
 
-  // 创建列定义
+  // Create column definition
   const columns = React.useMemo(
     () =>
       createScheduledScanColumns({
@@ -191,7 +191,7 @@ export default function ScheduledScanPage() {
 
   return (
     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-      {/* 页面标题 */}
+      {/* Page title */}
       <div className="px-4 lg:px-6">
         <div>
           <h1 className="text-3xl font-bold">{tScan("scheduled.title")}</h1>
@@ -199,7 +199,7 @@ export default function ScheduledScanPage() {
         </div>
       </div>
 
-      {/* 数据表格 */}
+      {/* Data table */}
       <div className="px-4 lg:px-6">
         <ScheduledScanDataTable
           data={scheduledScans}
@@ -219,14 +219,14 @@ export default function ScheduledScanPage() {
         />
       </div>
 
-      {/* 新建定时扫描对话框 */}
+      {/* Create scheduled scan dialog */}
       <CreateScheduledScanDialog
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onSuccess={() => refetch()}
       />
 
-      {/* 编辑定时扫描对话框 */}
+      {/* Edit scheduled scan dialog */}
       <EditScheduledScanDialog
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
@@ -234,7 +234,7 @@ export default function ScheduledScanPage() {
         onSuccess={() => refetch()}
       />
 
-      {/* 删除确认弹窗 */}
+      {/* Delete confirmation dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

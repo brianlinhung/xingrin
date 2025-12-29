@@ -13,7 +13,7 @@ from .csv_utils import (
     format_datetime,
     UTF8_BOM,
 )
-from .xget_proxy import get_xget_proxy_url
+from .git_proxy import get_git_proxy_url
 
 __all__ = [
     'deduplicate_for_bulk',
@@ -26,5 +26,5 @@ __all__ = [
     'format_list_field',
     'format_datetime',
     'UTF8_BOM',
-    'get_xget_proxy_url',
+    'get_git_proxy_url',
 ]

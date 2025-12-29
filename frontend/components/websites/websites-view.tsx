@@ -33,14 +33,14 @@ export function WebSitesView({
   const [filterQuery, setFilterQuery] = useState("")
   const [isSearching, setIsSearching] = useState(false)
 
-  // 国际化
+  // Internationalization
   const tColumns = useTranslations("columns")
   const tCommon = useTranslations("common")
   const tToast = useTranslations("toast")
   const tStatus = useTranslations("common.status")
   const locale = useLocale()
 
-  // 构建翻译对象
+  // Build translation object
   const translations = useMemo(() => ({
     columns: {
       url: tColumns("common.url"),
@@ -62,7 +62,7 @@ export function WebSitesView({
     },
   }), [tColumns, tCommon])
 
-  // 获取目标信息（用于 URL 匹配校验）
+  // Get target info (for URL matching validation)
   const { data: target } = useTarget(targetId || 0, { enabled: !!targetId })
 
   const handleFilterChange = (value: string) => {
@@ -94,7 +94,7 @@ export function WebSitesView({
   const activeQuery = targetId ? targetQuery : scanQuery
   const { data, isLoading, isFetching, error, refetch } = activeQuery
 
-  // 当请求完成时重置搜索状态
+  // Reset search state when request completes
   useEffect(() => {
     if (!isFetching && isSearching) {
       setIsSearching(false)
@@ -140,7 +140,7 @@ export function WebSitesView({
     setSelectedWebSites(selectedRows)
   }, [])
 
-  // 格式化日期为 YYYY-MM-DD HH:MM:SS（与后端一致）
+  // Format date as YYYY-MM-DD HH:MM:SS (consistent with backend)
   const formatDateForCSV = (dateString: string): string => {
     if (!dateString) return ''
     const date = new Date(dateString)
@@ -153,7 +153,7 @@ export function WebSitesView({
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
   }
 
-  // CSV 转义
+  // CSV escape
   const escapeCSV = (value: string | number | boolean | null | undefined): string => {
     if (value === null || value === undefined) return ''
     const str = String(value)
@@ -163,13 +163,13 @@ export function WebSitesView({
     return str
   }
 
-  // 格式化数组为逗号分隔字符串
+  // Format array as comma-separated string
   const formatArrayForCSV = (arr: string[] | undefined): string => {
     if (!arr || arr.length === 0) return ''
     return arr.join(',')
   }
 
-  // 生成 CSV 内容
+  // Generate CSV content
   const generateCSV = (items: WebSite[]): string => {
     const BOM = '\ufeff'
     const headers = [
@@ -196,7 +196,7 @@ export function WebSitesView({
     return BOM + [headers.join(','), ...rows].join('\n')
   }
 
-  // 处理下载所有网站
+  // Handle download all websites
   const handleDownloadAll = async () => {
     try {
       let blob: Blob | null = null
@@ -227,12 +227,12 @@ export function WebSitesView({
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
     } catch (error) {
-      console.error("下载网站列表失败", error)
+      console.error("Failed to download website list", error)
       toast.error(tToast("downloadFailed"))
     }
   }
 
-  // 处理下载选中的网站
+  // Handle download selected websites
   const handleDownloadSelected = () => {
     if (selectedWebSites.length === 0) {
       return
@@ -293,7 +293,7 @@ export function WebSitesView({
         onBulkAdd={targetId ? () => setBulkAddDialogOpen(true) : undefined}
       />
 
-      {/* 批量添加弹窗 */}
+      {/* Bulk add dialog */}
       {targetId && (
         <BulkAddUrlsDialog
           targetId={targetId}

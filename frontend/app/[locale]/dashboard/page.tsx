@@ -4,27 +4,27 @@ import { VulnSeverityChart } from "@/components/dashboard/vuln-severity-chart"
 import { DashboardDataTable } from "@/components/dashboard/dashboard-data-table"
 
 /**
- * 仪表板页面组件
- * 这是应用的主要仪表板页面,包含卡片、图表和数据表格
- * 布局结构已移至根布局组件中
+ * Dashboard page component
+ * This is the main dashboard page of the application, containing cards, charts and data tables
+ * Layout structure has been moved to the root layout component
  */
 export default function Page() {
   return (
-    // 内容区域,包含卡片、图表和数据表格
+    // Content area containing cards, charts and data tables
     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-      {/* 顶部统计卡片 */}
+      {/* Top statistics cards */}
       <DashboardStatCards />
 
-      {/* 图表区域 - 趋势图 + 漏洞分布 */}
+      {/* Chart area - Trend chart + Vulnerability distribution */}
       <div className="grid gap-4 px-4 lg:px-6 @xl/main:grid-cols-2">
-        {/* 资产趋势折线图 */}
+        {/* Asset trend line chart */}
         <AssetTrendChart />
 
-        {/* 漏洞严重程度分布 */}
+        {/* Vulnerability severity distribution */}
         <VulnSeverityChart />
       </div>
 
-      {/* 漏洞 / 扫描历史 Tab */}
+      {/* Vulnerabilities / Scan history tab */}
       <div className="px-4 lg:px-6">
         <DashboardDataTable />
       </div>

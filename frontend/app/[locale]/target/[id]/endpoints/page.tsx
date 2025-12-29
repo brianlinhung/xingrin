@@ -5,8 +5,8 @@ import { useParams } from "next/navigation"
 import { EndpointsDetailView } from "@/components/endpoints"
 
 /**
- * 目标端点页面
- * 显示目标下的端点详情
+ * Target endpoints page
+ * Displays endpoint details under the target
  */
 export default function TargetEndpointsPage() {
   const { id } = useParams<{ id: string }>()

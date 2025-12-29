@@ -5,8 +5,8 @@ import { useParams } from "next/navigation"
 import { VulnerabilitiesDetailView } from "@/components/vulnerabilities"
 
 /**
- * 目标漏洞页面
- * 显示目标下的漏洞详情
+ * Target vulnerabilities page
+ * Displays vulnerability details under the target
  */
 export default function TargetVulnerabilitiesPage() {
   const { id } = useParams<{ id: string }>()
