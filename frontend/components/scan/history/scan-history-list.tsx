@@ -191,13 +191,13 @@ export function ScanHistoryList({ hideToolbar = false }: ScanHistoryListProps) {
       toast.success(tToast("deletedScanRecord", { name: scanToDelete.targetName }))
     } catch (error) {
       toast.error(tToast("deleteFailed"))
-      console.error('删除失败:', error)
+      console.error('Delete failed:', error)
     } finally {
       setScanToDelete(null)
     }
   }
 
-  // 处理批量删除
+  // Handle bulk delete
   const handleBulkDelete = () => {
     if (selectedScans.length === 0) {
       return
@@ -205,13 +205,13 @@ export function ScanHistoryList({ hideToolbar = false }: ScanHistoryListProps) {
     setBulkDeleteDialogOpen(true)
   }
   
-  // 处理停止扫描
+  // Handle stop scan
   const handleStopScan = (scan: ScanRecord) => {
     setScanToStop(scan)
     setStopDialogOpen(true)
   }
   
-  // 确认停止扫描
+  // Confirm stop scan
   const confirmStop = async () => {
     if (!scanToStop) return
 
@@ -222,29 +222,29 @@ export function ScanHistoryList({ hideToolbar = false }: ScanHistoryListProps) {
       toast.success(tToast("stoppedScan", { name: scanToStop.targetName }))
     } catch (error) {
       toast.error(tToast("stopFailed"))
-      console.error('停止扫描失败:', error)
+      console.error('Stop scan failed:', error)
     } finally {
       setScanToStop(null)
     }
   }
   
-  // 查看扫描进度（获取单个扫描的最新数据）
+  // View scan progress (get latest data for single scan)
   const handleViewProgress = async (scan: ScanRecord) => {
     try {
-      // 获取单个扫描的最新数据，而不是刷新整个列表
+      // Get latest data for single scan, instead of refreshing entire list
       const freshScan = await getScan(scan.id)
       const progressData = buildScanProgressData(freshScan)
       setProgressData(progressData)
       setProgressDialogOpen(true)
     } catch (error) {
-      // 如果获取失败，使用当前数据
+      // If fetch fails, use current data
       const progressData = buildScanProgressData(scan)
       setProgressData(progressData)
       setProgressDialogOpen(true)
     }
   }
 
-  // 确认批量删除
+  // Confirm bulk delete
   const confirmBulkDelete = async () => {
     if (selectedScans.length === 0) return
 
@@ -257,17 +257,17 @@ export function ScanHistoryList({ hideToolbar = false }: ScanHistoryListProps) {
       toast.success(result.message || tToast("bulkDeleteSuccess", { count: result.deletedCount }))
     } catch (error) {
       toast.error(tToast("bulkDeleteFailed"))
-      console.error('批量删除失败:', error)
+      console.error('Bulk delete failed:', error)
     }
   }
 
 
-  // 处理分页变化
+  // Handle pagination change
   const handlePaginationChange = (newPagination: { pageIndex: number; pageSize: number }) => {
     setPagination(newPagination)
   }
 
-  // 创建列定义
+  // Create column definitions
   const scanColumns = useMemo(
     () =>
       createScanHistoryColumns({
@@ -281,7 +281,7 @@ export function ScanHistoryList({ hideToolbar = false }: ScanHistoryListProps) {
     [navigate, translations]
   )
 
-  // 错误处理
+  // Error handling
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
@@ -296,7 +296,7 @@ export function ScanHistoryList({ hideToolbar = false }: ScanHistoryListProps) {
     )
   }
 
-  // 加载状态
+  // Loading state
   if (isLoading) {
     return (
       <DataTableSkeleton
@@ -331,7 +331,7 @@ export function ScanHistoryList({ hideToolbar = false }: ScanHistoryListProps) {
         hideToolbar={hideToolbar}
       />
 
-      {/* 删除确认对话框 */}
+      {/* Delete confirmation dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -352,7 +352,7 @@ export function ScanHistoryList({ hideToolbar = false }: ScanHistoryListProps) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* 批量删除确认对话框 */}
+      {/* Bulk delete confirmation dialog */}
       <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -361,7 +361,7 @@ export function ScanHistoryList({ hideToolbar = false }: ScanHistoryListProps) {
               {tConfirm("bulkDeleteScanMessage", { count: selectedScans.length })}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {/* 扫描记录列表容器 */}
+          {/* Scan record list container */}
           <div className="mt-2 p-2 bg-muted rounded-md max-h-96 overflow-y-auto">
             <ul className="text-sm space-y-1">
               {selectedScans.map((scan) => (
@@ -384,7 +384,7 @@ export function ScanHistoryList({ hideToolbar = false }: ScanHistoryListProps) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* 停止扫描确认对话框 */}
+      {/* Stop scan confirmation dialog */}
       <AlertDialog open={stopDialogOpen} onOpenChange={setStopDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -405,7 +405,7 @@ export function ScanHistoryList({ hideToolbar = false }: ScanHistoryListProps) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* 扫描进度弹窗 */}
+      {/* Scan progress dialog */}
       <ScanProgressDialog
         open={progressDialogOpen}
         onOpenChange={setProgressDialogOpen}
