@@ -297,6 +297,9 @@ NUCLEI_PUBLIC_TEMPLATES_DIR = os.getenv('NUCLEI_PUBLIC_TEMPLATES_DIR', '/opt/xin
 # Nuclei 官方模板仓库地址
 NUCLEI_TEMPLATES_REPO_URL = os.getenv('NUCLEI_TEMPLATES_REPO_URL', 'https://github.com/projectdiscovery/nuclei-templates.git')
 
+# Git 镜像加速配置（用于加速 GitHub 仓库克隆）
+GIT_MIRROR = os.getenv('GIT_MIRROR', '').strip()
+
 # 对外访问主机与端口（供 Worker 访问 Django 使用）
 PUBLIC_HOST = os.getenv('PUBLIC_HOST', 'localhost').strip()
 PUBLIC_PORT = os.getenv('PUBLIC_PORT', '8083').strip()  # 对外 HTTPS 端口
