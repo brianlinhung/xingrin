@@ -355,13 +355,19 @@ class TaskDistributor:
         docker run -d 立即返回容器 ID。
         """
         import subprocess
+        import os
         logger.info("开始执行本地 Docker 命令...")
         try:
+            # 设置 Docker API 版本 1.40（兼容 Docker 19.03+，覆盖 95% 的生产环境）
+            env = os.environ.copy()
+            env['DOCKER_API_VERSION'] = '1.40'
+            
             result = subprocess.run(
                 docker_cmd,
                 shell=True,
                 capture_output=True,
                 text=True,
+                env=env,
             )
             
             if result.returncode != 0:
@@ -413,7 +419,9 @@ class TaskDistributor:
             logger.debug("SSH 连接成功 - Worker: %s", worker.name)
             
             # 执行 docker run（-d 模式立即返回）
-            stdin, stdout, stderr = ssh.exec_command(docker_cmd)
+            # 设置 DOCKER_API_VERSION=1.40（兼容 Docker 19.03+，覆盖 95% 的生产环境）
+            docker_cmd_with_env = f"DOCKER_API_VERSION=1.40 {docker_cmd}"
+            stdin, stdout, stderr = ssh.exec_command(docker_cmd_with_env)
             exit_code = stdout.channel.recv_exit_status()
             
             output = stdout.read().decode().strip()
