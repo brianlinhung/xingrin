@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
+import { useToastMessages } from '@/lib/toast-helpers'
+import { getErrorCode } from '@/lib/response-parser'
 import {
   getEngines,
   getEngine,
@@ -35,17 +36,16 @@ export function useEngine(id: number) {
  */
 export function useCreateEngine() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: createEngine,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['engines'] })
-      toast.success('Engine created successfully')
+      toastMessages.success('toast.engine.create.success')
     },
     onError: (error: any) => {
-      toast.error('Failed to create engine', {
-        description: error?.response?.data?.error || error.message,
-      })
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.engine.create.error')
     },
   })
 }
@@ -55,6 +55,7 @@ export function useCreateEngine() {
  */
 export function useUpdateEngine() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: Parameters<typeof updateEngine>[1] }) =>
@@ -62,12 +63,10 @@ export function useUpdateEngine() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['engines'] })
       queryClient.invalidateQueries({ queryKey: ['engines', variables.id] })
-      toast.success('Engine updated successfully')
+      toastMessages.success('toast.engine.update.success')
     },
     onError: (error: any) => {
-      toast.error('Failed to update engine', {
-        description: error?.response?.data?.error || error.message,
-      })
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.engine.update.error')
     },
   })
 }
@@ -77,17 +76,16 @@ export function useUpdateEngine() {
  */
 export function useDeleteEngine() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: deleteEngine,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['engines'] })
-      toast.success('Engine deleted successfully')
+      toastMessages.success('toast.engine.delete.success')
     },
     onError: (error: any) => {
-      toast.error('Failed to delete engine', {
-        description: error?.response?.data?.error || error.message,
-      })
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.engine.delete.error')
     },
   })
 }

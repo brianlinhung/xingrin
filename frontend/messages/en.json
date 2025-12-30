@@ -209,7 +209,18 @@
       "active": "Active",
       "inactive": "Inactive",
       "enabled": "Enabled",
-      "disabled": "Disabled"
+      "disabled": "Disabled",
+      "creating": "Creating...",
+      "updating": "Updating...",
+      "deleting": "Deleting...",
+      "removing": "Removing...",
+      "unlinking": "Unlinking...",
+      "batchCreating": "Batch creating...",
+      "batchDeleting": "Batch deleting...",
+      "batchRemoving": "Batch removing...",
+      "updateSuccess": "Update successful",
+      "updateFailed": "Update failed",
+      "uploading": "Uploading..."
     },
     "pagination": {
       "page": "Page {current} of {total}",
@@ -1225,7 +1236,286 @@
     "invalidJsonFile": "Invalid JSON file",
     "importSuccess": "Import successful",
     "importFailed": "Import failed",
-    "loadScanHistoryFailed": "Failed to load scan history"
+    "loadScanHistoryFailed": "Failed to load scan history",
+    "scan": {
+      "quick": {
+        "success": "Started {count} scan tasks",
+        "error": "Failed to start scan"
+      },
+      "stop": {
+        "success": "Scan stopped, {count} tasks cancelled"
+      },
+      "delete": {
+        "success": "Deleted scan task: {name}",
+        "bulkSuccess": "Deleted {count} scan tasks"
+      },
+      "initiate": {
+        "success": "Scan initiated successfully",
+        "error": "Failed to initiate scan"
+      }
+    },
+    "scheduledScan": {
+      "create": {
+        "success": "Scheduled scan created successfully",
+        "error": "Failed to create scheduled scan"
+      },
+      "update": {
+        "success": "Scheduled scan updated successfully",
+        "error": "Failed to update scheduled scan"
+      },
+      "delete": {
+        "success": "Scheduled scan deleted successfully",
+        "error": "Failed to delete scheduled scan"
+      },
+      "toggle": {
+        "enabled": "Scheduled scan enabled",
+        "disabled": "Scheduled scan disabled",
+        "error": "Failed to toggle scheduled scan"
+      }
+    },
+    "target": {
+      "create": {
+        "success": "Target created successfully",
+        "bulkSuccess": "Created {count} targets",
+        "error": "Failed to create target"
+      },
+      "update": {
+        "success": "Target updated successfully",
+        "error": "Failed to update target"
+      },
+      "delete": {
+        "success": "Target \"{name}\" deleted",
+        "bulkSuccess": "Deleted {count} targets",
+        "error": "Failed to delete target"
+      },
+      "link": {
+        "success": "Target linked to organization",
+        "error": "Failed to link target"
+      },
+      "unlink": {
+        "success": "Target unlinked from organization",
+        "bulkSuccess": "Unlinked {count} targets",
+        "error": "Failed to unlink target"
+      }
+    },
+    "organization": {
+      "create": {
+        "success": "Organization created successfully",
+        "error": "Failed to create organization"
+      },
+      "update": {
+        "success": "Organization updated successfully",
+        "error": "Failed to update organization"
+      },
+      "delete": {
+        "success": "Organization \"{name}\" deleted",
+        "bulkSuccess": "Deleted {count} organizations",
+        "error": "Failed to delete organization"
+      }
+    },
+    "asset": {
+      "subdomain": {
+        "create": {
+          "success": "Created {count} subdomains",
+          "partialSuccess": "Created {success} subdomains, skipped {skipped}",
+          "error": "Failed to create subdomains"
+        },
+        "delete": {
+          "success": "Subdomain deleted",
+          "bulkSuccess": "Deleted {count} subdomains",
+          "error": "Failed to delete subdomain"
+        }
+      },
+      "website": {
+        "create": {
+          "success": "Created {count} websites",
+          "partialSuccess": "Created {success} websites, skipped {skipped}",
+          "error": "Failed to create websites"
+        },
+        "delete": {
+          "success": "Website deleted",
+          "bulkSuccess": "Deleted {count} websites",
+          "error": "Failed to delete website"
+        }
+      },
+      "endpoint": {
+        "create": {
+          "success": "Created {count} endpoints",
+          "partialSuccess": "Created {success} endpoints, skipped {skipped}",
+          "error": "Failed to create endpoints"
+        },
+        "delete": {
+          "success": "Endpoint deleted",
+          "bulkSuccess": "Deleted {count} endpoints",
+          "error": "Failed to delete endpoint"
+        }
+      },
+      "directory": {
+        "create": {
+          "success": "Created {count} directories",
+          "partialSuccess": "Created {success} directories, skipped {skipped}",
+          "error": "Failed to create directories"
+        },
+        "delete": {
+          "success": "Directory deleted",
+          "bulkSuccess": "Deleted {count} directories",
+          "error": "Failed to delete directory"
+        }
+      }
+    },
+    "auth": {
+      "login": {
+        "success": "Login successful"
+      },
+      "logout": {
+        "success": "Logged out"
+      },
+      "changePassword": {
+        "success": "Password changed successfully",
+        "error": "Failed to change password"
+      }
+    },
+    "worker": {
+      "create": {
+        "success": "Worker created successfully",
+        "error": "Failed to create worker"
+      },
+      "update": {
+        "success": "Worker updated successfully",
+        "error": "Failed to update worker"
+      },
+      "delete": {
+        "success": "Worker deleted successfully",
+        "error": "Failed to delete worker"
+      },
+      "deploy": {
+        "success": "Worker deployment started",
+        "error": "Failed to deploy worker"
+      },
+      "restart": {
+        "success": "Worker is restarting",
+        "error": "Failed to restart worker"
+      },
+      "stop": {
+        "success": "Worker stopped",
+        "error": "Failed to stop worker"
+      }
+    },
+    "nucleiRepo": {
+      "create": {
+        "success": "Repository added successfully",
+        "error": "Failed to add repository"
+      },
+      "update": {
+        "success": "Repository updated successfully",
+        "error": "Failed to update repository"
+      },
+      "delete": {
+        "success": "Repository deleted successfully",
+        "error": "Failed to delete repository"
+      },
+      "sync": {
+        "success": "Repository synced successfully",
+        "error": "Failed to sync repository"
+      }
+    },
+    "wordlist": {
+      "upload": {
+        "success": "Wordlist uploaded successfully",
+        "error": "Failed to upload wordlist"
+      },
+      "update": {
+        "success": "Wordlist updated successfully",
+        "error": "Failed to update wordlist"
+      },
+      "delete": {
+        "success": "Wordlist deleted successfully",
+        "error": "Failed to delete wordlist"
+      }
+    },
+    "notification": {
+      "settings": {
+        "success": "Notification settings saved",
+        "error": "Failed to save notification settings"
+      },
+      "markRead": {
+        "success": "Marked as read",
+        "error": "Failed to mark as read"
+      },
+      "connection": {
+        "error": "Notification connection error: {message}"
+      }
+    },
+    "tool": {
+      "create": {
+        "success": "Tool created successfully",
+        "error": "Failed to create tool"
+      },
+      "update": {
+        "success": "Tool updated successfully",
+        "error": "Failed to update tool"
+      },
+      "delete": {
+        "success": "Tool deleted successfully",
+        "error": "Failed to delete tool"
+      }
+    },
+    "engine": {
+      "create": {
+        "success": "Engine created successfully",
+        "error": "Failed to create engine"
+      },
+      "update": {
+        "success": "Engine updated successfully",
+        "error": "Failed to update engine"
+      },
+      "delete": {
+        "success": "Engine deleted successfully",
+        "error": "Failed to delete engine"
+      }
+    },
+    "command": {
+      "create": {
+        "success": "Command created successfully",
+        "error": "Failed to create command"
+      },
+      "update": {
+        "success": "Command updated successfully",
+        "error": "Failed to update command"
+      },
+      "delete": {
+        "success": "Command deleted successfully",
+        "bulkSuccess": "Deleted {count} commands",
+        "error": "Failed to delete command"
+      }
+    },
+    "nucleiTemplate": {
+      "refresh": {
+        "loading": "Syncing templates...",
+        "success": "Templates synced successfully",
+        "error": "Failed to sync templates"
+      },
+      "upload": {
+        "success": "Template uploaded successfully",
+        "error": "Failed to upload template"
+      },
+      "save": {
+        "success": "Template saved successfully",
+        "error": "Failed to save template"
+      }
+    },
+    "nucleiGit": {
+      "settings": {
+        "success": "Git settings saved successfully",
+        "error": "Failed to save Git settings"
+      }
+    },
+    "systemLog": {
+      "fetch": {
+        "error": "Failed to fetch system logs, please check backend",
+        "recovered": "System log connection recovered"
+      }
+    }
   },
   "quickScan": {
     "title": "Quick Scan",
@@ -1488,5 +1778,16 @@
       "bulkAdd": "Bulk Add",
       "formatInvalid": "Invalid format"
     }
+  },
+  "errors": {
+    "unknown": "Operation failed, please try again later",
+    "validation": "Invalid input data",
+    "notFound": "Resource not found",
+    "permissionDenied": "Permission denied",
+    "serverError": "Server error, please try again later",
+    "badRequest": "Invalid request format",
+    "conflict": "Resource conflict, please check and try again",
+    "unauthorized": "Please login first",
+    "rateLimited": "Too many requests, please try again later"
   }
 }

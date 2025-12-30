@@ -9,6 +9,8 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from apps.common.response_helpers import success_response, error_response
+from apps.common.error_codes import ErrorCodes
 from apps.engine.serializers import WorkerNodeSerializer
 from apps.engine.services import WorkerService
 from apps.common.signals import worker_delete_failed
@@ -111,9 +113,8 @@ class WorkerNodeViewSet(viewsets.ModelViewSet):
         threading.Thread(target=_async_remote_uninstall, daemon=True).start()
         
         # 3. 立即返回成功
-        return Response(
-            {"message": f"节点 {worker_name} 已删除"},
-            status=status.HTTP_200_OK
+        return success_response(
+            data={'name': worker_name}
         )
     
     @action(detail=True, methods=['post'])
@@ -190,11 +191,13 @@ class WorkerNodeViewSet(viewsets.ModelViewSet):
                     worker.status = 'online'
                     worker.save(update_fields=['status'])
         
-        return Response({
-            'status': 'ok',
-            'need_update': need_update,
-            'server_version': server_version
-        })
+        return success_response(
+            data={
+                'status': 'ok',
+                'needUpdate': need_update,
+                'serverVersion': server_version
+            }
+        )
     
     def _trigger_remote_agent_update(self, worker, target_version: str):
         """
@@ -304,9 +307,10 @@ class WorkerNodeViewSet(viewsets.ModelViewSet):
         is_local = request.data.get('is_local', True)
         
         if not name:
-            return Response(
-                {'error': '缺少 name 参数'},
-                status=status.HTTP_400_BAD_REQUEST
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message='Missing name parameter',
+                status_code=status.HTTP_400_BAD_REQUEST
             )
         
         worker, created = self.worker_service.register_worker(
@@ -314,11 +318,13 @@ class WorkerNodeViewSet(viewsets.ModelViewSet):
             is_local=is_local
         )
         
-        return Response({
-            'worker_id': worker.id,
-            'name': worker.name,
-            'created': created
-        })
+        return success_response(
+            data={
+                'workerId': worker.id,
+                'name': worker.name,
+                'created': created
+            }
+        )
     
     @action(detail=False, methods=['get'])
     def config(self, request):
@@ -380,24 +386,26 @@ class WorkerNodeViewSet(viewsets.ModelViewSet):
         
         logger.info("返回 Worker 配置 - db_host: %s, redis_url: %s", worker_db_host, worker_redis_url)
         
-        return Response({
-            'db': {
-                'host': worker_db_host,
-                'port': str(settings.DATABASES['default']['PORT']),
-                'name': settings.DATABASES['default']['NAME'],
-                'user': settings.DATABASES['default']['USER'],
-                'password': settings.DATABASES['default']['PASSWORD'],
-            },
-            'redisUrl': worker_redis_url,
-            'paths': {
-                'results': getattr(settings, 'CONTAINER_RESULTS_MOUNT', '/opt/xingrin/results'),
-                'logs': getattr(settings, 'CONTAINER_LOGS_MOUNT', '/opt/xingrin/logs'),
-            },
-            'logging': {
-                'level': os.getenv('LOG_LEVEL', 'INFO'),
-                'enableCommandLogging': os.getenv('ENABLE_COMMAND_LOGGING', 'true').lower() == 'true',
-            },
-            'debug': settings.DEBUG,
-            # Git 加速配置（用于 Git clone 加速，如 Nuclei 模板仓库）
-            'gitMirror': settings.GIT_MIRROR,
-        })
+        return success_response(
+            data={
+                'db': {
+                    'host': worker_db_host,
+                    'port': str(settings.DATABASES['default']['PORT']),
+                    'name': settings.DATABASES['default']['NAME'],
+                    'user': settings.DATABASES['default']['USER'],
+                    'password': settings.DATABASES['default']['PASSWORD'],
+                },
+                'redisUrl': worker_redis_url,
+                'paths': {
+                    'results': getattr(settings, 'CONTAINER_RESULTS_MOUNT', '/opt/xingrin/results'),
+                    'logs': getattr(settings, 'CONTAINER_LOGS_MOUNT', '/opt/xingrin/logs'),
+                },
+                'logging': {
+                    'level': os.getenv('LOG_LEVEL', 'INFO'),
+                    'enableCommandLogging': os.getenv('ENABLE_COMMAND_LOGGING', 'true').lower() == 'true',
+                },
+                'debug': settings.DEBUG,
+                # Git 加速配置（用于 Git clone 加速，如 Nuclei 模板仓库）
+                'gitMirror': settings.GIT_MIRROR,
+            }
+        )

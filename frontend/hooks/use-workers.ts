@@ -5,7 +5,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { workerService } from '@/services/worker.service'
 import type { CreateWorkerRequest, UpdateWorkerRequest } from '@/types/worker.types'
-import { toast } from 'sonner'
+import { useToastMessages } from '@/lib/toast-helpers'
+import { getErrorCode } from '@/lib/response-parser'
 
 // Query Keys
 export const workerKeys = {
@@ -42,15 +43,16 @@ export function useWorker(id: number) {
  */
 export function useCreateWorker() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (data: CreateWorkerRequest) => workerService.createWorker(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: workerKeys.lists() })
-      toast.success('Worker 节点创建成功')
+      toastMessages.success('toast.worker.create.success')
     },
-    onError: (error: Error) => {
-      toast.error(`创建失败: ${error.message}`)
+    onError: (error: any) => {
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.worker.create.error')
     },
   })
 }
@@ -60,6 +62,7 @@ export function useCreateWorker() {
  */
 export function useUpdateWorker() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: UpdateWorkerRequest }) =>
@@ -67,10 +70,10 @@ export function useUpdateWorker() {
     onSuccess: (_: unknown, { id }: { id: number; data: UpdateWorkerRequest }) => {
       queryClient.invalidateQueries({ queryKey: workerKeys.lists() })
       queryClient.invalidateQueries({ queryKey: workerKeys.detail(id) })
-      toast.success('Worker 节点更新成功')
+      toastMessages.success('toast.worker.update.success')
     },
-    onError: (error: Error) => {
-      toast.error(`更新失败: ${error.message}`)
+    onError: (error: any) => {
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.worker.update.error')
     },
   })
 }
@@ -80,19 +83,19 @@ export function useUpdateWorker() {
  */
 export function useDeleteWorker() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (id: number) => workerService.deleteWorker(id),
     onSuccess: () => {
-      // 立即刷新活跃的列表查询
       queryClient.invalidateQueries({ 
         queryKey: workerKeys.lists(),
         refetchType: 'active',
       })
-      toast.success('Worker 节点已删除')
+      toastMessages.success('toast.worker.delete.success')
     },
-    onError: (error: Error) => {
-      toast.error(`删除失败: ${error.message}`)
+    onError: (error: any) => {
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.worker.delete.error')
     },
   })
 }
@@ -102,16 +105,17 @@ export function useDeleteWorker() {
  */
 export function useDeployWorker() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (id: number) => workerService.deployWorker(id),
     onSuccess: (_: unknown, id: number) => {
       queryClient.invalidateQueries({ queryKey: workerKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: workerKeys.lists() })
-      toast.success('部署已启动')
+      toastMessages.success('toast.worker.deploy.success')
     },
-    onError: (error: Error) => {
-      toast.error(`部署失败: ${error.message}`)
+    onError: (error: any) => {
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.worker.deploy.error')
     },
   })
 }
@@ -121,16 +125,17 @@ export function useDeployWorker() {
  */
 export function useRestartWorker() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (id: number) => workerService.restartWorker(id),
     onSuccess: (_: unknown, id: number) => {
       queryClient.invalidateQueries({ queryKey: workerKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: workerKeys.lists() })
-      toast.success('Worker 正在重启')
+      toastMessages.success('toast.worker.restart.success')
     },
-    onError: (error: Error) => {
-      toast.error(`重启失败: ${error.message}`)
+    onError: (error: any) => {
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.worker.restart.error')
     },
   })
 }
@@ -140,16 +145,17 @@ export function useRestartWorker() {
  */
 export function useStopWorker() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (id: number) => workerService.stopWorker(id),
     onSuccess: (_: unknown, id: number) => {
       queryClient.invalidateQueries({ queryKey: workerKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: workerKeys.lists() })
-      toast.success('Worker 已停止')
+      toastMessages.success('toast.worker.stop.success')
     },
-    onError: (error: Error) => {
-      toast.error(`停止失败: ${error.message}`)
+    onError: (error: any) => {
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.worker.stop.error')
     },
   })
 }

@@ -1,7 +1,8 @@
 "use client"
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { toast } from "sonner"
+import { useToastMessages } from '@/lib/toast-helpers'
+import { getErrorCode } from '@/lib/response-parser'
 import { NucleiGitService } from "@/services/nuclei-git.service"
 import type { UpdateNucleiGitSettingsRequest } from "@/types/nuclei-git.types"
 
@@ -14,15 +15,16 @@ export function useNucleiGitSettings() {
 
 export function useUpdateNucleiGitSettings() {
   const qc = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (data: UpdateNucleiGitSettingsRequest) => NucleiGitService.updateSettings(data),
-    onSuccess: (res) => {
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["nuclei", "git", "settings"] })
-      toast.success(res?.message || "Git repository configuration saved")
+      toastMessages.success('toast.nucleiGit.settings.success')
     },
-    onError: () => {
-      toast.error("Failed to save Git repository configuration, please try again")
+    onError: (error: any) => {
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.nucleiGit.settings.error')
     },
   })
 }

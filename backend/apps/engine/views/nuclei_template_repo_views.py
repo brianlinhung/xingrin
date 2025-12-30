@@ -31,6 +31,8 @@ from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from apps.common.response_helpers import success_response, error_response
+from apps.common.error_codes import ErrorCodes
 from apps.engine.models import NucleiTemplateRepo
 from apps.engine.serializers import NucleiTemplateRepoSerializer
 from apps.engine.services import NucleiTemplateRepoService
@@ -107,18 +109,30 @@ class NucleiTemplateRepoViewSet(viewsets.ModelViewSet):
         try:
             repo_id = int(pk) if pk is not None else None
         except (TypeError, ValueError):
-            return Response({"message": "无效的仓库 ID"}, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message='Invalid repository ID',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
 
         # 调用 Service 层
         try:
             result = self.service.refresh_repo(repo_id)
         except ValidationError as exc:
-            return Response({"message": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message=str(exc),
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
         except Exception as exc:  # noqa: BLE001
             logger.error("刷新 Nuclei 模板仓库失败: %s", exc, exc_info=True)
-            return Response({"message": f"刷新仓库失败: {exc}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return error_response(
+                code=ErrorCodes.SERVER_ERROR,
+                message=f'Refresh failed: {exc}',
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
-        return Response({"message": "刷新成功", "result": result}, status=status.HTTP_200_OK)
+        return success_response(data={'result': result})
 
     # ==================== 自定义 Action: 模板只读浏览 ====================
 
@@ -142,18 +156,30 @@ class NucleiTemplateRepoViewSet(viewsets.ModelViewSet):
         try:
             repo_id = int(pk) if pk is not None else None
         except (TypeError, ValueError):
-            return Response({"message": "无效的仓库 ID"}, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message='Invalid repository ID',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
 
         # 调用 Service 层，仅从当前本地目录读取目录树
         try:
             roots = self.service.get_template_tree(repo_id)
         except ValidationError as exc:
-            return Response({"message": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message=str(exc),
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
         except Exception as exc:  # noqa: BLE001
             logger.error("获取 Nuclei 模板目录树失败: %s", exc, exc_info=True)
-            return Response({"message": "获取模板目录树失败"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return error_response(
+                code=ErrorCodes.SERVER_ERROR,
+                message='Failed to get template tree',
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
-        return Response({"roots": roots})
+        return success_response(data={'roots': roots})
 
     @action(detail=True, methods=["get"], url_path="templates/content")
     def templates_content(self, request: Request, pk: str | None = None) -> Response:
@@ -174,23 +200,43 @@ class NucleiTemplateRepoViewSet(viewsets.ModelViewSet):
         try:
             repo_id = int(pk) if pk is not None else None
         except (TypeError, ValueError):
-            return Response({"message": "无效的仓库 ID"}, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message='Invalid repository ID',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
 
         # 解析 path 参数
         rel_path = (request.query_params.get("path", "") or "").strip()
         if not rel_path:
-            return Response({"message": "缺少 path 参数"}, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message='Missing path parameter',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
 
         # 调用 Service 层
         try:
             result = self.service.get_template_content(repo_id, rel_path)
         except ValidationError as exc:
-            return Response({"message": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message=str(exc),
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
         except Exception as exc:  # noqa: BLE001
             logger.error("获取 Nuclei 模板内容失败: %s", exc, exc_info=True)
-            return Response({"message": "获取模板内容失败"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return error_response(
+                code=ErrorCodes.SERVER_ERROR,
+                message='Failed to get template content',
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
         # 文件不存在
         if result is None:
-            return Response({"message": "模板不存在或无法读取"}, status=status.HTTP_404_NOT_FOUND)
-        return Response(result)
+            return error_response(
+                code=ErrorCodes.NOT_FOUND,
+                message='Template not found or unreadable',
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+        return success_response(data=result)

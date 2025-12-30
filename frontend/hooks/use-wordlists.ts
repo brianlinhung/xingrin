@@ -1,7 +1,8 @@
 "use client"
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { toast } from "sonner"
+import { useToastMessages } from '@/lib/toast-helpers'
+import { getErrorCode } from '@/lib/response-parser'
 import {
   getWordlists,
   uploadWordlist,
@@ -25,20 +26,21 @@ export function useWordlists(params?: { page?: number; pageSize?: number }) {
 // Upload wordlist
 export function useUploadWordlist() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation<{}, Error, { name: string; description?: string; file: File }>({
     mutationFn: (payload) => uploadWordlist(payload),
     onMutate: () => {
-      toast.loading("Uploading wordlist...", { id: "upload-wordlist" })
+      toastMessages.loading('common.status.uploading', {}, 'upload-wordlist')
     },
     onSuccess: () => {
-      toast.dismiss("upload-wordlist")
-      toast.success("Wordlist uploaded successfully")
+      toastMessages.dismiss('upload-wordlist')
+      toastMessages.success('toast.wordlist.upload.success')
       queryClient.invalidateQueries({ queryKey: ["wordlists"] })
     },
-    onError: (error) => {
-      toast.dismiss("upload-wordlist")
-      toast.error(`Upload failed: ${error.message}`)
+    onError: (error: any) => {
+      toastMessages.dismiss('upload-wordlist')
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.wordlist.upload.error')
     },
   })
 }
@@ -46,20 +48,21 @@ export function useUploadWordlist() {
 // Delete wordlist
 export function useDeleteWordlist() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation<void, Error, number>({
     mutationFn: (id: number) => deleteWordlist(id),
     onMutate: (id) => {
-      toast.loading("Deleting wordlist...", { id: `delete-wordlist-${id}` })
+      toastMessages.loading('common.status.deleting', {}, `delete-wordlist-${id}`)
     },
     onSuccess: (_data, id) => {
-      toast.dismiss(`delete-wordlist-${id}`)
-      toast.success("Wordlist deleted successfully")
+      toastMessages.dismiss(`delete-wordlist-${id}`)
+      toastMessages.success('toast.wordlist.delete.success')
       queryClient.invalidateQueries({ queryKey: ["wordlists"] })
     },
-    onError: (error, id) => {
-      toast.dismiss(`delete-wordlist-${id}`)
-      toast.error(`Delete failed: ${error.message}`)
+    onError: (error: any, id) => {
+      toastMessages.dismiss(`delete-wordlist-${id}`)
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.wordlist.delete.error')
     },
   })
 }
@@ -76,21 +79,22 @@ export function useWordlistContent(id: number | null) {
 // Update wordlist content
 export function useUpdateWordlistContent() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation<Wordlist, Error, { id: number; content: string }>({
     mutationFn: ({ id, content }) => updateWordlistContent(id, content),
     onMutate: () => {
-      toast.loading("Saving...", { id: "update-wordlist-content" })
+      toastMessages.loading('common.actions.saving', {}, 'update-wordlist-content')
     },
     onSuccess: (data) => {
-      toast.dismiss("update-wordlist-content")
-      toast.success("Wordlist saved successfully")
+      toastMessages.dismiss('update-wordlist-content')
+      toastMessages.success('toast.wordlist.update.success')
       queryClient.invalidateQueries({ queryKey: ["wordlists"] })
       queryClient.invalidateQueries({ queryKey: ["wordlist-content", data.id] })
     },
-    onError: (error) => {
-      toast.dismiss("update-wordlist-content")
-      toast.error(`Save failed: ${error.message}`)
+    onError: (error: any) => {
+      toastMessages.dismiss('update-wordlist-content')
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.wordlist.update.error')
     },
   })
 }

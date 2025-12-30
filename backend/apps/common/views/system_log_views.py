@@ -13,6 +13,8 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.common.response_helpers import success_response, error_response
+from apps.common.error_codes import ErrorCodes
 from apps.common.services.system_log_service import SystemLogService
 
 
@@ -61,9 +63,17 @@ class SystemLogsView(APIView):
 
             # 调用服务获取日志内容
             content = self.service.get_logs_content(lines=lines)
-            return Response({"content": content})
+            return success_response(data={"content": content})
         except ValueError:
-            return Response({"error": "lines 参数必须是整数"}, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message='lines must be an integer',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
         except Exception:
             logger.exception("获取系统日志失败")
-            return Response({"error": "获取系统日志失败"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return error_response(
+                code=ErrorCodes.SERVER_ERROR,
+                message='Failed to get system logs',
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

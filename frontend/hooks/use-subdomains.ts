@@ -1,7 +1,8 @@
 "use client"
 
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query"
-import { toast } from "sonner"
+import { useToastMessages } from '@/lib/toast-helpers'
+import { getErrorCode } from '@/lib/response-parser'
 import { SubdomainService } from "@/services/subdomain.service"
 import { OrganizationService } from "@/services/organization.service"
 import type { Subdomain, GetSubdomainsResponse, GetAllSubdomainsParams } from "@/types/subdomain.types"
@@ -57,33 +58,32 @@ export function useOrganizationSubdomains(
 // 创建子域名（绑定到资产）
 export function useCreateSubdomain() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (data: { domains: Array<{ name: string }>; assetId: number }) =>
       SubdomainService.createSubdomains(data),
     onMutate: async () => {
-      toast.loading('正在创建子域名...', { id: 'create-subdomain' })
+      toastMessages.loading('common.status.creating', {}, 'create-subdomain')
     },
     onSuccess: (response) => {
-      toast.dismiss('create-subdomain')
+      toastMessages.dismiss('create-subdomain')
       const { createdCount, existedCount, skippedCount = 0 } = response
-      if (skippedCount > 0 && existedCount > 0) {
-        toast.warning(`成功创建 ${createdCount} 个子域名（${existedCount} 个已存在，${skippedCount} 个已跳过）`)
-      } else if (skippedCount > 0) {
-        toast.warning(`成功创建 ${createdCount} 个子域名（${skippedCount} 个已跳过）`)
-      } else if (existedCount > 0) {
-        toast.warning(`成功创建 ${createdCount} 个子域名（${existedCount} 个已存在）`)
+      if (skippedCount > 0 || existedCount > 0) {
+        toastMessages.warning('toast.asset.subdomain.create.partialSuccess', { 
+          success: createdCount, 
+          skipped: (existedCount || 0) + (skippedCount || 0) 
+        })
       } else {
-        toast.success(`成功创建 ${createdCount} 个子域名`)
+        toastMessages.success('toast.asset.subdomain.create.success', { count: createdCount })
       }
       queryClient.invalidateQueries({ queryKey: ['subdomains'] })
       queryClient.invalidateQueries({ queryKey: ['assets'] })
     },
     onError: (error: any) => {
-      toast.dismiss('create-subdomain')
-      console.error('创建子域名失败:', error)
-      console.error('后端响应:', error?.response?.data || error)
-      toast.error('创建子域名失败，请查看控制台日志')
+      toastMessages.dismiss('create-subdomain')
+      console.error('Failed to create subdomain:', error)
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.asset.subdomain.create.error')
     },
   })
 }
@@ -91,6 +91,7 @@ export function useCreateSubdomain() {
 // 从组织中移除子域名
 export function useDeleteSubdomainFromOrganization() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (data: { organizationId: number; targetId: number }) =>
@@ -99,19 +100,18 @@ export function useDeleteSubdomainFromOrganization() {
         targetIds: [data.targetId],
       }),
     onMutate: ({ organizationId, targetId }) => {
-      toast.loading('正在移除子域名...', { id: `delete-${organizationId}-${targetId}` })
+      toastMessages.loading('common.status.removing', {}, `delete-${organizationId}-${targetId}`)
     },
-    onSuccess: (_response, { organizationId }) => {
-      toast.dismiss(`delete-${organizationId}`)
-      toast.success('子域名已成功移除')
+    onSuccess: (_response, { organizationId, targetId }) => {
+      toastMessages.dismiss(`delete-${organizationId}-${targetId}`)
+      toastMessages.success('toast.asset.subdomain.delete.success')
       queryClient.invalidateQueries({ queryKey: ['subdomains'] })
       queryClient.invalidateQueries({ queryKey: ['organizations'] })
     },
     onError: (error: any, { organizationId, targetId }) => {
-      toast.dismiss(`delete-${organizationId}-${targetId}`)
-      console.error('移除子域名失败:', error)
-      console.error('后端响应:', error?.response?.data || error)
-      toast.error('移除子域名失败，请查看控制台日志')
+      toastMessages.dismiss(`delete-${organizationId}-${targetId}`)
+      console.error('Failed to remove subdomain:', error)
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.asset.subdomain.delete.error')
     },
   })
 }
@@ -119,30 +119,25 @@ export function useDeleteSubdomainFromOrganization() {
 // 批量从组织中移除子域名
 export function useBatchDeleteSubdomainsFromOrganization() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (data: { organizationId: number; domainIds: number[] }) => 
       SubdomainService.batchDeleteSubdomainsFromOrganization(data),
     onMutate: ({ organizationId }) => {
-      toast.loading('正在批量移除子域名...', { id: `batch-delete-${organizationId}` })
+      toastMessages.loading('common.status.batchRemoving', {}, `batch-delete-${organizationId}`)
     },
     onSuccess: (response, { organizationId }) => {
-      toast.dismiss(`batch-delete-${organizationId}`)
+      toastMessages.dismiss(`batch-delete-${organizationId}`)
       const successCount = response.successCount || 0
-      const failedCount = response.failedCount || 0
-      if (failedCount > 0) {
-        toast.warning(`批量移除完成（成功：${successCount}，失败：${failedCount}）`)
-      } else {
-        toast.success(`成功移除 ${successCount} 个子域名`)
-      }
+      toastMessages.success('toast.asset.subdomain.delete.bulkSuccess', { count: successCount })
       queryClient.invalidateQueries({ queryKey: ['subdomains'] })
       queryClient.invalidateQueries({ queryKey: ['organizations'] })
     },
     onError: (error: any, { organizationId }) => {
-      toast.dismiss(`batch-delete-${organizationId}`)
-      console.error('批量移除子域名失败:', error)
-      console.error('后端响应:', error?.response?.data || error)
-      toast.error('批量移除失败，请查看控制台日志')
+      toastMessages.dismiss(`batch-delete-${organizationId}`)
+      console.error('Failed to batch remove subdomains:', error)
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.asset.subdomain.delete.error')
     },
   })
 }
@@ -150,18 +145,16 @@ export function useBatchDeleteSubdomainsFromOrganization() {
 // 删除单个子域名（使用单独的 DELETE API）
 export function useDeleteSubdomain() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (id: number) => SubdomainService.deleteSubdomain(id),
     onMutate: (id) => {
-      toast.loading('正在删除子域名...', { id: `delete-subdomain-${id}` })
+      toastMessages.loading('common.status.deleting', {}, `delete-subdomain-${id}`)
     },
     onSuccess: (response, id) => {
-      toast.dismiss(`delete-subdomain-${id}`)
-      
-      // 显示删除成功信息
-      const { subdomainName } = response
-      toast.success(`子域名 "${subdomainName}" 已成功删除`)
+      toastMessages.dismiss(`delete-subdomain-${id}`)
+      toastMessages.success('toast.asset.subdomain.delete.success')
       
       queryClient.invalidateQueries({ queryKey: ['subdomains'] })
       queryClient.invalidateQueries({ queryKey: ['targets'] })
@@ -169,10 +162,9 @@ export function useDeleteSubdomain() {
       queryClient.invalidateQueries({ queryKey: ['organizations'] })
     },
     onError: (error: any, id) => {
-      toast.dismiss(`delete-subdomain-${id}`)
-      console.error('删除子域名失败:', error)
-      console.error('后端响应:', error?.response?.data || error)
-      toast.error('删除子域名失败，请查看控制台日志')
+      toastMessages.dismiss(`delete-subdomain-${id}`)
+      console.error('Failed to delete subdomain:', error)
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.asset.subdomain.delete.error')
     },
   })
 }
@@ -180,29 +172,16 @@ export function useDeleteSubdomain() {
 // 批量删除子域名（使用统一的批量删除接口）
 export function useBatchDeleteSubdomains() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (ids: number[]) => SubdomainService.batchDeleteSubdomains(ids),
     onMutate: () => {
-      toast.loading('正在批量删除子域名...', { id: 'batch-delete-subdomains' })
+      toastMessages.loading('common.status.batchDeleting', {}, 'batch-delete-subdomains')
     },
     onSuccess: (response) => {
-      toast.dismiss('batch-delete-subdomains')
-      
-      // 显示级联删除信息
-      const cascadeInfo = Object.entries(response.cascadeDeleted || {})
-        .filter(([key, count]) => key !== 'asset.Subdomain' && count > 0)
-        .map(([key, count]) => {
-          const modelName = key.split('.')[1]
-          return `${modelName}: ${count}`
-        })
-        .join(', ')
-      
-      if (cascadeInfo) {
-        toast.success(`成功删除 ${response.deletedCount} 个子域名（级联删除: ${cascadeInfo}）`)
-      } else {
-        toast.success(`成功删除 ${response.deletedCount} 个子域名`)
-      }
+      toastMessages.dismiss('batch-delete-subdomains')
+      toastMessages.success('toast.asset.subdomain.delete.bulkSuccess', { count: response.deletedCount })
       
       queryClient.invalidateQueries({ queryKey: ['subdomains'] })
       queryClient.invalidateQueries({ queryKey: ['targets'] })
@@ -210,10 +189,9 @@ export function useBatchDeleteSubdomains() {
       queryClient.invalidateQueries({ queryKey: ['organizations'] })
     },
     onError: (error: any) => {
-      toast.dismiss('batch-delete-subdomains')
-      console.error('批量删除子域名失败:', error)
-      console.error('后端响应:', error?.response?.data || error)
-      toast.error('批量删除失败，请查看控制台日志')
+      toastMessages.dismiss('batch-delete-subdomains')
+      console.error('Failed to batch delete subdomains:', error)
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.asset.subdomain.delete.error')
     },
   })
 }
@@ -221,24 +199,24 @@ export function useBatchDeleteSubdomains() {
 // 更新子域名
 export function useUpdateSubdomain() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: { name?: string; description?: string } }) =>
       SubdomainService.updateSubdomain({ id, ...data }),
     onMutate: ({ id }) => {
-      toast.loading('正在更新子域名...', { id: `update-subdomain-${id}` })
+      toastMessages.loading('common.status.updating', {}, `update-subdomain-${id}`)
     },
     onSuccess: (_response, { id }) => {
-      toast.dismiss(`update-subdomain-${id}`)
-      toast.success('更新成功')
+      toastMessages.dismiss(`update-subdomain-${id}`)
+      toastMessages.success('common.status.updateSuccess')
       queryClient.invalidateQueries({ queryKey: ['subdomains'] })
       queryClient.invalidateQueries({ queryKey: ['organizations'] })
     },
     onError: (error: any, { id }) => {
-      toast.dismiss(`update-subdomain-${id}`)
-      console.error('更新子域名失败:', error)
-      console.error('后端响应:', error?.response?.data || error)
-      toast.error('更新子域名失败，请查看控制台日志')
+      toastMessages.dismiss(`update-subdomain-${id}`)
+      console.error('Failed to update subdomain:', error)
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'common.status.updateFailed')
     },
   })
 }
@@ -295,49 +273,40 @@ export function useScanSubdomains(
 // 批量创建子域名（绑定到目标）
 export function useBulkCreateSubdomains() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (data: { targetId: number; subdomains: string[] }) =>
       SubdomainService.bulkCreateSubdomains(data.targetId, data.subdomains),
     onMutate: async () => {
-      toast.loading('正在批量创建子域名...', { id: 'bulk-create-subdomains' })
+      toastMessages.loading('common.status.batchCreating', {}, 'bulk-create-subdomains')
     },
     onSuccess: (response, { targetId }) => {
-      toast.dismiss('bulk-create-subdomains')
-      const { createdCount, skippedCount, invalidCount, mismatchedCount } = response
+      toastMessages.dismiss('bulk-create-subdomains')
+      const { createdCount, skippedCount = 0, invalidCount = 0, mismatchedCount = 0 } = response
+      const totalSkipped = skippedCount + invalidCount + mismatchedCount
       
-      let message = `成功创建 ${createdCount} 个子域名`
-      const details: string[] = []
-      
-      if (skippedCount > 0) {
-        details.push(`${skippedCount} 个重复`)
-      }
-      if (invalidCount > 0) {
-        details.push(`${invalidCount} 个格式无效`)
-      }
-      if (mismatchedCount > 0) {
-        details.push(`${mismatchedCount} 个不匹配`)
-      }
-      
-      if (details.length > 0) {
-        message += `（${details.join('，')}）`
-      }
-      
-      if (createdCount > 0) {
-        toast.success(message)
+      if (totalSkipped > 0) {
+        toastMessages.warning('toast.asset.subdomain.create.partialSuccess', { 
+          success: createdCount, 
+          skipped: totalSkipped 
+        })
+      } else if (createdCount > 0) {
+        toastMessages.success('toast.asset.subdomain.create.success', { count: createdCount })
       } else {
-        toast.warning(message)
+        toastMessages.warning('toast.asset.subdomain.create.partialSuccess', { 
+          success: 0, 
+          skipped: 0 
+        })
       }
       
-      // 刷新子域名列表
       queryClient.invalidateQueries({ queryKey: ['targets', targetId, 'subdomains'] })
       queryClient.invalidateQueries({ queryKey: ['subdomains'] })
     },
     onError: (error: any) => {
-      toast.dismiss('bulk-create-subdomains')
-      console.error('批量创建子域名失败:', error)
-      const errorMessage = error?.response?.data?.error || '批量创建失败，请查看控制台日志'
-      toast.error(errorMessage)
+      toastMessages.dismiss('bulk-create-subdomains')
+      console.error('Failed to bulk create subdomains:', error)
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.asset.subdomain.create.error')
     },
   })
 }

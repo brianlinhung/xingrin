@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
-import { toast } from 'sonner'
+import { useToastMessages } from '@/lib/toast-helpers'
+import { getErrorCode } from '@/lib/response-parser'
 import { OrganizationService } from '@/services/organization.service'
 import type { Organization, CreateOrganizationRequest, UpdateOrganizationRequest } from '@/types/organization.types'
 
@@ -107,33 +108,23 @@ export function useOrganizationTargets(
  */
 export function useCreateOrganization() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (data: CreateOrganizationRequest) => 
       OrganizationService.createOrganization(data),
     onMutate: () => {
-      // Show creation start notification
-      toast.loading('Creating organization...', { id: 'create-organization' })
+      toastMessages.loading('common.status.creating', {}, 'create-organization')
     },
     onSuccess: () => {
-      // Close loading notification
-      toast.dismiss('create-organization')
-      
-      // Refresh all organization-related queries (wildcard matching)
+      toastMessages.dismiss('create-organization')
       queryClient.invalidateQueries({ queryKey: ['organizations'] })
-      
-      // Show success notification
-      toast.success('Created successfully')
+      toastMessages.success('toast.organization.create.success')
     },
     onError: (error: any) => {
-      // Close loading notification
-      toast.dismiss('create-organization')
-      
+      toastMessages.dismiss('create-organization')
       console.error('Failed to create organization:', error)
-      console.error('Backend response:', error?.response?.data || error)
-      
-      // Frontend constructs error message
-      toast.error('Failed to create organization, please check console logs')
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.organization.create.error')
     },
   })
 }
@@ -143,33 +134,23 @@ export function useCreateOrganization() {
  */
 export function useUpdateOrganization() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: UpdateOrganizationRequest }) =>
       OrganizationService.updateOrganization({ id, ...data }),
-    onMutate: ({ id, data }) => {
-      // 显示更新开始的提示
-      toast.loading('正在更新组织...', { id: `update-${id}` })
+    onMutate: ({ id }) => {
+      toastMessages.loading('common.status.updating', {}, `update-${id}`)
     },
     onSuccess: ({ id }) => {
-      // 关闭加载提示
-      toast.dismiss(`update-${id}`)
-      
-      // 刷新所有组织相关查询（通配符匹配）
+      toastMessages.dismiss(`update-${id}`)
       queryClient.invalidateQueries({ queryKey: ['organizations'] })
-      
-      // 显示成功提示
-      toast.success('更新成功')
+      toastMessages.success('toast.organization.update.success')
     },
     onError: (error: any, { id }) => {
-      // 关闭加载提示
-      toast.dismiss(`update-${id}`)
-      
-      console.error('更新组织失败:', error)
-      console.error('后端响应:', error?.response?.data || error)
-      
-      // 前端自己构造错误提示
-      toast.error('更新组织失败，请查看控制台日志')
+      toastMessages.dismiss(`update-${id}`)
+      console.error('Failed to update organization:', error)
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.organization.update.error')
     },
   })
 }
@@ -179,20 +160,16 @@ export function useUpdateOrganization() {
  */
 export function useDeleteOrganization() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (id: number) => OrganizationService.deleteOrganization(id),
     onMutate: async (deletedId) => {
-      // 显示删除开始的提示
-      toast.loading('正在删除组织...', { id: `delete-${deletedId}` })
+      toastMessages.loading('common.status.deleting', {}, `delete-${deletedId}`)
       
-      // 取消正在进行的查询
       await queryClient.cancelQueries({ queryKey: ['organizations'] })
-
-      // 获取当前数据作为备份
       const previousData = queryClient.getQueriesData({ queryKey: ['organizations'] })
 
-      // 乐观更新：从所有列表查询中移除该组织
       queryClient.setQueriesData(
         { queryKey: ['organizations'] },
         (old: any) => {
@@ -206,38 +183,27 @@ export function useDeleteOrganization() {
         }
       )
 
-      // 返回备份数据用于回滚
       return { previousData, deletedId }
     },
-    onSuccess: (response, deletedId, context) => {
-      // 关闭加载提示
-      toast.dismiss(`delete-${deletedId}`)
-      
-      // 显示删除成功信息
+    onSuccess: (response, deletedId) => {
+      toastMessages.dismiss(`delete-${deletedId}`)
       const { organizationName } = response
-      toast.success(`组织 "${organizationName}" 已成功删除`)
+      toastMessages.success('toast.organization.delete.success', { name: organizationName })
     },
     onError: (error: any, deletedId, context) => {
-      // 关闭加载提示
-      toast.dismiss(`delete-${deletedId}`)
+      toastMessages.dismiss(`delete-${deletedId}`)
       
-      // 回滚乐观更新
       if (context?.previousData) {
         context.previousData.forEach(([queryKey, data]) => {
           queryClient.setQueryData(queryKey, data)
         })
       }
       
-      console.error('删除组织失败:', error)
-      console.error('后端响应:', error?.response?.data || error)
-      
-      // 前端自己构造错误提示
-      toast.error('删除组织失败，请查看控制台日志')
+      console.error('Failed to delete organization:', error)
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.organization.delete.error')
     },
     onSettled: () => {
-      // 无论成功失败都刷新数据
       queryClient.invalidateQueries({ queryKey: ['organizations'] })
-      // 刷新目标查询，因为删除组织会解除目标的关联关系，需要更新目标的 organizations 字段
       queryClient.invalidateQueries({ queryKey: ['targets'] })
     },
   })
@@ -248,21 +214,17 @@ export function useDeleteOrganization() {
  */
 export function useBatchDeleteOrganizations() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (ids: number[]) => 
       OrganizationService.batchDeleteOrganizations(ids),
     onMutate: async (deletedIds) => {
-      // 显示批量删除开始的提示
-      toast.loading('正在批量删除组织...', { id: 'batch-delete' })
+      toastMessages.loading('common.status.batchDeleting', {}, 'batch-delete')
       
-      // 取消正在进行的查询
       await queryClient.cancelQueries({ queryKey: ['organizations'] })
-
-      // 获取当前数据作为备份
       const previousData = queryClient.getQueriesData({ queryKey: ['organizations'] })
 
-      // 乐观更新：从所有列表查询中移除这些组织
       queryClient.setQueriesData(
         { queryKey: ['organizations'] },
         (old: any) => {
@@ -278,42 +240,27 @@ export function useBatchDeleteOrganizations() {
         }
       )
 
-      // 返回备份数据用于回滚
       return { previousData, deletedIds }
     },
-    onSuccess: (response, deletedIds) => {
-      // 关闭加载提示
-      toast.dismiss('batch-delete')
-      
-      // 打印后端响应
-      console.log('批量删除组织成功')
-      console.log('后端响应:', response)
-      
-      // 显示删除成功信息
+    onSuccess: (response) => {
+      toastMessages.dismiss('batch-delete')
       const { deletedOrganizationCount } = response
-      toast.success(`成功删除 ${deletedOrganizationCount} 个组织`)
+      toastMessages.success('toast.organization.delete.bulkSuccess', { count: deletedOrganizationCount })
     },
     onError: (error: any, deletedIds, context) => {
-      // 关闭加载提示
-      toast.dismiss('batch-delete')
+      toastMessages.dismiss('batch-delete')
       
-      // 回滚乐观更新
       if (context?.previousData) {
         context.previousData.forEach(([queryKey, data]) => {
           queryClient.setQueryData(queryKey, data)
         })
       }
       
-      console.error('批量删除组织失败:', error)
-      console.error('后端响应:', error?.response?.data || error)
-      
-      // 前端自己构造错误提示
-      toast.error('批量删除失败，请查看控制台日志')
+      console.error('Failed to batch delete organizations:', error)
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.organization.delete.error')
     },
     onSettled: () => {
-      // 无论成功失败都刷新数据
       queryClient.invalidateQueries({ queryKey: ['organizations'] })
-      // 刷新目标查询，因为删除组织会解除目标的关联关系，需要更新目标的 organizations 字段
       queryClient.invalidateQueries({ queryKey: ['targets'] })
     },
   })
@@ -326,29 +273,25 @@ export function useBatchDeleteOrganizations() {
  */
 export function useUnlinkTargetsFromOrganization() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (data: { organizationId: number; targetIds: number[] }) => 
       OrganizationService.unlinkTargetsFromOrganization(data),
-    onMutate: ({ organizationId, targetIds }) => {
-      toast.loading('正在解除关联...', { id: `unlink-${organizationId}` })
+    onMutate: ({ organizationId }) => {
+      toastMessages.loading('common.status.unlinking', {}, `unlink-${organizationId}`)
     },
-    onSuccess: (response, { organizationId }) => {
-      toast.dismiss(`unlink-${organizationId}`)
-      toast.success(response.message || '已成功解除关联')
+    onSuccess: (response, { organizationId, targetIds }) => {
+      toastMessages.dismiss(`unlink-${organizationId}`)
+      toastMessages.success('toast.target.unlink.bulkSuccess', { count: targetIds.length })
       
-      // 刷新所有目标和组织相关查询
       queryClient.invalidateQueries({ queryKey: ['targets'] })
       queryClient.invalidateQueries({ queryKey: ['organizations'] })
     },
     onError: (error: any, { organizationId }) => {
-      toast.dismiss(`unlink-${organizationId}`)
-      
-      console.error('解除关联失败:', error)
-      console.error('后端响应:', error?.response?.data || error)
-      
-      const errorMessage = error?.response?.data?.error || '解除关联失败'
-      toast.error(errorMessage)
+      toastMessages.dismiss(`unlink-${organizationId}`)
+      console.error('Failed to unlink targets:', error)
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.target.unlink.error')
     },
   })
 }

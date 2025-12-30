@@ -3,9 +3,9 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { toast } from "sonner"
+import { useToastMessages } from '@/lib/toast-helpers'
+import { getErrorCode } from '@/lib/response-parser'
 import { nucleiRepoApi } from "../services/nuclei-repo.api"
-import { getErrorMessage } from "@/lib/api-client"
 import type { NucleiTemplateTreeNode, NucleiTemplateContent } from "@/types/nuclei.types"
 
 // ==================== 仓库 CRUD ====================
@@ -41,15 +41,16 @@ export function useNucleiRepo(repoId: number | null) {
 /** 创建仓库 */
 export function useCreateNucleiRepo() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: nucleiRepoApi.createRepo,
-    onSuccess: (data) => {
-      toast.success(`仓库「${data.name}」创建成功`)
+    onSuccess: () => {
+      toastMessages.success('toast.nucleiRepo.create.success')
       queryClient.invalidateQueries({ queryKey: ["nuclei-repos"] })
     },
-    onError: (error) => {
-      toast.error(getErrorMessage(error))
+    onError: (error: any) => {
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.nucleiRepo.create.error')
     },
   })
 }
@@ -57,6 +58,7 @@ export function useCreateNucleiRepo() {
 /** 更新仓库 */
 export function useUpdateNucleiRepo() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (data: {
@@ -64,12 +66,12 @@ export function useUpdateNucleiRepo() {
       repoUrl?: string
     }) => nucleiRepoApi.updateRepo(data.id, { repoUrl: data.repoUrl }),
     onSuccess: (_data, variables) => {
-      toast.success("仓库配置已更新")
+      toastMessages.success('toast.nucleiRepo.update.success')
       queryClient.invalidateQueries({ queryKey: ["nuclei-repos"] })
       queryClient.invalidateQueries({ queryKey: ["nuclei-repos", variables.id] })
     },
-    onError: (error) => {
-      toast.error(getErrorMessage(error))
+    onError: (error: any) => {
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.nucleiRepo.update.error')
     },
   })
 }
@@ -77,15 +79,16 @@ export function useUpdateNucleiRepo() {
 /** 删除仓库 */
 export function useDeleteNucleiRepo() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: nucleiRepoApi.deleteRepo,
     onSuccess: () => {
-      toast.success("仓库已删除")
+      toastMessages.success('toast.nucleiRepo.delete.success')
       queryClient.invalidateQueries({ queryKey: ["nuclei-repos"] })
     },
-    onError: (error) => {
-      toast.error(getErrorMessage(error))
+    onError: (error: any) => {
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.nucleiRepo.delete.error')
     },
   })
 }
@@ -95,18 +98,18 @@ export function useDeleteNucleiRepo() {
 /** 刷新仓库（Git clone/pull） */
 export function useRefreshNucleiRepo() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: nucleiRepoApi.refreshRepo,
     onSuccess: (_data, repoId) => {
-      toast.success("仓库同步成功")
-      // 刷新仓库列表（last_synced_at 会更新）
+      toastMessages.success('toast.nucleiRepo.sync.success')
       queryClient.invalidateQueries({ queryKey: ["nuclei-repos"] })
       queryClient.invalidateQueries({ queryKey: ["nuclei-repos", repoId] })
       queryClient.invalidateQueries({ queryKey: ["nuclei-repo-tree", repoId] })
     },
-    onError: (error) => {
-      toast.error(getErrorMessage(error))
+    onError: (error: any) => {
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.nucleiRepo.sync.error')
     },
   })
 }

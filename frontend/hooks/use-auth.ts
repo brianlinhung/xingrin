@@ -3,9 +3,9 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
 import { login, logout, getMe, changePassword } from '@/services/auth.service'
-import { getErrorMessage } from '@/lib/api-client'
+import { useToastMessages } from '@/lib/toast-helpers'
+import { getErrorCode } from '@/lib/response-parser'
 import type { LoginRequest, ChangePasswordRequest } from '@/types/auth.types'
 
 /**
@@ -30,16 +30,22 @@ export function useAuth() {
 export function useLogin() {
   const queryClient = useQueryClient()
   const router = useRouter()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (data: LoginRequest) => login(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['auth', 'me'] })
-      toast.success('Login successful')
+      toastMessages.success('toast.auth.login.success')
       router.push('/dashboard/')
     },
-    onError: (error: unknown) => {
-      toast.error(getErrorMessage(error))
+    onError: (error: any) => {
+      const errorCode = getErrorCode(error.response?.data)
+      if (errorCode) {
+        toastMessages.errorFromCode(errorCode)
+      } else {
+        toastMessages.error('auth.loginFailed')
+      }
     },
   })
 }
@@ -50,16 +56,22 @@ export function useLogin() {
 export function useLogout() {
   const queryClient = useQueryClient()
   const router = useRouter()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: logout,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['auth', 'me'] })
-      toast.success('Logged out')
+      toastMessages.success('toast.auth.logout.success')
       router.push('/login/')
     },
-    onError: (error: unknown) => {
-      toast.error(getErrorMessage(error))
+    onError: (error: any) => {
+      const errorCode = getErrorCode(error.response?.data)
+      if (errorCode) {
+        toastMessages.errorFromCode(errorCode)
+      } else {
+        toastMessages.error('errors.unknown')
+      }
     },
   })
 }
@@ -68,13 +80,20 @@ export function useLogout() {
  * Change password
  */
 export function useChangePassword() {
+  const toastMessages = useToastMessages()
+
   return useMutation({
     mutationFn: (data: ChangePasswordRequest) => changePassword(data),
     onSuccess: () => {
-      toast.success('Password changed successfully')
+      toastMessages.success('toast.auth.changePassword.success')
     },
-    onError: (error: unknown) => {
-      toast.error(getErrorMessage(error))
+    onError: (error: any) => {
+      const errorCode = getErrorCode(error.response?.data)
+      if (errorCode) {
+        toastMessages.errorFromCode(errorCode)
+      } else {
+        toastMessages.error('toast.auth.changePassword.error')
+      }
     },
   })
 }

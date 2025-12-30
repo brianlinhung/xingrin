@@ -11,6 +11,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
+from apps.common.response_helpers import success_response, error_response
+from apps.common.error_codes import ErrorCodes
+
 logger = logging.getLogger(__name__)
 
 
@@ -28,9 +31,10 @@ class LoginView(APIView):
         password = request.data.get('password')
         
         if not username or not password:
-            return Response(
-                {'error': '请提供用户名和密码'},
-                status=status.HTTP_400_BAD_REQUEST
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message='Username and password are required',
+                status_code=status.HTTP_400_BAD_REQUEST
             )
         
         user = authenticate(request, username=username, password=password)
@@ -38,20 +42,22 @@ class LoginView(APIView):
         if user is not None:
             login(request, user)
             logger.info(f"用户 {username} 登录成功")
-            return Response({
-                'message': '登录成功',
-                'user': {
-                    'id': user.id,
-                    'username': user.username,
-                    'isStaff': user.is_staff,
-                    'isSuperuser': user.is_superuser,
+            return success_response(
+                data={
+                    'user': {
+                        'id': user.id,
+                        'username': user.username,
+                        'isStaff': user.is_staff,
+                        'isSuperuser': user.is_superuser,
+                    }
                 }
-            })
+            )
         else:
             logger.warning(f"用户 {username} 登录失败：用户名或密码错误")
-            return Response(
-                {'error': '用户名或密码错误'},
-                status=status.HTTP_401_UNAUTHORIZED
+            return error_response(
+                code=ErrorCodes.UNAUTHORIZED,
+                message='Invalid username or password',
+                status_code=status.HTTP_401_UNAUTHORIZED
             )
 
 
@@ -79,7 +85,7 @@ class LogoutView(APIView):
                 logout(request)
         else:
             logout(request)
-        return Response({'message': '已登出'})
+        return success_response()
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -100,22 +106,26 @@ class MeView(APIView):
         if user_id:
             try:
                 user = User.objects.get(pk=user_id)
-                return Response({
-                    'authenticated': True,
-                    'user': {
-                        'id': user.id,
-                        'username': user.username,
-                        'isStaff': user.is_staff,
-                        'isSuperuser': user.is_superuser,
+                return success_response(
+                    data={
+                        'authenticated': True,
+                        'user': {
+                            'id': user.id,
+                            'username': user.username,
+                            'isStaff': user.is_staff,
+                            'isSuperuser': user.is_superuser,
+                        }
                     }
-                })
+                )
             except User.DoesNotExist:
                 pass
         
-        return Response({
-            'authenticated': False,
-            'user': None
-        })
+        return success_response(
+            data={
+                'authenticated': False,
+                'user': None
+            }
+        )
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -134,17 +144,19 @@ class ChangePasswordView(APIView):
         
         user_id = request.session.get('_auth_user_id')
         if not user_id:
-            return Response(
-                {'error': '请先登录'},
-                status=status.HTTP_401_UNAUTHORIZED
+            return error_response(
+                code=ErrorCodes.UNAUTHORIZED,
+                message='Please login first',
+                status_code=status.HTTP_401_UNAUTHORIZED
             )
         
         try:
             user = User.objects.get(pk=user_id)
         except User.DoesNotExist:
-            return Response(
-                {'error': '用户不存在'},
-                status=status.HTTP_401_UNAUTHORIZED
+            return error_response(
+                code=ErrorCodes.UNAUTHORIZED,
+                message='User does not exist',
+                status_code=status.HTTP_401_UNAUTHORIZED
             )
         
         # CamelCaseParser 将 oldPassword -> old_password
@@ -152,15 +164,17 @@ class ChangePasswordView(APIView):
         new_password = request.data.get('new_password')
         
         if not old_password or not new_password:
-            return Response(
-                {'error': '请提供旧密码和新密码'},
-                status=status.HTTP_400_BAD_REQUEST
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message='Old password and new password are required',
+                status_code=status.HTTP_400_BAD_REQUEST
             )
         
         if not user.check_password(old_password):
-            return Response(
-                {'error': '旧密码错误'},
-                status=status.HTTP_400_BAD_REQUEST
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message='Old password is incorrect',
+                status_code=status.HTTP_400_BAD_REQUEST
             )
         
         user.set_password(new_password)
@@ -170,4 +184,4 @@ class ChangePasswordView(APIView):
         update_session_auth_hash(request, user)
         
         logger.info(f"用户 {user.username} 已修改密码")
-        return Response({'message': '密码修改成功'})
+        return success_response()

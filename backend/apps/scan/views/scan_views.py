@@ -7,6 +7,9 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.utils import DatabaseError, IntegrityError, OperationalError
 import logging
 
+from apps.common.response_helpers import success_response, error_response
+from apps.common.error_codes import ErrorCodes
+
 logger = logging.getLogger(__name__)
 
 from ..models import Scan, ScheduledScan
@@ -75,20 +78,31 @@ class ScanViewSet(viewsets.ModelViewSet):
             scan_service = ScanService()
             result = scan_service.delete_scans_two_phase([scan.id])
             
-            return Response({
-                'message': f'已删除扫描任务: Scan #{scan.id}',
-                'scanId': scan.id,
-                'deletedCount': result['soft_deleted_count'],
-                'deletedScans': result['scan_names']
-            }, status=status.HTTP_200_OK)
+            return success_response(
+                data={
+                    'scanId': scan.id,
+                    'deletedCount': result['soft_deleted_count'],
+                    'deletedScans': result['scan_names']
+                }
+            )
             
         except Scan.DoesNotExist:
-            raise NotFound('扫描任务不存在')
+            return error_response(
+                code=ErrorCodes.NOT_FOUND,
+                status_code=status.HTTP_404_NOT_FOUND
+            )
         except ValueError as e:
-            raise NotFound(str(e))
+            return error_response(
+                code=ErrorCodes.NOT_FOUND,
+                message=str(e),
+                status_code=status.HTTP_404_NOT_FOUND
+            )
         except Exception as e:
             logger.exception("删除扫描任务时发生错误")
-            raise APIException('服务器错误，请稍后重试')
+            return error_response(
+                code=ErrorCodes.SERVER_ERROR,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
     @action(detail=False, methods=['post'])
     def quick(self, request):
@@ -132,10 +146,12 @@ class ScanViewSet(viewsets.ModelViewSet):
             targets = result['targets']
             
             if not targets:
-                return Response({
-                    'error': '没有有效的目标可供扫描',
-                    'errors': result.get('errors', [])
-                }, status=status.HTTP_400_BAD_REQUEST)
+                return error_response(
+                    code=ErrorCodes.VALIDATION_ERROR,
+                    message='No valid targets for scanning',
+                    details=result.get('errors', []),
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
             
             # 2. 获取扫描引擎
             engine_service = EngineService()
@@ -153,21 +169,28 @@ class ScanViewSet(viewsets.ModelViewSet):
             # 序列化返回结果
             scan_serializer = ScanSerializer(created_scans, many=True)
             
-            return Response({
-                'message': f'快速扫描已启动：{len(created_scans)} 个任务',
-                'target_stats': result['target_stats'],
-                'asset_stats': result['asset_stats'],
-                'errors': result.get('errors', []),
-                'scans': scan_serializer.data
-            }, status=status.HTTP_201_CREATED)
+            return success_response(
+                data={
+                    'count': len(created_scans),
+                    'targetStats': result['target_stats'],
+                    'assetStats': result['asset_stats'],
+                    'errors': result.get('errors', []),
+                    'scans': scan_serializer.data
+                },
+                status_code=status.HTTP_201_CREATED
+            )
             
         except ValidationError as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message=str(e),
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
         except Exception as e:
             logger.exception("快速扫描启动失败")
-            return Response(
-                {'error': '服务器内部错误，请稍后重试'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            return error_response(
+                code=ErrorCodes.SERVER_ERROR,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
     @action(detail=False, methods=['post'])
@@ -208,35 +231,36 @@ class ScanViewSet(viewsets.ModelViewSet):
             # 序列化返回结果
             scan_serializer = ScanSerializer(created_scans, many=True)
             
-            return Response(
-                {
-                    'message': f'已成功发起 {len(created_scans)} 个扫描任务',
+            return success_response(
+                data={
                     'count': len(created_scans),
                     'scans': scan_serializer.data
                 },
-                status=status.HTTP_201_CREATED
+                status_code=status.HTTP_201_CREATED
             )
             
         except ObjectDoesNotExist as e:
             # 资源不存在错误（由 service 层抛出）
-            error_msg = str(e)
-            return Response(
-                {'error': error_msg},
-                status=status.HTTP_404_NOT_FOUND
+            return error_response(
+                code=ErrorCodes.NOT_FOUND,
+                message=str(e),
+                status_code=status.HTTP_404_NOT_FOUND
             )
         
         except ValidationError as e:
             # 参数验证错误（由 service 层抛出）
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_400_BAD_REQUEST
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message=str(e),
+                status_code=status.HTTP_400_BAD_REQUEST
             )
         
         except (DatabaseError, IntegrityError, OperationalError):
             # 数据库错误
-            return Response(
-                {'error': '数据库错误，请稍后重试'},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            return error_response(
+                code=ErrorCodes.SERVER_ERROR,
+                message='Database error',
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE
             )
 
     # 所有快照相关的 action 和 export 已迁移到 asset/views.py 中的快照 ViewSet
@@ -278,21 +302,24 @@ class ScanViewSet(viewsets.ModelViewSet):
         
         # 参数验证
         if not ids:
-            return Response(
-                {'error': '缺少必填参数: ids'},
-                status=status.HTTP_400_BAD_REQUEST
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message='Missing required parameter: ids',
+                status_code=status.HTTP_400_BAD_REQUEST
             )
         
         if not isinstance(ids, list):
-            return Response(
-                {'error': 'ids 必须是数组'},
-                status=status.HTTP_400_BAD_REQUEST
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message='ids must be an array',
+                status_code=status.HTTP_400_BAD_REQUEST
             )
         
         if not all(isinstance(i, int) for i in ids):
-            return Response(
-                {'error': 'ids 数组中的所有元素必须是整数'},
-                status=status.HTTP_400_BAD_REQUEST
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message='All elements in ids array must be integers',
+                status_code=status.HTTP_400_BAD_REQUEST
             )
         
         try:
@@ -300,19 +327,27 @@ class ScanViewSet(viewsets.ModelViewSet):
             scan_service = ScanService()
             result = scan_service.delete_scans_two_phase(ids)
             
-            return Response({
-                'message': f"已删除 {result['soft_deleted_count']} 个扫描任务",
-                'deletedCount': result['soft_deleted_count'],
-                'deletedScans': result['scan_names']
-            }, status=status.HTTP_200_OK)
+            return success_response(
+                data={
+                    'deletedCount': result['soft_deleted_count'],
+                    'deletedScans': result['scan_names']
+                }
+            )
             
         except ValueError as e:
             # 未找到记录
-            raise NotFound(str(e))
+            return error_response(
+                code=ErrorCodes.NOT_FOUND,
+                message=str(e),
+                status_code=status.HTTP_404_NOT_FOUND
+            )
             
         except Exception as e:
             logger.exception("批量删除扫描任务时发生错误")
-            raise APIException('服务器错误，请稍后重试')
+            return error_response(
+                code=ErrorCodes.SERVER_ERROR,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
     @action(detail=False, methods=['get'])
     def statistics(self, request):
@@ -337,22 +372,25 @@ class ScanViewSet(viewsets.ModelViewSet):
             scan_service = ScanService()
             stats = scan_service.get_statistics()
             
-            return Response({
-                'total': stats['total'],
-                'running': stats['running'],
-                'completed': stats['completed'],
-                'failed': stats['failed'],
-                'totalVulns': stats['total_vulns'],
-                'totalSubdomains': stats['total_subdomains'],
-                'totalEndpoints': stats['total_endpoints'],
-                'totalWebsites': stats['total_websites'],
-                'totalAssets': stats['total_assets'],
-            })
+            return success_response(
+                data={
+                    'total': stats['total'],
+                    'running': stats['running'],
+                    'completed': stats['completed'],
+                    'failed': stats['failed'],
+                    'totalVulns': stats['total_vulns'],
+                    'totalSubdomains': stats['total_subdomains'],
+                    'totalEndpoints': stats['total_endpoints'],
+                    'totalWebsites': stats['total_websites'],
+                    'totalAssets': stats['total_assets'],
+                }
+            )
         
         except (DatabaseError, OperationalError):
-            return Response(
-                {'error': '数据库错误，请稍后重试'},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            return error_response(
+                code=ErrorCodes.SERVER_ERROR,
+                message='Database error',
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE
             )
     
     @action(detail=True, methods=['post'])
@@ -383,35 +421,31 @@ class ScanViewSet(viewsets.ModelViewSet):
                 # 检查是否是状态不允许的问题
                 scan = scan_service.get_scan(scan_id=pk, prefetch_relations=False)
                 if scan and scan.status not in [ScanStatus.RUNNING, ScanStatus.INITIATED]:
-                    return Response(
-                        {
-                            'error': f'无法停止扫描：当前状态为 {ScanStatus(scan.status).label}',
-                            'detail': '只能停止运行中或初始化状态的扫描'
-                        },
-                        status=status.HTTP_400_BAD_REQUEST
+                    return error_response(
+                        code=ErrorCodes.BAD_REQUEST,
+                        message=f'Cannot stop scan: current status is {ScanStatus(scan.status).label}',
+                        status_code=status.HTTP_400_BAD_REQUEST
                     )
                 # 其他失败原因
-                return Response(
-                    {'error': '停止扫描失败'},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                return error_response(
+                    code=ErrorCodes.SERVER_ERROR,
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
             
-            return Response(
-                {
-                    'message': f'扫描已停止，已撤销 {revoked_count} 个任务',
-                    'revokedTaskCount': revoked_count
-                },
-                status=status.HTTP_200_OK
+            return success_response(
+                data={'revokedTaskCount': revoked_count}
             )
         
         except ObjectDoesNotExist:
-            return Response(
-                {'error': f'扫描 ID {pk} 不存在'},
-                status=status.HTTP_404_NOT_FOUND
+            return error_response(
+                code=ErrorCodes.NOT_FOUND,
+                message=f'Scan ID {pk} not found',
+                status_code=status.HTTP_404_NOT_FOUND
             )
         
         except (DatabaseError, IntegrityError, OperationalError):
-            return Response(
-                {'error': '数据库错误，请稍后重试'},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            return error_response(
+                code=ErrorCodes.SERVER_ERROR,
+                message='Database error',
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE
             )

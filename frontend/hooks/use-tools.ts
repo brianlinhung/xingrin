@@ -1,7 +1,8 @@
 "use client"
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { toast } from "sonner"
+import { useToastMessages } from '@/lib/toast-helpers'
+import { getErrorCode } from '@/lib/response-parser'
 import { ToolService } from "@/services/tool.service"
 import type { Tool, GetToolsParams, CreateToolRequest, UpdateToolRequest } from "@/types/tool.types"
 
@@ -35,35 +36,25 @@ export function useTools(params: GetToolsParams = {}) {
 // 创建工具
 export function useCreateTool() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (data: CreateToolRequest) => ToolService.createTool(data),
     onMutate: async () => {
-      toast.loading('正在创建工具...', { id: 'create-tool' })
+      toastMessages.loading('common.status.creating', {}, 'create-tool')
     },
-    onSuccess: (response) => {
-      toast.dismiss('create-tool')
-      
-      // 打印后端响应
-      console.log('创建工具成功')
-      console.log('后端响应:', response)
-      
-      toast.success('创建成功')
-      
-      // 刷新工具列表和分类列表
+    onSuccess: () => {
+      toastMessages.dismiss('create-tool')
+      toastMessages.success('toast.tool.create.success')
       queryClient.invalidateQueries({ 
         queryKey: toolKeys.all,
         refetchType: 'active' 
       })
     },
     onError: (error: any) => {
-      toast.dismiss('create-tool')
-      
-      console.error('创建工具失败:', error)
-      console.error('后端响应:', error?.response?.data || error)
-      
-      // 前端自己构造错误提示
-      toast.error('创建工具失败，请查看控制台日志')
+      toastMessages.dismiss('create-tool')
+      console.error('Failed to create tool:', error)
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.tool.create.error')
     },
   })
 }
@@ -71,34 +62,26 @@ export function useCreateTool() {
 // 更新工具
 export function useUpdateTool() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: UpdateToolRequest }) => 
       ToolService.updateTool(id, data),
     onMutate: async () => {
-      toast.loading('正在更新工具...', { id: 'update-tool' })
+      toastMessages.loading('common.status.updating', {}, 'update-tool')
     },
-    onSuccess: (response) => {
-      toast.dismiss('update-tool')
-      
-      console.log('更新工具成功')
-      console.log('后端响应:', response)
-      
-      toast.success('更新成功')
-      
-      // 刷新工具列表
+    onSuccess: () => {
+      toastMessages.dismiss('update-tool')
+      toastMessages.success('toast.tool.update.success')
       queryClient.invalidateQueries({ 
         queryKey: toolKeys.all,
         refetchType: 'active' 
       })
     },
     onError: (error: any) => {
-      toast.dismiss('update-tool')
-      
-      console.error('更新工具失败:', error)
-      console.error('后端响应:', error?.response?.data || error)
-      
-      toast.error('更新工具失败，请查看控制台日志')
+      toastMessages.dismiss('update-tool')
+      console.error('Failed to update tool:', error)
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.tool.update.error')
     },
   })
 }
@@ -106,32 +89,25 @@ export function useUpdateTool() {
 // 删除工具
 export function useDeleteTool() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (id: number) => ToolService.deleteTool(id),
     onMutate: async () => {
-      toast.loading('正在删除工具...', { id: 'delete-tool' })
+      toastMessages.loading('common.status.deleting', {}, 'delete-tool')
     },
-    onSuccess: (response) => {
-      toast.dismiss('delete-tool')
-      
-      console.log('删除工具成功')
-      
-      toast.success('删除成功')
-      
-      // 刷新工具列表
+    onSuccess: () => {
+      toastMessages.dismiss('delete-tool')
+      toastMessages.success('toast.tool.delete.success')
       queryClient.invalidateQueries({ 
         queryKey: toolKeys.all,
         refetchType: 'active' 
       })
     },
     onError: (error: any) => {
-      toast.dismiss('delete-tool')
-      
-      console.error('删除工具失败:', error)
-      console.error('后端响应:', error?.response?.data || error)
-      
-      toast.error('删除工具失败，请查看控制台日志')
+      toastMessages.dismiss('delete-tool')
+      console.error('Failed to delete tool:', error)
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.tool.delete.error')
     },
   })
 }

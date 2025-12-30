@@ -1,7 +1,8 @@
 "use client"
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { toast } from "sonner"
+import { useToastMessages } from '@/lib/toast-helpers'
+import { getErrorCode } from '@/lib/response-parser'
 import { getNucleiTemplateTree, getNucleiTemplateContent, refreshNucleiTemplates, saveNucleiTemplate, uploadNucleiTemplate } from "@/services/nuclei.service"
 import type { NucleiTemplateTreeNode, NucleiTemplateContent, UploadNucleiTemplatePayload, SaveNucleiTemplatePayload } from "@/types/nuclei.types"
 
@@ -22,60 +23,63 @@ export function useNucleiTemplateContent(path: string | null) {
 
 export function useRefreshNucleiTemplates() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: () => refreshNucleiTemplates(),
     onMutate: () => {
-      toast.loading("正在更新 Nuclei 官方模板...", { id: "refresh-nuclei-templates" })
+      toastMessages.loading('toast.nucleiTemplate.refresh.loading', {}, 'refresh-nuclei-templates')
     },
     onSuccess: () => {
-      toast.dismiss("refresh-nuclei-templates")
-      toast.success("模板更新完成")
+      toastMessages.dismiss('refresh-nuclei-templates')
+      toastMessages.success('toast.nucleiTemplate.refresh.success')
       queryClient.invalidateQueries({ queryKey: ["nuclei", "templates", "tree"] })
     },
-    onError: () => {
-      toast.dismiss("refresh-nuclei-templates")
-      toast.error("模板更新失败")
+    onError: (error: any) => {
+      toastMessages.dismiss('refresh-nuclei-templates')
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.nucleiTemplate.refresh.error')
     },
   })
 }
 
 export function useUploadNucleiTemplate() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation<void, Error, UploadNucleiTemplatePayload>({
     mutationFn: (payload) => uploadNucleiTemplate(payload),
     onMutate: () => {
-      toast.loading("正在上传模板...", { id: "upload-nuclei-template" })
+      toastMessages.loading('common.status.uploading', {}, 'upload-nuclei-template')
     },
     onSuccess: () => {
-      toast.dismiss("upload-nuclei-template")
-      toast.success("模板上传成功")
+      toastMessages.dismiss('upload-nuclei-template')
+      toastMessages.success('toast.nucleiTemplate.upload.success')
       queryClient.invalidateQueries({ queryKey: ["nuclei", "templates", "tree"] })
     },
-    onError: (error) => {
-      toast.dismiss("upload-nuclei-template")
-      toast.error(error.message || "模板上传失败")
+    onError: (error: any) => {
+      toastMessages.dismiss('upload-nuclei-template')
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.nucleiTemplate.upload.error')
     },
   })
 }
 
 export function useSaveNucleiTemplate() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation<void, Error, SaveNucleiTemplatePayload>({
     mutationFn: (payload) => saveNucleiTemplate(payload),
     onMutate: () => {
-      toast.loading("正在保存模板...", { id: "save-nuclei-template" })
+      toastMessages.loading('common.actions.saving', {}, 'save-nuclei-template')
     },
     onSuccess: (_data, variables) => {
-      toast.dismiss("save-nuclei-template")
-      toast.success("模板保存成功")
+      toastMessages.dismiss('save-nuclei-template')
+      toastMessages.success('toast.nucleiTemplate.save.success')
       queryClient.invalidateQueries({ queryKey: ["nuclei", "templates", "content", variables.path] })
     },
-    onError: (error) => {
-      toast.dismiss("save-nuclei-template")
-      toast.error(error.message || "模板保存失败")
+    onError: (error: any) => {
+      toastMessages.dismiss('save-nuclei-template')
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.nucleiTemplate.save.error')
     },
   })
 }

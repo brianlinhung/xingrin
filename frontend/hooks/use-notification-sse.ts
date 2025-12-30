@@ -4,9 +4,9 @@
 
 import { useCallback, useEffect, useState, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
 import type { BackendNotification, Notification, BackendNotificationLevel, NotificationSeverity } from '@/types/notification.types'
 import { getBackendBaseUrl } from '@/lib/env'
+import { useToastMessages } from '@/lib/toast-helpers'
 
 const severityMap: Record<BackendNotificationLevel, NotificationSeverity> = {
   critical: 'critical',
@@ -70,6 +70,7 @@ export function useNotificationSSE() {
   const reconnectAttempts = useRef(0)
   const maxReconnectAttempts = 10
   const baseReconnectDelay = 1000 // 1秒
+  const toastMessages = useToastMessages()
 
   const markNotificationsAsRead = useCallback((ids?: number[]) => {
     setNotifications(prev => prev.map(notification => {
@@ -176,7 +177,7 @@ export function useNotificationSSE() {
 
           if (data.type === 'error') {
             console.error('[ERROR] WebSocket 错误:', data.message)
-            toast.error(`通知连接错误: ${data.message}`)
+            toastMessages.error('toast.notification.connection.error', { message: data.message })
             return
           }
 
@@ -258,7 +259,7 @@ export function useNotificationSSE() {
       setIsConnected(false)
       isConnectingRef.current = false
     }
-  }, [queryClient, startHeartbeat, stopHeartbeat, getReconnectDelay])
+  }, [queryClient, startHeartbeat, stopHeartbeat, getReconnectDelay, toastMessages])
 
   // 断开连接
   const disconnect = useCallback(() => {

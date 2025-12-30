@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { NotificationSettingsService } from '@/services/notification-settings.service'
 import type { UpdateNotificationSettingsRequest } from '@/types/notification-settings.types'
-import { toast } from 'sonner'
+import { useToastMessages } from '@/lib/toast-helpers'
+import { getErrorCode } from '@/lib/response-parser'
 
 export function useNotificationSettings() {
   return useQuery({
@@ -12,15 +13,17 @@ export function useNotificationSettings() {
 
 export function useUpdateNotificationSettings() {
   const qc = useQueryClient()
+  const toastMessages = useToastMessages()
+  
   return useMutation({
     mutationFn: (data: UpdateNotificationSettingsRequest) =>
       NotificationSettingsService.updateSettings(data),
-    onSuccess: (res) => {
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['notification-settings'] })
-      toast.success(res?.message || 'Notification settings saved')
+      toastMessages.success('toast.notification.settings.success')
     },
-    onError: () => {
-      toast.error('Save failed, please try again')
+    onError: (error: any) => {
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.notification.settings.error')
     },
   })
 }

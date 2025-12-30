@@ -2,7 +2,8 @@
  * Targets Hooks - 目标管理相关 hooks
  */
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
-import { toast } from 'sonner'
+import { useToastMessages } from '@/lib/toast-helpers'
+import { getErrorCode } from '@/lib/response-parser'
 import {
   getTargets,
   getTargetById,
@@ -110,15 +111,16 @@ export function useTarget(id: number, options?: { enabled?: boolean }) {
  */
 export function useCreateTarget() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (data: CreateTargetRequest) => createTarget(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['targets'] })
-      toast.success('目标创建成功')
+      toastMessages.success('toast.target.create.success')
     },
-    onError: (error: Error) => {
-      toast.error(`创建失败: ${error.message}`)
+    onError: (error: any) => {
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.target.create.error')
     },
   })
 }
@@ -128,6 +130,7 @@ export function useCreateTarget() {
  */
 export function useUpdateTarget() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: UpdateTargetRequest }) =>
@@ -135,10 +138,10 @@ export function useUpdateTarget() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['targets'] })
       queryClient.invalidateQueries({ queryKey: ['targets', variables.id] })
-      toast.success('目标更新成功')
+      toastMessages.success('toast.target.update.success')
     },
-    onError: (error: Error) => {
-      toast.error(`更新失败: ${error.message}`)
+    onError: (error: any) => {
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.target.update.error')
     },
   })
 }
@@ -148,25 +151,26 @@ export function useUpdateTarget() {
  */
 export function useDeleteTarget() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (id: number) => deleteTarget(id),
     onMutate: (id) => {
-      toast.loading('正在删除目标...', { id: `delete-target-${id}` })
+      toastMessages.loading('common.status.deleting', {}, `delete-target-${id}`)
     },
     onSuccess: (response, id) => {
-      toast.dismiss(`delete-target-${id}`)
+      toastMessages.dismiss(`delete-target-${id}`)
       
       // 显示删除成功信息
       const { targetName } = response
-      toast.success(`目标 "${targetName}" 已成功删除`)
+      toastMessages.success('toast.target.delete.success', { name: targetName })
       
       queryClient.invalidateQueries({ queryKey: ['targets'] })
       queryClient.invalidateQueries({ queryKey: ['organizations'] })
     },
-    onError: (error: Error, id) => {
-      toast.dismiss(`delete-target-${id}`)
-      toast.error(`删除失败: ${error.message}`)
+    onError: (error: any, id) => {
+      toastMessages.dismiss(`delete-target-${id}`)
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.target.delete.error')
     },
   })
 }
@@ -176,15 +180,16 @@ export function useDeleteTarget() {
  */
 export function useBatchDeleteTargets() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (data: BatchDeleteTargetsRequest) => batchDeleteTargets(data),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['targets'] })
-      toast.success(`成功删除 ${response.deletedCount} 个目标`)
+      toastMessages.success('toast.target.delete.bulkSuccess', { count: response.deletedCount })
     },
-    onError: (error: Error) => {
-      toast.error(`批量删除失败: ${error.message}`)
+    onError: (error: any) => {
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.target.delete.error')
     },
   })
 }
@@ -194,16 +199,17 @@ export function useBatchDeleteTargets() {
  */
 export function useBatchCreateTargets() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (data: BatchCreateTargetsRequest) => batchCreateTargets(data),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['targets'] })
       queryClient.invalidateQueries({ queryKey: ['organizations'] })
-      toast.success(response.message)
+      toastMessages.success('toast.target.create.bulkSuccess', { count: response.createdCount || 0 })
     },
-    onError: (error: Error) => {
-      toast.error(`批量创建失败: ${error.message}`)
+    onError: (error: any) => {
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.target.create.error')
     },
   })
 }
@@ -224,6 +230,7 @@ export function useTargetOrganizations(targetId: number, page = 1, pageSize = 10
  */
 export function useLinkTargetOrganizations() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: ({ targetId, organizationIds }: { targetId: number; organizationIds: number[] }) =>
@@ -231,10 +238,10 @@ export function useLinkTargetOrganizations() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['targets', variables.targetId, 'organizations'] })
       queryClient.invalidateQueries({ queryKey: ['targets', variables.targetId] })
-      toast.success('组织关联成功')
+      toastMessages.success('toast.target.link.success')
     },
-    onError: (error: Error) => {
-      toast.error(`关联失败: ${error.message}`)
+    onError: (error: any) => {
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.target.link.error')
     },
   })
 }
@@ -244,6 +251,7 @@ export function useLinkTargetOrganizations() {
  */
 export function useUnlinkTargetOrganizations() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: ({ targetId, organizationIds }: { targetId: number; organizationIds: number[] }) =>
@@ -251,10 +259,10 @@ export function useUnlinkTargetOrganizations() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['targets', variables.targetId, 'organizations'] })
       queryClient.invalidateQueries({ queryKey: ['targets', variables.targetId] })
-      toast.success('取消关联成功')
+      toastMessages.success('toast.target.unlink.success')
     },
-    onError: (error: Error) => {
-      toast.error(`取消关联失败: ${error.message}`)
+    onError: (error: any) => {
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.target.unlink.error')
     },
   })
 }

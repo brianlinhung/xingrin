@@ -1,11 +1,12 @@
 import { useEffect, useRef } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { toast } from "sonner"
 
 import { systemLogService } from "@/services/system-log.service"
+import { useToastMessages } from "@/lib/toast-helpers"
 
 export function useSystemLogs(options?: { lines?: number; enabled?: boolean }) {
   const hadErrorRef = useRef(false)
+  const toastMessages = useToastMessages()
 
   const query = useQuery({
     queryKey: ["system", "logs", { lines: options?.lines ?? null }],
@@ -19,14 +20,14 @@ export function useSystemLogs(options?: { lines?: number; enabled?: boolean }) {
   useEffect(() => {
     if (query.isError && !hadErrorRef.current) {
       hadErrorRef.current = true
-      toast.error("系统日志获取失败，请检查后端接口")
+      toastMessages.error('toast.systemLog.fetch.error')
     }
 
     if (query.isSuccess && hadErrorRef.current) {
       hadErrorRef.current = false
-      toast.success("系统日志连接已恢复")
+      toastMessages.success('toast.systemLog.fetch.recovered')
     }
-  }, [query.isError, query.isSuccess])
+  }, [query.isError, query.isSuccess, toastMessages])
 
   return query
 }

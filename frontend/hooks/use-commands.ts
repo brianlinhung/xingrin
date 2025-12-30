@@ -7,7 +7,8 @@ import type {
   GetCommandsResponse,
   Command,
 } from "@/types/command.types"
-import { toast } from "sonner"
+import { useToastMessages } from '@/lib/toast-helpers'
+import { getErrorCode } from '@/lib/response-parser'
 
 // Mock data
 const MOCK_COMMANDS: Command[] = [
@@ -273,16 +274,17 @@ export function useCommand(id: number) {
  */
 export function useCreateCommand() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (data: CreateCommandRequest) => CommandService.createCommand(data),
     onSuccess: () => {
-      toast.success("Command created successfully")
+      toastMessages.success('toast.command.create.success')
       queryClient.invalidateQueries({ queryKey: ["commands"] })
     },
     onError: (error: any) => {
       console.error("Failed to create command:", error)
-      toast.error("Failed to create command")
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.command.create.error')
     },
   })
 }
@@ -292,18 +294,19 @@ export function useCreateCommand() {
  */
 export function useUpdateCommand() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: UpdateCommandRequest }) =>
       CommandService.updateCommand(id, data),
     onSuccess: () => {
-      toast.success("Command updated successfully")
+      toastMessages.success('toast.command.update.success')
       queryClient.invalidateQueries({ queryKey: ["commands"] })
       queryClient.invalidateQueries({ queryKey: ["command"] })
     },
     onError: (error: any) => {
       console.error("Failed to update command:", error)
-      toast.error("Failed to update command")
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.command.update.error')
     },
   })
 }
@@ -313,16 +316,17 @@ export function useUpdateCommand() {
  */
 export function useDeleteCommand() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (id: number) => CommandService.deleteCommand(id),
     onSuccess: () => {
-      toast.success("Command deleted successfully")
+      toastMessages.success('toast.command.delete.success')
       queryClient.invalidateQueries({ queryKey: ["commands"] })
     },
     onError: (error: any) => {
       console.error("Failed to delete command:", error)
-      toast.error("Failed to delete command")
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.command.delete.error')
     },
   })
 }
@@ -332,6 +336,7 @@ export function useDeleteCommand() {
  */
 export function useBatchDeleteCommands() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: async (ids: number[]) => {
@@ -351,12 +356,12 @@ export function useBatchDeleteCommands() {
       }
     },
     onSuccess: (response) => {
-      toast.success(`Successfully deleted ${response.data?.deletedCount} commands`)
+      toastMessages.success('toast.command.delete.bulkSuccess', { count: response.data?.deletedCount || 0 })
       queryClient.invalidateQueries({ queryKey: ["commands"] })
     },
     onError: (error: any) => {
       console.error("Failed to batch delete commands:", error)
-      toast.error("Failed to batch delete commands")
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.command.delete.error')
     },
   })
 }

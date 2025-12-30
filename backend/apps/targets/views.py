@@ -95,8 +95,9 @@ class OrganizationViewSet(viewsets.ModelViewSet):
             organization.targets.remove(*existing_target_ids)
         
         return Response({
-            'unlinked_count': existing_count,
-            'message': f'成功解除 {existing_count} 个目标的关联'
+            'data': {
+                'unlinkedCount': existing_count
+            }
         })
     
     def destroy(self, request, *args, **kwargs):
@@ -125,11 +126,12 @@ class OrganizationViewSet(viewsets.ModelViewSet):
             result = self.org_service.delete_organizations_two_phase([organization.id])
             
             return Response({
-                'message': f'已删除组织: {organization.name}',
-                'organizationId': organization.id,
-                'organizationName': organization.name,
-                'deletedCount': result['soft_deleted_count'],
-                'deletedOrganizations': result['organization_names']
+                'data': {
+                    'organizationId': organization.id,
+                    'organizationName': organization.name,
+                    'deletedCount': result['soft_deleted_count'],
+                    'deletedOrganizations': result['organization_names']
+                }
             }, status=200)
         
         except Organization.DoesNotExist:
@@ -182,9 +184,10 @@ class OrganizationViewSet(viewsets.ModelViewSet):
             result = self.org_service.delete_organizations_two_phase(ids)
             
             return Response({
-                'message': f"已删除 {result['soft_deleted_count']} 个组织",
-                'deletedCount': result['soft_deleted_count'],
-                'deletedOrganizations': result['organization_names']
+                'data': {
+                    'deletedCount': result['soft_deleted_count'],
+                    'deletedOrganizations': result['organization_names']
+                }
             }, status=200)
         
         except ValueError as e:
@@ -272,10 +275,11 @@ class TargetViewSet(viewsets.ModelViewSet):
             result = self.target_service.delete_targets_two_phase([target.id])
             
             return Response({
-                'message': f'已删除目标: {target.name}',
-                'targetId': target.id,
-                'targetName': target.name,
-                'deletedCount': result['soft_deleted_count']
+                'data': {
+                    'targetId': target.id,
+                    'targetName': target.name,
+                    'deletedCount': result['soft_deleted_count']
+                }
             }, status=200)
         
         except Target.DoesNotExist:
@@ -331,9 +335,10 @@ class TargetViewSet(viewsets.ModelViewSet):
             result = self.target_service.delete_targets_two_phase(ids)
             
             return Response({
-                'message': f"已删除 {result['soft_deleted_count']} 个目标",
-                'deletedCount': result['soft_deleted_count'],
-                'deletedTargets': result['target_names']
+                'data': {
+                    'deletedCount': result['soft_deleted_count'],
+                    'deletedTargets': result['target_names']
+                }
             }, status=200)
         
         except ValueError as e:

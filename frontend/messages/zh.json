@@ -209,7 +209,18 @@
       "active": "活跃",
       "inactive": "未激活",
       "enabled": "已启用",
-      "disabled": "已禁用"
+      "disabled": "已禁用",
+      "creating": "正在创建...",
+      "updating": "正在更新...",
+      "deleting": "正在删除...",
+      "removing": "正在移除...",
+      "unlinking": "正在解除关联...",
+      "batchCreating": "正在批量创建...",
+      "batchDeleting": "正在批量删除...",
+      "batchRemoving": "正在批量移除...",
+      "updateSuccess": "更新成功",
+      "updateFailed": "更新失败",
+      "uploading": "正在上传..."
     },
     "pagination": {
       "page": "第 {current} 页，共 {total} 页",
@@ -1225,7 +1236,286 @@
     "invalidJsonFile": "无效的 JSON 文件",
     "importSuccess": "导入成功",
     "importFailed": "导入失败",
-    "loadScanHistoryFailed": "加载扫描历史失败"
+    "loadScanHistoryFailed": "加载扫描历史失败",
+    "scan": {
+      "quick": {
+        "success": "已启动 {count} 个扫描任务",
+        "error": "启动扫描失败"
+      },
+      "stop": {
+        "success": "扫描已停止，已撤销 {count} 个任务"
+      },
+      "delete": {
+        "success": "已删除扫描任务: {name}",
+        "bulkSuccess": "已删除 {count} 个扫描任务"
+      },
+      "initiate": {
+        "success": "扫描发起成功",
+        "error": "发起扫描失败"
+      }
+    },
+    "scheduledScan": {
+      "create": {
+        "success": "定时扫描创建成功",
+        "error": "创建定时扫描失败"
+      },
+      "update": {
+        "success": "定时扫描更新成功",
+        "error": "更新定时扫描失败"
+      },
+      "delete": {
+        "success": "定时扫描删除成功",
+        "error": "删除定时扫描失败"
+      },
+      "toggle": {
+        "enabled": "定时扫描已启用",
+        "disabled": "定时扫描已禁用",
+        "error": "切换定时扫描状态失败"
+      }
+    },
+    "target": {
+      "create": {
+        "success": "目标创建成功",
+        "bulkSuccess": "已创建 {count} 个目标",
+        "error": "创建目标失败"
+      },
+      "update": {
+        "success": "目标更新成功",
+        "error": "更新目标失败"
+      },
+      "delete": {
+        "success": "目标 \"{name}\" 已删除",
+        "bulkSuccess": "已删除 {count} 个目标",
+        "error": "删除目标失败"
+      },
+      "link": {
+        "success": "目标已关联到组织",
+        "error": "关联目标失败"
+      },
+      "unlink": {
+        "success": "目标已从组织解除关联",
+        "bulkSuccess": "已解除 {count} 个目标的关联",
+        "error": "解除关联失败"
+      }
+    },
+    "organization": {
+      "create": {
+        "success": "组织创建成功",
+        "error": "创建组织失败"
+      },
+      "update": {
+        "success": "组织更新成功",
+        "error": "更新组织失败"
+      },
+      "delete": {
+        "success": "组织 \"{name}\" 已删除",
+        "bulkSuccess": "已删除 {count} 个组织",
+        "error": "删除组织失败"
+      }
+    },
+    "asset": {
+      "subdomain": {
+        "create": {
+          "success": "已创建 {count} 个子域名",
+          "partialSuccess": "已创建 {success} 个子域名，跳过 {skipped} 个",
+          "error": "创建子域名失败"
+        },
+        "delete": {
+          "success": "子域名已删除",
+          "bulkSuccess": "已删除 {count} 个子域名",
+          "error": "删除子域名失败"
+        }
+      },
+      "website": {
+        "create": {
+          "success": "已创建 {count} 个网站",
+          "partialSuccess": "已创建 {success} 个网站，跳过 {skipped} 个",
+          "error": "创建网站失败"
+        },
+        "delete": {
+          "success": "网站已删除",
+          "bulkSuccess": "已删除 {count} 个网站",
+          "error": "删除网站失败"
+        }
+      },
+      "endpoint": {
+        "create": {
+          "success": "已创建 {count} 个端点",
+          "partialSuccess": "已创建 {success} 个端点，跳过 {skipped} 个",
+          "error": "创建端点失败"
+        },
+        "delete": {
+          "success": "端点已删除",
+          "bulkSuccess": "已删除 {count} 个端点",
+          "error": "删除端点失败"
+        }
+      },
+      "directory": {
+        "create": {
+          "success": "已创建 {count} 个目录",
+          "partialSuccess": "已创建 {success} 个目录，跳过 {skipped} 个",
+          "error": "创建目录失败"
+        },
+        "delete": {
+          "success": "目录已删除",
+          "bulkSuccess": "已删除 {count} 个目录",
+          "error": "删除目录失败"
+        }
+      }
+    },
+    "auth": {
+      "login": {
+        "success": "登录成功"
+      },
+      "logout": {
+        "success": "已登出"
+      },
+      "changePassword": {
+        "success": "密码修改成功",
+        "error": "修改密码失败"
+      }
+    },
+    "worker": {
+      "create": {
+        "success": "节点创建成功",
+        "error": "创建节点失败"
+      },
+      "update": {
+        "success": "节点更新成功",
+        "error": "更新节点失败"
+      },
+      "delete": {
+        "success": "节点删除成功",
+        "error": "删除节点失败"
+      },
+      "deploy": {
+        "success": "节点部署已启动",
+        "error": "部署节点失败"
+      },
+      "restart": {
+        "success": "节点正在重启",
+        "error": "重启节点失败"
+      },
+      "stop": {
+        "success": "节点已停止",
+        "error": "停止节点失败"
+      }
+    },
+    "nucleiRepo": {
+      "create": {
+        "success": "仓库添加成功",
+        "error": "添加仓库失败"
+      },
+      "update": {
+        "success": "仓库更新成功",
+        "error": "更新仓库失败"
+      },
+      "delete": {
+        "success": "仓库删除成功",
+        "error": "删除仓库失败"
+      },
+      "sync": {
+        "success": "仓库同步成功",
+        "error": "同步仓库失败"
+      }
+    },
+    "wordlist": {
+      "upload": {
+        "success": "字典上传成功",
+        "error": "上传字典失败"
+      },
+      "update": {
+        "success": "字典更新成功",
+        "error": "更新字典失败"
+      },
+      "delete": {
+        "success": "字典删除成功",
+        "error": "删除字典失败"
+      }
+    },
+    "notification": {
+      "settings": {
+        "success": "通知设置已保存",
+        "error": "保存通知设置失败"
+      },
+      "markRead": {
+        "success": "已标记为已读",
+        "error": "标记已读失败"
+      },
+      "connection": {
+        "error": "通知连接错误: {message}"
+      }
+    },
+    "tool": {
+      "create": {
+        "success": "工具创建成功",
+        "error": "创建工具失败"
+      },
+      "update": {
+        "success": "工具更新成功",
+        "error": "更新工具失败"
+      },
+      "delete": {
+        "success": "工具删除成功",
+        "error": "删除工具失败"
+      }
+    },
+    "engine": {
+      "create": {
+        "success": "引擎创建成功",
+        "error": "创建引擎失败"
+      },
+      "update": {
+        "success": "引擎更新成功",
+        "error": "更新引擎失败"
+      },
+      "delete": {
+        "success": "引擎删除成功",
+        "error": "删除引擎失败"
+      }
+    },
+    "command": {
+      "create": {
+        "success": "命令创建成功",
+        "error": "创建命令失败"
+      },
+      "update": {
+        "success": "命令更新成功",
+        "error": "更新命令失败"
+      },
+      "delete": {
+        "success": "命令删除成功",
+        "bulkSuccess": "已删除 {count} 个命令",
+        "error": "删除命令失败"
+      }
+    },
+    "nucleiTemplate": {
+      "refresh": {
+        "loading": "正在同步模板...",
+        "success": "模板同步成功",
+        "error": "同步模板失败"
+      },
+      "upload": {
+        "success": "模板上传成功",
+        "error": "上传模板失败"
+      },
+      "save": {
+        "success": "模板保存成功",
+        "error": "保存模板失败"
+      }
+    },
+    "nucleiGit": {
+      "settings": {
+        "success": "Git 设置保存成功",
+        "error": "保存 Git 设置失败"
+      }
+    },
+    "systemLog": {
+      "fetch": {
+        "error": "系统日志获取失败，请检查后端接口",
+        "recovered": "系统日志连接已恢复"
+      }
+    }
   },
   "quickScan": {
     "title": "快速扫描",
@@ -1488,5 +1778,16 @@
       "bulkAdd": "批量添加",
       "formatInvalid": "格式无效"
     }
+  },
+  "errors": {
+    "unknown": "操作失败，请稍后重试",
+    "validation": "输入数据无效",
+    "notFound": "资源未找到",
+    "permissionDenied": "权限不足",
+    "serverError": "服务器错误，请稍后重试",
+    "badRequest": "请求格式错误",
+    "conflict": "资源冲突，请检查后重试",
+    "unauthorized": "请先登录",
+    "rateLimited": "请求过于频繁，请稍后重试"
   }
 }

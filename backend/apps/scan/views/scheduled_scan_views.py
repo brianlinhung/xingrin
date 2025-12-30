@@ -18,6 +18,8 @@ from ..serializers import (
 from ..services.scheduled_scan_service import ScheduledScanService
 from ..repositories import ScheduledScanDTO
 from apps.common.pagination import BasePagination
+from apps.common.response_helpers import success_response, error_response
+from apps.common.error_codes import ErrorCodes
 
 
 logger = logging.getLogger(__name__)
@@ -75,15 +77,16 @@ class ScheduledScanViewSet(viewsets.ModelViewSet):
             scheduled_scan = self.service.create(dto)
             response_serializer = ScheduledScanSerializer(scheduled_scan)
             
-            return Response(
-                {
-                    'message': f'创建定时扫描任务成功: {scheduled_scan.name}',
-                    'scheduled_scan': response_serializer.data
-                },
-                status=status.HTTP_201_CREATED
+            return success_response(
+                data=response_serializer.data,
+                status_code=status.HTTP_201_CREATED
             )
         except ValidationError as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message=str(e),
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
     
     def update(self, request, *args, **kwargs):
         """更新定时扫描任务"""
@@ -105,24 +108,27 @@ class ScheduledScanViewSet(viewsets.ModelViewSet):
             scheduled_scan = self.service.update(instance.id, dto)
             response_serializer = ScheduledScanSerializer(scheduled_scan)
             
-            return Response({
-                'message': f'更新定时扫描任务成功: {scheduled_scan.name}',
-                'scheduled_scan': response_serializer.data
-            })
+            return success_response(data=response_serializer.data)
         except ValidationError as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message=str(e),
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
     
     def destroy(self, request, *args, **kwargs):
         """删除定时扫描任务"""
         instance = self.get_object()
+        scan_id = instance.id
         name = instance.name
         
-        if self.service.delete(instance.id):
-            return Response({
-                'message': f'删除定时扫描任务成功: {name}',
-                'id': instance.id
-            })
-        return Response({'error': '删除失败'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        if self.service.delete(scan_id):
+            return success_response(data={'id': scan_id, 'name': name})
+        return error_response(
+            code=ErrorCodes.SERVER_ERROR,
+            message='Failed to delete scheduled scan',
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
     
     @action(detail=True, methods=['post'])
     def toggle(self, request, pk=None):
@@ -136,14 +142,11 @@ class ScheduledScanViewSet(viewsets.ModelViewSet):
             scheduled_scan = self.get_object()
             response_serializer = ScheduledScanSerializer(scheduled_scan)
             
-            status_text = '启用' if is_enabled else '禁用'
-            return Response({
-                'message': f'已{status_text}定时扫描任务',
-                'scheduled_scan': response_serializer.data
-            })
+            return success_response(data=response_serializer.data)
         
-        return Response(
-            {'error': f'定时扫描任务 ID {pk} 不存在或操作失败'},
-            status=status.HTTP_404_NOT_FOUND
+        return error_response(
+            code=ErrorCodes.NOT_FOUND,
+            message=f'Scheduled scan with ID {pk} not found or operation failed',
+            status_code=status.HTTP_404_NOT_FOUND
         )
     

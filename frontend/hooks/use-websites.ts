@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
-import { toast } from 'sonner'
+import { useToastMessages } from '@/lib/toast-helpers'
+import { getErrorCode } from '@/lib/response-parser'
 import { WebsiteService } from '@/services/website.service'
 import type { WebSite, WebSiteListResponse } from '@/types/website.types'
 
@@ -108,28 +109,25 @@ export function useScanWebSites(
 // 删除单个网站（使用单独的 DELETE API）
 export function useDeleteWebSite() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: websiteService.deleteWebSite,
     onMutate: (id) => {
-      toast.loading('正在删除网站...', { id: `delete-website-${id}` })
+      toastMessages.loading('common.status.deleting', {}, `delete-website-${id}`)
     },
     onSuccess: (response, id) => {
-      toast.dismiss(`delete-website-${id}`)
+      toastMessages.dismiss(`delete-website-${id}`)
+      toastMessages.success('toast.asset.website.delete.success')
       
-      // 显示删除成功信息
-      const { websiteUrl } = response
-      toast.success(`网站 "${websiteUrl}" 已成功删除`)
-      
-      // 刷新相关查询
       queryClient.invalidateQueries({ queryKey: ['target-websites'] })
       queryClient.invalidateQueries({ queryKey: ['scan-websites'] })
       queryClient.invalidateQueries({ queryKey: ['targets'] })
       queryClient.invalidateQueries({ queryKey: ['scans'] })
     },
-    onError: (error: Error, id) => {
-      toast.dismiss(`delete-website-${id}`)
-      toast.error(error.message || '删除网站失败')
+    onError: (error: any, id) => {
+      toastMessages.dismiss(`delete-website-${id}`)
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.asset.website.delete.error')
     },
   })
 }
@@ -137,39 +135,25 @@ export function useDeleteWebSite() {
 // 批量删除网站（使用统一的批量删除接口）
 export function useBulkDeleteWebSites() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: websiteService.bulkDeleteWebSites,
     onMutate: () => {
-      toast.loading('正在批量删除网站...', { id: 'bulk-delete-websites' })
+      toastMessages.loading('common.status.batchDeleting', {}, 'bulk-delete-websites')
     },
     onSuccess: (response) => {
-      toast.dismiss('bulk-delete-websites')
+      toastMessages.dismiss('bulk-delete-websites')
+      toastMessages.success('toast.asset.website.delete.bulkSuccess', { count: response.deletedCount })
       
-      // 显示级联删除信息
-      const cascadeInfo = Object.entries(response.cascadeDeleted || {})
-        .filter(([key, count]) => key !== 'asset.WebSite' && count > 0)
-        .map(([key, count]) => {
-          const modelName = key.split('.')[1]
-          return `${modelName}: ${count}`
-        })
-        .join(', ')
-      
-      if (cascadeInfo) {
-        toast.success(`成功删除 ${response.deletedCount} 个网站（级联删除: ${cascadeInfo}）`)
-      } else {
-        toast.success(`成功删除 ${response.deletedCount} 个网站`)
-      }
-      
-      // 刷新相关查询
       queryClient.invalidateQueries({ queryKey: ['target-websites'] })
       queryClient.invalidateQueries({ queryKey: ['scan-websites'] })
       queryClient.invalidateQueries({ queryKey: ['targets'] })
       queryClient.invalidateQueries({ queryKey: ['scans'] })
     },
-    onError: (error: Error) => {
-      toast.dismiss('bulk-delete-websites')
-      toast.error(error.message || '批量删除网站失败')
+    onError: (error: any) => {
+      toastMessages.dismiss('bulk-delete-websites')
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.asset.website.delete.error')
     },
   })
 }
@@ -178,32 +162,31 @@ export function useBulkDeleteWebSites() {
 // 批量创建网站（绑定到目标）
 export function useBulkCreateWebsites() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (data: { targetId: number; urls: string[] }) =>
       WebsiteService.bulkCreateWebsites(data.targetId, data.urls),
     onMutate: async () => {
-      toast.loading('正在批量创建网站...', { id: 'bulk-create-websites' })
+      toastMessages.loading('common.status.batchCreating', {}, 'bulk-create-websites')
     },
     onSuccess: (response, { targetId }) => {
-      toast.dismiss('bulk-create-websites')
+      toastMessages.dismiss('bulk-create-websites')
       const { createdCount } = response
       
       if (createdCount > 0) {
-        toast.success(`成功创建 ${createdCount} 个网站`)
+        toastMessages.success('toast.asset.website.create.success', { count: createdCount })
       } else {
-        toast.warning('没有新网站被创建（可能已存在）')
+        toastMessages.warning('toast.asset.website.create.partialSuccess', { success: 0, skipped: 0 })
       }
       
-      // 刷新网站列表
       queryClient.invalidateQueries({ queryKey: ['target-websites', targetId] })
       queryClient.invalidateQueries({ queryKey: ['scan-websites'] })
     },
     onError: (error: any) => {
-      toast.dismiss('bulk-create-websites')
-      console.error('批量创建网站失败:', error)
-      const errorMessage = error?.response?.data?.error || '批量创建失败，请查看控制台日志'
-      toast.error(errorMessage)
+      toastMessages.dismiss('bulk-create-websites')
+      console.error('Failed to bulk create websites:', error)
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.asset.website.create.error')
     },
   })
 }

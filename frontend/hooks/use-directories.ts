@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
-import { toast } from 'sonner'
+import { useToastMessages } from '@/lib/toast-helpers'
+import { getErrorCode } from '@/lib/response-parser'
 import { DirectoryService } from '@/services/directory.service'
 import type { Directory, DirectoryListResponse } from '@/types/directory.types'
 
@@ -108,28 +109,25 @@ export function useScanDirectories(
 // 删除单个目录（使用单独的 DELETE API）
 export function useDeleteDirectory() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: directoryService.deleteDirectory,
     onMutate: (id) => {
-      toast.loading('正在删除目录...', { id: `delete-directory-${id}` })
+      toastMessages.loading('common.status.deleting', {}, `delete-directory-${id}`)
     },
     onSuccess: (response, id) => {
-      toast.dismiss(`delete-directory-${id}`)
+      toastMessages.dismiss(`delete-directory-${id}`)
+      toastMessages.success('toast.asset.directory.delete.success')
       
-      // 显示删除成功信息
-      const { directoryUrl } = response
-      toast.success(`目录 "${directoryUrl}" 已成功删除`)
-      
-      // 刷新相关查询
       queryClient.invalidateQueries({ queryKey: ['target-directories'] })
       queryClient.invalidateQueries({ queryKey: ['scan-directories'] })
       queryClient.invalidateQueries({ queryKey: ['targets'] })
       queryClient.invalidateQueries({ queryKey: ['scans'] })
     },
-    onError: (error: Error, id) => {
-      toast.dismiss(`delete-directory-${id}`)
-      toast.error(error.message || '删除目录失败')
+    onError: (error: any, id) => {
+      toastMessages.dismiss(`delete-directory-${id}`)
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.asset.directory.delete.error')
     },
   })
 }
@@ -137,25 +135,25 @@ export function useDeleteDirectory() {
 // 批量删除目录（使用统一的批量删除接口）
 export function useBulkDeleteDirectories() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: directoryService.bulkDeleteDirectories,
     onMutate: () => {
-      toast.loading('正在批量删除目录...', { id: 'bulk-delete-directories' })
+      toastMessages.loading('common.status.batchDeleting', {}, 'bulk-delete-directories')
     },
     onSuccess: (response) => {
-      toast.dismiss('bulk-delete-directories')
-      toast.success(`成功删除 ${response.deletedCount} 个目录`)
+      toastMessages.dismiss('bulk-delete-directories')
+      toastMessages.success('toast.asset.directory.delete.bulkSuccess', { count: response.deletedCount })
       
-      // 刷新相关查询
       queryClient.invalidateQueries({ queryKey: ['target-directories'] })
       queryClient.invalidateQueries({ queryKey: ['scan-directories'] })
       queryClient.invalidateQueries({ queryKey: ['targets'] })
       queryClient.invalidateQueries({ queryKey: ['scans'] })
     },
-    onError: (error: Error) => {
-      toast.dismiss('bulk-delete-directories')
-      toast.error(error.message || '批量删除目录失败')
+    onError: (error: any) => {
+      toastMessages.dismiss('bulk-delete-directories')
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.asset.directory.delete.error')
     },
   })
 }
@@ -164,32 +162,31 @@ export function useBulkDeleteDirectories() {
 // 批量创建目录（绑定到目标）
 export function useBulkCreateDirectories() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (data: { targetId: number; urls: string[] }) =>
       DirectoryService.bulkCreateDirectories(data.targetId, data.urls),
     onMutate: async () => {
-      toast.loading('正在批量创建目录...', { id: 'bulk-create-directories' })
+      toastMessages.loading('common.status.batchCreating', {}, 'bulk-create-directories')
     },
     onSuccess: (response, { targetId }) => {
-      toast.dismiss('bulk-create-directories')
+      toastMessages.dismiss('bulk-create-directories')
       const { createdCount } = response
       
       if (createdCount > 0) {
-        toast.success(`成功创建 ${createdCount} 个目录`)
+        toastMessages.success('toast.asset.directory.create.success', { count: createdCount })
       } else {
-        toast.warning('没有新目录被创建（可能已存在）')
+        toastMessages.warning('toast.asset.directory.create.partialSuccess', { success: 0, skipped: 0 })
       }
       
-      // 刷新目录列表
       queryClient.invalidateQueries({ queryKey: ['target-directories', targetId] })
       queryClient.invalidateQueries({ queryKey: ['scan-directories'] })
     },
     onError: (error: any) => {
-      toast.dismiss('bulk-create-directories')
-      console.error('批量创建目录失败:', error)
-      const errorMessage = error?.response?.data?.error || '批量创建失败，请查看控制台日志'
-      toast.error(errorMessage)
+      toastMessages.dismiss('bulk-create-directories')
+      console.error('Failed to bulk create directories:', error)
+      toastMessages.errorFromCode(getErrorCode(error?.response?.data), 'toast.asset.directory.create.error')
     },
   })
 }

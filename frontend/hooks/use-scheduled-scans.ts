@@ -1,5 +1,4 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
-import { toast } from 'sonner'
 import {
   getScheduledScans,
   getScheduledScan,
@@ -8,6 +7,8 @@ import {
   deleteScheduledScan,
   toggleScheduledScan,
 } from '@/services/scheduled-scan.service'
+import { useToastMessages } from '@/lib/toast-helpers'
+import { parseResponse, getErrorCode } from '@/lib/response-parser'
 import type { CreateScheduledScanRequest, UpdateScheduledScanRequest } from '@/types/scheduled-scan.types'
 
 /**
@@ -37,15 +38,23 @@ export function useScheduledScan(id: number) {
  */
 export function useCreateScheduledScan() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (data: CreateScheduledScanRequest) => createScheduledScan(data),
-    onSuccess: (result) => {
-      toast.success(result.message)
+    onSuccess: (response) => {
+      const data = parseResponse<any>(response)
+      // 使用 i18n 消息显示成功提示
+      toastMessages.success('toast.scheduledScan.create.success')
       queryClient.invalidateQueries({ queryKey: ['scheduled-scans'] })
     },
-    onError: (error: Error) => {
-      toast.error(`创建失败: ${error.message}`)
+    onError: (error: any) => {
+      const errorCode = getErrorCode(error.response?.data)
+      if (errorCode) {
+        toastMessages.errorFromCode(errorCode)
+      } else {
+        toastMessages.error('toast.scheduledScan.create.error')
+      }
     },
   })
 }
@@ -55,17 +64,25 @@ export function useCreateScheduledScan() {
  */
 export function useUpdateScheduledScan() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: UpdateScheduledScanRequest }) =>
       updateScheduledScan(id, data),
-    onSuccess: (result) => {
-      toast.success(result.message)
+    onSuccess: (response) => {
+      const data = parseResponse<any>(response)
+      // 使用 i18n 消息显示成功提示
+      toastMessages.success('toast.scheduledScan.update.success')
       queryClient.invalidateQueries({ queryKey: ['scheduled-scans'] })
       queryClient.invalidateQueries({ queryKey: ['scheduled-scan'] })
     },
-    onError: (error: Error) => {
-      toast.error(`更新失败: ${error.message}`)
+    onError: (error: any) => {
+      const errorCode = getErrorCode(error.response?.data)
+      if (errorCode) {
+        toastMessages.errorFromCode(errorCode)
+      } else {
+        toastMessages.error('toast.scheduledScan.update.error')
+      }
     },
   })
 }
@@ -75,15 +92,23 @@ export function useUpdateScheduledScan() {
  */
 export function useDeleteScheduledScan() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: (id: number) => deleteScheduledScan(id),
-    onSuccess: (result) => {
-      toast.success(result.message)
+    onSuccess: (response) => {
+      const data = parseResponse<any>(response)
+      // 使用 i18n 消息显示成功提示
+      toastMessages.success('toast.scheduledScan.delete.success')
       queryClient.invalidateQueries({ queryKey: ['scheduled-scans'] })
     },
-    onError: (error: Error) => {
-      toast.error(`删除失败: ${error.message}`)
+    onError: (error: any) => {
+      const errorCode = getErrorCode(error.response?.data)
+      if (errorCode) {
+        toastMessages.errorFromCode(errorCode)
+      } else {
+        toastMessages.error('toast.scheduledScan.delete.error')
+      }
     },
   })
 }
@@ -94,6 +119,7 @@ export function useDeleteScheduledScan() {
  */
 export function useToggleScheduledScan() {
   const queryClient = useQueryClient()
+  const toastMessages = useToastMessages()
 
   return useMutation({
     mutationFn: ({ id, isEnabled }: { id: number; isEnabled: boolean }) =>
@@ -122,18 +148,29 @@ export function useToggleScheduledScan() {
       // 返回上下文用于回滚
       return { previousQueries }
     },
-    onSuccess: (result) => {
-      toast.success(result.message)
+    onSuccess: (response, { isEnabled }) => {
+      const data = parseResponse<any>(response)
+      // 使用 i18n 消息显示成功提示
+      if (isEnabled) {
+        toastMessages.success('toast.scheduledScan.toggle.enabled')
+      } else {
+        toastMessages.success('toast.scheduledScan.toggle.disabled')
+      }
       // 不调用 invalidateQueries，保持当前排序
     },
-    onError: (error: Error, _variables, context) => {
+    onError: (error: any, _variables, context) => {
       // 回滚到之前的状态
       if (context?.previousQueries) {
         context.previousQueries.forEach(([queryKey, data]) => {
           queryClient.setQueryData(queryKey, data)
         })
       }
-      toast.error(`操作失败: ${error.message}`)
+      const errorCode = getErrorCode(error.response?.data)
+      if (errorCode) {
+        toastMessages.errorFromCode(errorCode)
+      } else {
+        toastMessages.error('toast.scheduledScan.toggle.error')
+      }
     },
   })
 }

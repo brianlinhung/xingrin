@@ -9,6 +9,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from apps.common.pagination import BasePagination
+from apps.common.response_helpers import success_response, error_response
+from apps.common.error_codes import ErrorCodes
 from apps.engine.serializers.wordlist_serializer import WordlistSerializer
 from apps.engine.services.wordlist_service import WordlistService
 
@@ -46,7 +48,11 @@ class WordlistViewSet(viewsets.ViewSet):
         uploaded_file = request.FILES.get("file")
 
         if not uploaded_file:
-            return Response({"error": "缺少字典文件"}, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message='Missing wordlist file',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
             wordlist = self.service.create_wordlist(
@@ -55,21 +61,32 @@ class WordlistViewSet(viewsets.ViewSet):
                 uploaded_file=uploaded_file,
             )
         except ValidationError as exc:
-            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message=str(exc),
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
 
         serializer = WordlistSerializer(wordlist)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return success_response(data=serializer.data, status_code=status.HTTP_201_CREATED)
 
     def destroy(self, request, pk=None):
         """删除字典记录"""
         try:
             wordlist_id = int(pk)
         except (TypeError, ValueError):
-            return Response({"error": "无效的 ID"}, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message='Invalid ID',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
 
         success = self.service.delete_wordlist(wordlist_id)
         if not success:
-            return Response({"error": "字典不存在"}, status=status.HTTP_404_NOT_FOUND)
+            return error_response(
+                code=ErrorCodes.NOT_FOUND,
+                status_code=status.HTTP_404_NOT_FOUND
+            )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -82,15 +99,27 @@ class WordlistViewSet(viewsets.ViewSet):
         """
         name = (request.query_params.get("wordlist", "") or "").strip()
         if not name:
-            return Response({"error": "缺少参数 wordlist"}, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message='Missing parameter: wordlist',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
 
         wordlist = self.service.get_wordlist_by_name(name)
         if not wordlist:
-            return Response({"error": "字典不存在"}, status=status.HTTP_404_NOT_FOUND)
+            return error_response(
+                code=ErrorCodes.NOT_FOUND,
+                message='Wordlist not found',
+                status_code=status.HTTP_404_NOT_FOUND
+            )
 
         file_path = wordlist.file_path
         if not file_path or not os.path.exists(file_path):
-            return Response({"error": "字典文件不存在"}, status=status.HTTP_404_NOT_FOUND)
+            return error_response(
+                code=ErrorCodes.NOT_FOUND,
+                message='Wordlist file not found',
+                status_code=status.HTTP_404_NOT_FOUND
+            )
 
         filename = os.path.basename(file_path)
         response = FileResponse(open(file_path, "rb"), as_attachment=True, filename=filename)
@@ -106,22 +135,38 @@ class WordlistViewSet(viewsets.ViewSet):
         try:
             wordlist_id = int(pk)
         except (TypeError, ValueError):
-            return Response({"error": "无效的 ID"}, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message='Invalid ID',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
 
         if request.method == "GET":
             content = self.service.get_wordlist_content(wordlist_id)
             if content is None:
-                return Response({"error": "字典不存在或文件无法读取"}, status=status.HTTP_404_NOT_FOUND)
-            return Response({"content": content})
+                return error_response(
+                    code=ErrorCodes.NOT_FOUND,
+                    message='Wordlist not found or file unreadable',
+                    status_code=status.HTTP_404_NOT_FOUND
+                )
+            return success_response(data={"content": content})
 
         elif request.method == "PUT":
             content = request.data.get("content")
             if content is None:
-                return Response({"error": "缺少 content 参数"}, status=status.HTTP_400_BAD_REQUEST)
+                return error_response(
+                    code=ErrorCodes.VALIDATION_ERROR,
+                    message='Missing content parameter',
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
 
             wordlist = self.service.update_wordlist_content(wordlist_id, content)
             if not wordlist:
-                return Response({"error": "字典不存在或更新失败"}, status=status.HTTP_404_NOT_FOUND)
+                return error_response(
+                    code=ErrorCodes.NOT_FOUND,
+                    message='Wordlist not found or update failed',
+                    status_code=status.HTTP_404_NOT_FOUND
+                )
 
             serializer = WordlistSerializer(wordlist)
-            return Response(serializer.data)
+            return success_response(data=serializer.data)

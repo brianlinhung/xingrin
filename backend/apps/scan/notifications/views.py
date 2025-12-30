@@ -14,6 +14,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.common.pagination import BasePagination
+from apps.common.response_helpers import success_response, error_response
+from apps.common.error_codes import ErrorCodes
 from .models import Notification
 from .serializers import NotificationSerializer
 from .types import NotificationLevel
@@ -60,34 +62,7 @@ def notifications_test(request):
         }, status=500)
 
 
-def build_api_response(
-    data: Any = None,
-    *,
-    message: str = '操作成功',
-    code: str = '200',
-    state: str = 'success',
-    status_code: int = status.HTTP_200_OK
-) -> Response:
-    """构建统一的 API 响应格式
-    
-    Args:
-        data: 响应数据体（可选）
-        message: 响应消息
-        code: 响应代码
-        state: 响应状态（success/error）
-        status_code: HTTP 状态码
-        
-    Returns:
-        DRF Response 对象
-    """
-    payload = {
-        'code': code,
-        'state': state,
-        'message': message,
-    }
-    if data is not None:
-        payload['data'] = data
-    return Response(payload, status=status_code)
+# build_api_response 已废弃，请使用 success_response/error_response
 
 
 def _parse_bool(value: str | None) -> bool | None:
@@ -172,7 +147,7 @@ class NotificationUnreadCountView(APIView):
         """获取未读通知数量"""
         service = NotificationService()
         count = service.get_unread_count()
-        return build_api_response({'count': count}, message='获取未读数量成功')
+        return success_response(data={'count': count})
 
 
 class NotificationMarkAllAsReadView(APIView):
@@ -192,7 +167,7 @@ class NotificationMarkAllAsReadView(APIView):
         """标记全部通知为已读"""
         service = NotificationService()
         updated = service.mark_all_as_read()
-        return build_api_response({'updated': updated}, message='全部标记已读成功')
+        return success_response(data={'updated': updated})
 
 
 class NotificationSettingsView(APIView):
@@ -209,13 +184,13 @@ class NotificationSettingsView(APIView):
         """获取通知设置"""
         service = NotificationSettingsService()
         settings = service.get_settings()
-        return Response(settings)
+        return success_response(data=settings)
     
     def put(self, request: Request) -> Response:
         """更新通知设置"""
         service = NotificationSettingsService()
         settings = service.update_settings(request.data)
-        return Response({'message': '已保存通知设置', **settings})
+        return success_response(data=settings)
 
 
 # ============================================
@@ -247,22 +222,24 @@ def notification_callback(request):
         required_fields = ['id', 'category', 'title', 'message', 'level', 'created_at']
         for field in required_fields:
             if field not in data:
-                return Response(
-                    {'error': f'缺少字段: {field}'},
-                    status=status.HTTP_400_BAD_REQUEST
+                return error_response(
+                    code=ErrorCodes.VALIDATION_ERROR,
+                    message=f'Missing field: {field}',
+                    status_code=status.HTTP_400_BAD_REQUEST
                 )
         
         # 推送到 WebSocket
         _push_notification_to_websocket(data)
         
         logger.debug(f"回调通知推送成功 - ID: {data['id']}, Title: {data['title']}")
-        return Response({'status': 'ok'})
+        return success_response(data={'status': 'ok'})
         
     except Exception as e:
         logger.error(f"回调通知处理失败: {e}", exc_info=True)
-        return Response(
-            {'error': str(e)},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        return error_response(
+            code=ErrorCodes.SERVER_ERROR,
+            message=str(e),
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
 

@@ -164,12 +164,13 @@ class SubdomainViewSet(viewsets.ModelViewSet):
         
         响应:
         {
-            "message": "批量创建完成",
-            "createdCount": 10,
-            "skippedCount": 2,
-            "invalidCount": 1,
-            "mismatchedCount": 1,
-            "totalReceived": 14
+            "data": {
+                "createdCount": 10,
+                "skippedCount": 2,
+                "invalidCount": 1,
+                "mismatchedCount": 1,
+                "totalReceived": 14
+            }
         }
         """
         from apps.targets.models import Target
@@ -220,12 +221,13 @@ class SubdomainViewSet(viewsets.ModelViewSet):
             )
         
         return Response({
-            'message': '批量创建完成',
-            'createdCount': result.created_count,
-            'skippedCount': result.skipped_count,
-            'invalidCount': result.invalid_count,
-            'mismatchedCount': result.mismatched_count,
-            'totalReceived': result.total_received,
+            'data': {
+                'createdCount': result.created_count,
+                'skippedCount': result.skipped_count,
+                'invalidCount': result.invalid_count,
+                'mismatchedCount': result.mismatched_count,
+                'totalReceived': result.total_received,
+            }
         }, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], url_path='export')
@@ -299,9 +301,9 @@ class WebSiteViewSet(viewsets.ModelViewSet):
         
         响应:
         {
-            "message": "批量创建完成",
-            "createdCount": 10,
-            "mismatchedCount": 2
+            "data": {
+                "createdCount": 10
+            }
         }
         """
         from apps.targets.models import Target
@@ -346,8 +348,9 @@ class WebSiteViewSet(viewsets.ModelViewSet):
             )
         
         return Response({
-            'message': '批量创建完成',
-            'createdCount': created_count,
+            'data': {
+                'createdCount': created_count,
+            }
         }, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], url_path='export')
@@ -426,9 +429,9 @@ class DirectoryViewSet(viewsets.ModelViewSet):
         
         响应:
         {
-            "message": "批量创建完成",
-            "createdCount": 10,
-            "mismatchedCount": 2
+            "data": {
+                "createdCount": 10
+            }
         }
         """
         from apps.targets.models import Target
@@ -473,8 +476,9 @@ class DirectoryViewSet(viewsets.ModelViewSet):
             )
         
         return Response({
-            'message': '批量创建完成',
-            'createdCount': created_count,
+            'data': {
+                'createdCount': created_count,
+            }
         }, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], url_path='export')
@@ -553,9 +557,9 @@ class EndpointViewSet(viewsets.ModelViewSet):
         
         响应:
         {
-            "message": "批量创建完成",
-            "createdCount": 10,
-            "mismatchedCount": 2
+            "data": {
+                "createdCount": 10
+            }
         }
         """
         from apps.targets.models import Target
@@ -600,8 +604,9 @@ class EndpointViewSet(viewsets.ModelViewSet):
             )
         
         return Response({
-            'message': '批量创建完成',
-            'createdCount': created_count,
+            'data': {
+                'createdCount': created_count,
+            }
         }, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], url_path='export')
