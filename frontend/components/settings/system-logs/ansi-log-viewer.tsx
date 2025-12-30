@@ -19,41 +19,69 @@ export function AnsiLogViewer({ content, className }: AnsiLogViewerProps) {
   useEffect(() => {
     if (!terminalRef.current) return
 
-    // 创建 Terminal 实例
-    const terminal = new Terminal({
-      fontSize: 12,
-      fontFamily: 'Menlo, Monaco, "Courier New", monospace',
-      theme: {
-        background: "#1e1e1e",
-        foreground: "#d4d4d4",
-      },
-      rows: 30,
-      scrollback: 10000,
-      convertEol: true,
-      disableStdin: true, // 只读模式
-      cursorBlink: false,
-    })
+    // 延迟初始化，确保 DOM 完全挂载
+    const timer = setTimeout(() => {
+      if (!terminalRef.current) return
 
-    // 添加插件
-    const fitAddon = new FitAddon()
-    terminal.loadAddon(fitAddon)
-    terminal.loadAddon(new WebLinksAddon())
+      try {
+        // 创建 Terminal 实例
+        const terminal = new Terminal({
+          fontSize: 12,
+          fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+          theme: {
+            background: "#1e1e1e",
+            foreground: "#d4d4d4",
+          },
+          rows: 30,
+          scrollback: 10000,
+          convertEol: true,
+          disableStdin: true, // 只读模式
+          cursorBlink: false,
+        })
 
-    // 挂载到 DOM
-    terminal.open(terminalRef.current)
-    fitAddon.fit()
+        // 添加插件
+        const fitAddon = new FitAddon()
+        terminal.loadAddon(fitAddon)
+        terminal.loadAddon(new WebLinksAddon())
 
-    // 保存引用
-    xtermRef.current = terminal
-    fitAddonRef.current = fitAddon
+        // 挂载到 DOM
+        terminal.open(terminalRef.current!)
+        
+        // 延迟 fit，确保 DOM 渲染完成
+        requestAnimationFrame(() => {
+          try {
+            fitAddon.fit()
+          } catch (e) {
+            console.warn("Failed to fit terminal:", e)
+          }
+        })
 
-    // 监听窗口大小变化
-    const handleResize = () => fitAddon.fit()
-    window.addEventListener("resize", handleResize)
+        // 保存引用
+        xtermRef.current = terminal
+        fitAddonRef.current = fitAddon
+
+        // 监听窗口大小变化
+        const handleResize = () => {
+          try {
+            fitAddon.fit()
+          } catch (e) {
+            console.warn("Failed to fit terminal on resize:", e)
+          }
+        }
+        window.addEventListener("resize", handleResize)
+
+        // 清理函数
+        return () => {
+          window.removeEventListener("resize", handleResize)
+          terminal.dispose()
+        }
+      } catch (e) {
+        console.error("Failed to initialize terminal:", e)
+      }
+    }, 100)
 
     return () => {
-      window.removeEventListener("resize", handleResize)
-      terminal.dispose()
+      clearTimeout(timer)
     }
   }, [])
 
@@ -62,14 +90,18 @@ export function AnsiLogViewer({ content, className }: AnsiLogViewerProps) {
     const terminal = xtermRef.current
     if (!terminal || !content) return
 
-    // 清空终端
-    terminal.clear()
+    try {
+      // 清空终端
+      terminal.clear()
 
-    // 写入新内容
-    terminal.write(content.replace(/\n/g, "\r\n")) // 转换换行符
+      // 写入新内容
+      terminal.write(content.replace(/\n/g, "\r\n")) // 转换换行符
 
-    // 滚动到底部
-    terminal.scrollToBottom()
+      // 滚动到底部
+      terminal.scrollToBottom()
+    } catch (e) {
+      console.warn("Failed to update terminal content:", e)
+    }
   }, [content])
 
   // 监听主题变化（可选）
