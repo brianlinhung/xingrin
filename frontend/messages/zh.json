@@ -89,6 +89,7 @@
       "lastRun": "上次执行"
     },
     "fingerprint": {
+      "name": "名称",
       "cats": "分类",
       "rules": "规则",
       "implies": "依赖",
@@ -100,6 +101,7 @@
       "cms": "CMS",
       "method": "匹配方式",
       "keyword": "关键词",
+      "type": "类型",
       "important": "重点资产"
     },
     "command": {

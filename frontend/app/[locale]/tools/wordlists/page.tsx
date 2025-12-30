@@ -37,7 +37,7 @@ export default function WordlistsPage() {
   // Internationalization
   const tCommon = useTranslations("common")
   const tConfirm = useTranslations("common.confirm")
-  const tNav = useTranslations("nav")
+  const tNav = useTranslations("navigation")
   const t = useTranslations("pages.wordlists")
   const locale = useLocale()
 

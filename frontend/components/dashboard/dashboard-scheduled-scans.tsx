@@ -44,12 +44,12 @@ export function DashboardScheduledScans() {
     },
     cron: {
       everyMinute: tScan("cron.everyMinute"),
-      everyNMinutes: tScan("cron.everyNMinutes"),
-      everyHour: tScan("cron.everyHour"),
-      everyNHours: tScan("cron.everyNHours"),
-      everyDay: tScan("cron.everyDay"),
-      everyWeek: tScan("cron.everyWeek"),
-      everyMonth: tScan("cron.everyMonth"),
+      everyNMinutes: tScan.raw("cron.everyNMinutes") as string,
+      everyHour: tScan.raw("cron.everyHour") as string,
+      everyNHours: tScan.raw("cron.everyNHours") as string,
+      everyDay: tScan.raw("cron.everyDay") as string,
+      everyWeek: tScan.raw("cron.everyWeek") as string,
+      everyMonth: tScan.raw("cron.everyMonth") as string,
       weekdays: tScan.raw("cron.weekdays") as string[],
     },
   }), [tColumns, tCommon, tScan])

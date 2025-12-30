@@ -57,7 +57,7 @@ export function ImportFingerprintDialog({
     ehole: {
       title: t("import.eholeTitle"),
       description: t("import.eholeDesc"),
-      formatHint: t("import.eholeFormatHint"),
+      formatHint: t.raw("import.eholeFormatHint") as string,
       validate: (json) => {
         if (!json.fingerprint) {
           return { valid: false, error: t("import.eholeInvalidMissing") }
@@ -78,7 +78,7 @@ export function ImportFingerprintDialog({
     goby: {
       title: t("import.gobyTitle"),
       description: t("import.gobyDesc"),
-      formatHint: t("import.gobyFormatHint"),
+      formatHint: t.raw("import.gobyFormatHint") as string,
       validate: (json) => {
         // Support both array and object formats
         if (Array.isArray(json)) {
@@ -102,7 +102,7 @@ export function ImportFingerprintDialog({
     wappalyzer: {
       title: t("import.wappalyzerTitle"),
       description: t("import.wappalyzerDesc"),
-      formatHint: t("import.wappalyzerFormatHint"),
+      formatHint: t.raw("import.wappalyzerFormatHint") as string,
       validate: (json) => {
         // Support array format
         if (Array.isArray(json)) {

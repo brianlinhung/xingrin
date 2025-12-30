@@ -89,6 +89,7 @@
       "lastRun": "Last Run"
     },
     "fingerprint": {
+      "name": "Name",
       "cats": "Categories",
       "rules": "Rules",
       "implies": "Implies",
@@ -100,6 +101,7 @@
       "cms": "CMS",
       "method": "Method",
       "keyword": "Keyword",
+      "type": "Type",
       "important": "Important"
     },
     "command": {

@@ -95,7 +95,7 @@ export default function ScanEnginePage() {
   // Internationalization
   const tCommon = useTranslations("common")
   const tConfirm = useTranslations("common.confirm")
-  const tNav = useTranslations("nav")
+  const tNav = useTranslations("navigation")
   const tEngine = useTranslations("scan.engine")
 
   // API Hooks
