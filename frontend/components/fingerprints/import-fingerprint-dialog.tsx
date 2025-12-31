@@ -209,7 +209,7 @@ export function ImportFingerprintDialog({
   }[fingerprintType]
 
   // Determine accepted file types based on fingerprint type
-  const getAcceptConfig = () => {
+  const getAcceptConfig = (): Record<string, string[]> => {
     if (fingerprintType === "arl") {
       return { 
         "application/json": [".json"],
