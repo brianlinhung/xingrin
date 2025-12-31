@@ -87,7 +87,7 @@ fingerprint_detect:
   tools:
     xingfinger:
       enabled: true
-      fingerprint-libs: [ehole, goby, wappalyzer]  # 启用的指纹库：ehole, goby, wappalyzer, fingers, fingerprinthub, arl
+      fingerprint-libs: [ehole, goby, wappalyzer, fingers, fingerprinthub, arl]  # 全部指纹库
 
 # ==================== 目录扫描 ====================
 directory_scan:

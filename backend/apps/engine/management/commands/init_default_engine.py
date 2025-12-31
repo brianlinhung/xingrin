@@ -90,6 +90,7 @@ class Command(BaseCommand):
                     single_config,
                     sort_keys=False,
                     allow_unicode=True,
+                    default_flow_style=None,
                 )
             except yaml.YAMLError as e:
                 self.stdout.write(self.style.ERROR(f'生成子引擎 {scan_type} 配置失败: {e}'))
