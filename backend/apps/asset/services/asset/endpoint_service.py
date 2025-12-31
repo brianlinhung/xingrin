@@ -28,6 +28,7 @@ class EndpointService:
         'host': 'host',
         'title': 'title',
         'status': 'status_code',
+        'tech': 'tech',
     }
     
     def __init__(self):
@@ -115,7 +116,7 @@ class EndpointService:
         """获取目标下的所有端点"""
         queryset = self.repo.get_by_target(target_id)
         if filter_query:
-            queryset = apply_filters(queryset, filter_query, self.FILTER_FIELD_MAPPING)
+            queryset = apply_filters(queryset, filter_query, self.FILTER_FIELD_MAPPING, json_array_fields=['tech'])
         return queryset
     
     def count_endpoints_by_target(self, target_id: int) -> int:
@@ -134,7 +135,7 @@ class EndpointService:
         """获取所有端点（全局查询）"""
         queryset = self.repo.get_all()
         if filter_query:
-            queryset = apply_filters(queryset, filter_query, self.FILTER_FIELD_MAPPING)
+            queryset = apply_filters(queryset, filter_query, self.FILTER_FIELD_MAPPING, json_array_fields=['tech'])
         return queryset
     
     def iter_endpoint_urls_by_target(self, target_id: int, chunk_size: int = 1000) -> Iterator[str]:

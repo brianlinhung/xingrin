@@ -535,6 +535,7 @@ class EndpointViewSet(viewsets.ModelViewSet):
     - host="example"     主机名模糊匹配
     - title="login"      标题模糊匹配
     - status="200,301"   状态码多值匹配
+    - tech="nginx"       技术栈匹配（数组字段）
     - 多条件空格分隔     AND 关系
     """
     

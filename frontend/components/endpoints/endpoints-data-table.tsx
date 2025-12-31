@@ -14,6 +14,7 @@ const ENDPOINT_FILTER_FIELDS: FilterField[] = [
   { key: "host", label: "Host", description: "Hostname" },
   { key: "title", label: "Title", description: "Page title" },
   { key: "status", label: "Status", description: "HTTP status code" },
+  { key: "tech", label: "Tech", description: "Technologies" },
 ]
 
 // Endpoint page filter examples
@@ -21,6 +22,7 @@ const ENDPOINT_FILTER_EXAMPLES = [
   'url="/api/*" && status="200"',
   'host="api.example.com" || host="admin.example.com"',
   'title="Dashboard" && status!="404"',
+  'tech="php" || tech="wordpress"',
 ]
 
 interface EndpointsDataTableProps<TData extends { id: number | string }, TValue> {
