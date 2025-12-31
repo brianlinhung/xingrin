@@ -244,8 +244,8 @@ export function useBatchDeleteOrganizations() {
     },
     onSuccess: (response) => {
       toastMessages.dismiss('batch-delete')
-      const { deletedOrganizationCount } = response
-      toastMessages.success('toast.organization.delete.bulkSuccess', { count: deletedOrganizationCount })
+      const { deletedCount } = response
+      toastMessages.success('toast.organization.delete.bulkSuccess', { count: deletedCount })
     },
     onError: (error: any, deletedIds, context) => {
       toastMessages.dismiss('batch-delete')

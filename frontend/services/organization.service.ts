@@ -127,13 +127,15 @@ export class OrganizationService {
    */
   static async batchDeleteOrganizations(organizationIds: number[]): Promise<{
     message: string
-    deletedOrganizationCount: number
+    deletedCount: number
+    deletedOrganizations: string[]
   }> {
     const response = await api.post<{
       message: string
-      deletedOrganizationCount: number
-    }>('/organizations/batch_delete/', {
-      organizationIds  // [OK] Use camelCase, interceptor will automatically convert to organization_ids
+      deletedCount: number
+      deletedOrganizations: string[]
+    }>('/organizations/bulk-delete/', {
+      ids: organizationIds  // Backend expects 'ids' parameter
     })
     return response.data
   }
