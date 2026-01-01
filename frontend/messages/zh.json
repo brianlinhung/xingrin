@@ -57,12 +57,12 @@
       "bodyPreview": "Body Preview",
       "vhost": "VHost",
       "gfPatterns": "GF Patterns",
-      "responseHeaders": "响应头",
+      "responseHeaders": "Response Headers",
       "responseTime": "Response Time"
     },
     "website": {
       "host": "Host",
-      "responseHeaders": "响应头"
+      "responseHeaders": "Response Headers"
     },
     "directory": {
       "length": "Length",
