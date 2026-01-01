@@ -134,6 +134,7 @@ class HttpxRecord:
         self.vhost = data.get('vhost')
         self.failed = data.get('failed', False)
         self.timestamp = data.get('timestamp')
+        self.response_headers = data.get('header', {})  # 响应头（httpx 输出的 header 字段）
         
         # 从 URL 中提取主机名
         self.host = self._extract_hostname()
@@ -359,7 +360,8 @@ def _save_batch(
             tech=record.tech if isinstance(record.tech, list) else [],
             status=record.status_code,
             content_length=record.content_length,
-            vhost=record.vhost
+            vhost=record.vhost,
+            response_headers=record.response_headers if record.response_headers else {},
         )
         
         snapshot_items.append(snapshot_dto)

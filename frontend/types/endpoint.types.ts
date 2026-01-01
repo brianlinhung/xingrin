@@ -23,6 +23,7 @@ export interface Endpoint {
   bodyPreview?: string
   tech?: string[]
   vhost?: boolean | null
+  responseHeaders?: Record<string, unknown>
   createdAt?: string
 
   // Legacy domain association fields (may not exist in some APIs)

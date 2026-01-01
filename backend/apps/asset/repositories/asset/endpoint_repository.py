@@ -53,7 +53,8 @@ class DjangoEndpointRepository:
                     tech=item.tech if item.tech else [],
                     vhost=item.vhost,
                     location=item.location or '',
-                    matched_gf_patterns=item.matched_gf_patterns if item.matched_gf_patterns else []
+                    matched_gf_patterns=item.matched_gf_patterns if item.matched_gf_patterns else [],
+                    response_headers=item.response_headers if item.response_headers else {}
                 )
                 for item in unique_items
             ]
@@ -66,7 +67,7 @@ class DjangoEndpointRepository:
                     update_fields=[
                         'host', 'title', 'status_code', 'content_length',
                         'webserver', 'body_preview', 'content_type', 'tech',
-                        'vhost', 'location', 'matched_gf_patterns'
+                        'vhost', 'location', 'matched_gf_patterns', 'response_headers'
                     ],
                     batch_size=1000
                 )
@@ -143,7 +144,8 @@ class DjangoEndpointRepository:
                     tech=item.tech if item.tech else [],
                     vhost=item.vhost,
                     location=item.location or '',
-                    matched_gf_patterns=item.matched_gf_patterns if item.matched_gf_patterns else []
+                    matched_gf_patterns=item.matched_gf_patterns if item.matched_gf_patterns else [],
+                    response_headers=item.response_headers if item.response_headers else {}
                 )
                 for item in unique_items
             ]

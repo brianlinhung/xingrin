@@ -843,6 +843,18 @@ class TestDataGenerator:
                 # 生成固定 245 长度的 URL
                 url = generate_fixed_length_url(target_name, length=245, path_hint=f'website/{i:04d}')
                 
+                # 生成模拟的响应头数据
+                response_headers = {
+                    'server': random.choice(['nginx', 'Apache', 'cloudflare', 'Microsoft-IIS/10.0']),
+                    'content_type': 'text/html; charset=utf-8',
+                    'x_powered_by': random.choice(['PHP/8.2', 'ASP.NET', 'Express', None]),
+                    'x_frame_options': random.choice(['DENY', 'SAMEORIGIN', None]),
+                    'strict_transport_security': 'max-age=31536000; includeSubDomains' if random.choice([True, False]) else None,
+                    'set_cookie': f'session={random.randint(100000, 999999)}; HttpOnly; Secure' if random.choice([True, False]) else None,
+                }
+                # 移除 None 值
+                response_headers = {k: v for k, v in response_headers.items() if v is not None}
+                
                 batch_data.append((
                     url, target_id, target_name, random.choice(titles),
                     random.choice(webservers), random.choice(tech_stacks),
@@ -850,7 +862,8 @@ class TestDataGenerator:
                     random.randint(1000, 500000), 'text/html; charset=utf-8',
                     f'https://{target_name}/login' if random.choice([True, False]) else '',
                     random.choice(body_previews),
-                    random.choice([True, False, None])
+                    random.choice([True, False, None]),
+                    json.dumps(response_headers)
                 ))
         
         # 批量插入
@@ -860,11 +873,11 @@ class TestDataGenerator:
                 INSERT INTO website (
                     url, target_id, host, title, webserver, tech, status_code,
                     content_length, content_type, location, body_preview, vhost,
-                    created_at
+                    response_headers, created_at
                 ) VALUES %s
                 ON CONFLICT DO NOTHING
                 RETURNING id
-            """, batch_data, template="(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())")
+            """, batch_data, template="(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())")
             ids = [row[0] for row in cur.fetchall()]
                     
         print(f"  ✓ 创建了 {len(batch_data)} 个网站\n")
@@ -1017,6 +1030,18 @@ class TestDataGenerator:
                 # 生成 10-20 个 tags (gf_patterns)
                 tags = random.choice(gf_patterns)
                 
+                # 生成模拟的响应头数据
+                response_headers = {
+                    'server': random.choice(['nginx', 'gunicorn', 'uvicorn', 'Apache']),
+                    'content_type': 'application/json',
+                    'x_request_id': f'req_{random.randint(100000, 999999)}',
+                    'x_ratelimit_limit': str(random.choice([100, 1000, 5000])),
+                    'x_ratelimit_remaining': str(random.randint(0, 1000)),
+                    'cache_control': random.choice(['no-cache', 'max-age=3600', 'private', None]),
+                }
+                # 移除 None 值
+                response_headers = {k: v for k, v in response_headers.items() if v is not None}
+                
                 batch_data.append((
                     url, target_id, target_name, title,
                     random.choice(['nginx/1.24.0', 'gunicorn/21.2.0']),
@@ -1024,7 +1049,8 @@ class TestDataGenerator:
                     random.randint(100, 50000), 'application/json',
                     tech_list,
                     '', random.choice(body_previews),
-                    random.choice([True, False, None]), tags
+                    random.choice([True, False, None]), tags,
+                    json.dumps(response_headers)
                 ))
                 count += 1
         
@@ -1034,10 +1060,10 @@ class TestDataGenerator:
                 INSERT INTO endpoint (
                     url, target_id, host, title, webserver, status_code, content_length,
                     content_type, tech, location, body_preview, vhost, matched_gf_patterns,
-                    created_at
+                    response_headers, created_at
                 ) VALUES %s
                 ON CONFLICT DO NOTHING
-            """, batch_data, template="(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())")
+            """, batch_data, template="(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())")
                 
         print(f"  ✓ 创建了 {count} 个端点\n")
 
@@ -1401,13 +1427,23 @@ class TestDataGenerator:
                 # 生成固定 245 长度的 URL
                 url = generate_fixed_length_url(target_name, length=245, path_hint=f'website-snap/{i:04d}')
                 
+                # 生成模拟的响应头数据
+                response_headers = {
+                    'server': random.choice(['nginx', 'Apache', 'cloudflare']),
+                    'content_type': 'text/html; charset=utf-8',
+                    'x_frame_options': random.choice(['DENY', 'SAMEORIGIN', None]),
+                }
+                # 移除 None 值
+                response_headers = {k: v for k, v in response_headers.items() if v is not None}
+                
                 batch_data.append((
                     scan_id, url, target_name, random.choice(titles),
                     random.choice(webservers), random.choice(tech_stacks),
                     random.choice([200, 301, 403]),
                     random.randint(1000, 50000), 'text/html; charset=utf-8',
                     '',  # location 字段
-                    '<!DOCTYPE html><html><head><title>Test</title></head><body>Content</body></html>'
+                    '<!DOCTYPE html><html><head><title>Test</title></head><body>Content</body></html>',
+                    json.dumps(response_headers)
                 ))
                 count += 1
         
@@ -1416,10 +1452,11 @@ class TestDataGenerator:
             execute_values(cur, """
                 INSERT INTO website_snapshot (
                     scan_id, url, host, title, web_server, tech, status,
-                    content_length, content_type, location, body_preview, created_at
+                    content_length, content_type, location, body_preview,
+                    response_headers, created_at
                 ) VALUES %s
                 ON CONFLICT DO NOTHING
-            """, batch_data, template="(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())")
+            """, batch_data, template="(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())")
                 
         print(f"  ✓ 创建了 {count} 个网站快照\n")
 
@@ -1498,6 +1535,13 @@ class TestDataGenerator:
                 num_tags = random.randint(10, 20)
                 tags = random.sample(all_tags, min(num_tags, len(all_tags)))
                 
+                # 生成模拟的响应头数据
+                response_headers = {
+                    'server': 'nginx/1.24.0',
+                    'content_type': 'application/json',
+                    'x_request_id': f'req_{random.randint(100000, 999999)}',
+                }
+                
                 batch_data.append((
                     scan_id, url, target_name, title,
                     random.choice([200, 201, 401, 403, 404]),
@@ -1506,7 +1550,8 @@ class TestDataGenerator:
                     'nginx/1.24.0',
                     'application/json', tech_list,
                     '{"status":"ok","data":{}}',
-                    tags
+                    tags,
+                    json.dumps(response_headers)
                 ))
                 count += 1
         
@@ -1516,10 +1561,10 @@ class TestDataGenerator:
                 INSERT INTO endpoint_snapshot (
                     scan_id, url, host, title, status_code, content_length,
                     location, webserver, content_type, tech, body_preview,
-                    matched_gf_patterns, created_at
+                    matched_gf_patterns, response_headers, created_at
                 ) VALUES %s
                 ON CONFLICT DO NOTHING
-            """, batch_data, template="(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())")
+            """, batch_data, template="(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())")
                 
         print(f"  ✓ 创建了 {count} 个端点快照\n")
 
@@ -2543,9 +2588,10 @@ class MillionDataGenerator:
                 if len(batch_data) >= batch_size:
                     execute_values(cur, """
                         INSERT INTO website (url, target_id, host, title, webserver, tech, 
-                            status_code, content_length, content_type, location, body_preview, created_at)
+                            status_code, content_length, content_type, location, body_preview, 
+                            vhost, response_headers, created_at)
                         VALUES %s ON CONFLICT DO NOTHING
-                    """, batch_data, template="(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())")
+                    """, batch_data, template="(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NULL, '{}'::jsonb, NOW())")
                     self.conn.commit()
                     batch_data = []
                     print(f"    ✓ {count:,} / {target_count:,}")
@@ -2555,9 +2601,10 @@ class MillionDataGenerator:
         if batch_data:
             execute_values(cur, """
                 INSERT INTO website (url, target_id, host, title, webserver, tech, 
-                    status_code, content_length, content_type, location, body_preview, created_at)
+                    status_code, content_length, content_type, location, body_preview, 
+                    vhost, response_headers, created_at)
                 VALUES %s ON CONFLICT DO NOTHING
-            """, batch_data, template="(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())")
+            """, batch_data, template="(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NULL, '{}'::jsonb, NOW())")
             self.conn.commit()
                 
         print(f"  ✓ 创建了 {count:,} 个网站\n")
@@ -2632,9 +2679,9 @@ class MillionDataGenerator:
                     execute_values(cur, """
                         INSERT INTO endpoint (url, target_id, host, title, webserver, status_code,
                             content_length, content_type, tech, location, body_preview, vhost, 
-                            matched_gf_patterns, created_at)
+                            matched_gf_patterns, response_headers, created_at)
                         VALUES %s ON CONFLICT DO NOTHING
-                    """, batch_data, template="(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())")
+                    """, batch_data, template="(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, '{}'::jsonb, NOW())")
                     self.conn.commit()
                     batch_data = []
                     print(f"    ✓ {count:,} / {target_count:,}")
@@ -2645,9 +2692,9 @@ class MillionDataGenerator:
             execute_values(cur, """
                 INSERT INTO endpoint (url, target_id, host, title, webserver, status_code,
                     content_length, content_type, tech, location, body_preview, vhost, 
-                    matched_gf_patterns, created_at)
+                    matched_gf_patterns, response_headers, created_at)
                 VALUES %s ON CONFLICT DO NOTHING
-            """, batch_data, template="(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())")
+            """, batch_data, template="(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, '{}'::jsonb, NOW())")
             self.conn.commit()
                 
         print(f"  ✓ 创建了 {count:,} 个端点\n")

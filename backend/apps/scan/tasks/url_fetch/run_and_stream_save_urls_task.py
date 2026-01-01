@@ -2,8 +2,8 @@
 基于 execute_stream 的流式 URL 验证任务
 
 主要功能：
-    1. 实时执行 httpx 命令验证 URL 存活
-    2. 流式处理命令输出，解析存活的 URL
+    1. 实时执行 httpx 命令验证 URL
+    2. 流式处理命令输出，解析 URL 信息
     3. 批量保存到数据库（Endpoint 表）
     4. 避免一次性加载所有 URL 到内存
 
@@ -14,7 +14,7 @@
     - 使用 execute_stream 实时处理输出
     - 流式处理避免内存溢出
     - 批量操作减少数据库交互
-    - 只保存存活的 URL（status 2xx/3xx）
+    - 保存所有有效 URL（包括 4xx/5xx，便于安全分析）
 """
 
 import logging
@@ -73,7 +73,7 @@ def _parse_and_validate_line(line: str) -> Optional[dict]:
     Returns:
         Optional[dict]: 有效的 httpx 记录，或 None 如果验证失败
         
-    只返回存活的 URL（2xx/3xx 状态码）
+    保存所有有效 URL（不再过滤状态码，安全扫描中 403/404/500 等也有分析价值）
     """
     try:
         # 清理 NUL 字符后再解析 JSON
@@ -99,24 +99,21 @@ def _parse_and_validate_line(line: str) -> Optional[dict]:
             logger.info("URL 为空，跳过 - 数据: %s", str(line_data)[:200])
             return None
         
-        # 只保存存活的 URL（2xx 或 3xx）
-        if status_code and (200 <= status_code < 400):
-            return {
-                'url': _sanitize_string(url),
-                'host': _sanitize_string(line_data.get('host', '')),
-                'status_code': status_code,
-                'title': _sanitize_string(line_data.get('title', '')),
-                'content_length': line_data.get('content_length', 0),
-                'content_type': _sanitize_string(line_data.get('content_type', '')),
-                'webserver': _sanitize_string(line_data.get('webserver', '')),
-                'location': _sanitize_string(line_data.get('location', '')),
-                'tech': line_data.get('tech', []),
-                'body_preview': _sanitize_string(line_data.get('body_preview', '')),
-                'vhost': line_data.get('vhost', False),
-            }
-        else:
-            logger.debug("URL 不存活（状态码: %s），跳过: %s", status_code, url)
-            return None
+        # 保存所有有效 URL（不再过滤状态码）
+        return {
+            'url': _sanitize_string(url),
+            'host': _sanitize_string(line_data.get('host', '')),
+            'status_code': status_code,
+            'title': _sanitize_string(line_data.get('title', '')),
+            'content_length': line_data.get('content_length', 0),
+            'content_type': _sanitize_string(line_data.get('content_type', '')),
+            'webserver': _sanitize_string(line_data.get('webserver', '')),
+            'location': _sanitize_string(line_data.get('location', '')),
+            'tech': line_data.get('tech', []),
+            'body_preview': _sanitize_string(line_data.get('body_preview', '')),
+            'vhost': line_data.get('vhost', False),
+            'response_headers': line_data.get('header', {}),
+        }
     
     except Exception:
         logger.info("跳过无法解析的行: %s", line[:100] if line else 'empty')
@@ -306,6 +303,7 @@ def _save_batch(
                 vhost=record.get('vhost', False),
                 matched_gf_patterns=[],
                 target_id=target_id,
+                response_headers=record.get('response_headers', {}),
             )
             snapshots.append(dto)
         except Exception as e:

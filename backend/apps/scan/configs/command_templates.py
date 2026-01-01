@@ -99,7 +99,8 @@ SITE_SCAN_COMMANDS = {
             '-status-code -content-type -content-length '
             '-location -title -server -body-preview '
             '-tech-detect -cdn -vhost '
-            '-random-agent -no-color -json'
+            '-include-response-header '
+            '-random-agent -no-color -json -silent'
         ),
         'optional': {
             'threads': '-threads {threads}',
@@ -171,7 +172,8 @@ URL_FETCH_COMMANDS = {
             '-status-code -content-type -content-length '
             '-location -title -server -body-preview '
             '-tech-detect -cdn -vhost '
-            '-random-agent -no-color -json'
+            '-include-response-header '
+            '-random-agent -no-color -json -silent'
         ),
         'optional': {
             'threads': '-threads {threads}',

@@ -41,6 +41,7 @@ python-dateutil==2.9.0
 pytz==2024.1
 validators==0.22.0
 PyYAML==6.0.1
+ruamel.yaml>=0.18.0  # 保留注释的 YAML 解析
 colorlog==6.8.2  # 彩色日志输出
 python-json-logger==2.0.7  # JSON 结构化日志
 Jinja2>=3.1.6  # 命令模板引擎

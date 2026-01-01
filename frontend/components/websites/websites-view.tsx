@@ -54,6 +54,7 @@ export function WebSitesView({
       contentType: tColumns("endpoint.contentType"),
       bodyPreview: tColumns("endpoint.bodyPreview"),
       vhost: tColumns("endpoint.vhost"),
+      responseHeaders: tColumns("website.responseHeaders"),
       createdAt: tColumns("common.createdAt"),
     },
     actions: {

@@ -4,14 +4,12 @@
 # 必需参数：enabled（是否启用）
 # 可选参数：timeout（超时秒数，默认 auto 自动计算）
 
-# ==================== 子域名发现 ====================
-# 
-# Stage 1: 被动收集（并行） - 必选，至少启用一个工具
-# Stage 2: 字典爆破（可选） - 使用字典暴力枚举子域名
-# Stage 3: 变异生成 + 验证（可选） - 基于已发现域名生成变异，流式验证存活
-# Stage 4: DNS 存活验证（可选） - 验证所有候选域名是否能解析
-#
 subdomain_discovery:
+  # ==================== 子域名发现 ====================
+  # Stage 1: 被动收集（并行） - 必选，至少启用一个工具
+  # Stage 2: 字典爆破（可选） - 使用字典暴力枚举子域名
+  # Stage 3: 变异生成 + 验证（可选） - 基于已发现域名生成变异，流式验证存活
+  # Stage 4: DNS 存活验证（可选） - 验证所有候选域名是否能解析
   # === Stage 1: 被动收集工具（并行执行）===
   passive_tools:
     subfinder:
@@ -55,8 +53,8 @@ subdomain_discovery:
     subdomain_resolve:
       timeout: auto    # 自动根据候选子域数量计算
 
-# ==================== 端口扫描 ====================
 port_scan:
+  # ==================== 端口扫描 ====================
   tools:
     naabu_active:
       enabled: true
@@ -70,8 +68,8 @@ port_scan:
       enabled: true
       # timeout: auto    # 被动扫描通常较快
 
-# ==================== 站点扫描 ====================
 site_scan:
+  # ==================== 站点扫描 ====================
   tools:
     httpx:
       enabled: true
@@ -81,16 +79,16 @@ site_scan:
       # request-timeout: 10  # 单个请求超时秒数（默认 10）
       # retries: 2           # 请求失败重试次数
 
-# ==================== 指纹识别 ====================
-# 在 site_scan 后串行执行，识别 WebSite 的技术栈
 fingerprint_detect:
+  # ==================== 指纹识别 ====================
+  # 在 site_scan 后串行执行，识别 WebSite 的技术栈
   tools:
     xingfinger:
       enabled: true
-      fingerprint-libs: [ehole, goby, wappalyzer, fingers, fingerprinthub, arl]  # 全部指纹库
+      fingerprint-libs: [ehole, goby, wappalyzer, fingers, fingerprinthub, arl]  # 默认启动全部指纹库
 
-# ==================== 目录扫描 ====================
 directory_scan:
+  # ==================== 目录扫描 ====================
   tools:
     ffuf:
       enabled: true
@@ -103,8 +101,8 @@ directory_scan:
       match-codes: 200,201,301,302,401,403  # 匹配的 HTTP 状态码
       # rate: 0                           # 每秒请求数（默认 0 不限制）
 
-# ==================== URL 获取 ====================
 url_fetch:
+  # ==================== URL 获取 ====================
   tools:
     waymore:
       enabled: true
@@ -142,8 +140,8 @@ url_fetch:
       # request-timeout: 10  # 单个请求超时秒数（默认 10）
       # retries: 2           # 请求失败重试次数
 
-# ==================== 漏洞扫描 ====================
 vuln_scan:
+  # ==================== 漏洞扫描 ====================
   tools:
     dalfox_xss:
       enabled: true

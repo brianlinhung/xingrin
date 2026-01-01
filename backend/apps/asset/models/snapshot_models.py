@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.indexes import GinIndex
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 
@@ -70,6 +71,11 @@ class WebsiteSnapshot(models.Model):
     )
     body_preview = models.TextField(blank=True, default='', help_text='响应体预览')
     vhost = models.BooleanField(null=True, blank=True, help_text='虚拟主机标志')
+    response_headers = models.JSONField(
+        blank=True,
+        default=dict,
+        help_text='HTTP响应头（JSON格式）'
+    )
     created_at = models.DateTimeField(auto_now_add=True, help_text='创建时间')
 
     class Meta:
@@ -83,6 +89,8 @@ class WebsiteSnapshot(models.Model):
             models.Index(fields=['host']),  # host索引，优化根据主机名查询
             models.Index(fields=['title']),  # title索引，优化标题搜索
             models.Index(fields=['-created_at']),
+            GinIndex(fields=['tech']),  # GIN索引，优化数组字段查询
+            GinIndex(fields=['response_headers']),  # GIN索引，优化 JSON 字段查询
         ]
         constraints = [
             # 唯一约束：同一次扫描中，同一个URL只能记录一次
@@ -259,6 +267,11 @@ class EndpointSnapshot(models.Model):
         default=list,
         help_text='匹配的GF模式列表'
     )
+    response_headers = models.JSONField(
+        blank=True,
+        default=dict,
+        help_text='HTTP响应头（JSON格式）'
+    )
     created_at = models.DateTimeField(auto_now_add=True, help_text='创建时间')
 
     class Meta:
@@ -274,6 +287,8 @@ class EndpointSnapshot(models.Model):
             models.Index(fields=['status_code']),  # 状态码索引，优化筛选
             models.Index(fields=['webserver']),  # webserver索引，优化服务器搜索
             models.Index(fields=['-created_at']),
+            GinIndex(fields=['tech']),  # GIN索引，优化数组字段查询
+            GinIndex(fields=['response_headers']),  # GIN索引，优化 JSON 字段查询
         ]
         constraints = [
             # 唯一约束：同一次扫描中，同一个URL只能记录一次

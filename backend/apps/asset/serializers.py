@@ -67,9 +67,10 @@ class SubdomainListSerializer(serializers.ModelSerializer):
 
 
 class WebSiteSerializer(serializers.ModelSerializer):
-    """站点序列化器"""
+    """站点序列化器（目标详情页）"""
     
     subdomain = serializers.CharField(source='subdomain.name', allow_blank=True, default='')
+    responseHeaders = serializers.JSONField(source='response_headers', read_only=True)  # HTTP响应头
     
     class Meta:
         model = WebSite
@@ -86,6 +87,7 @@ class WebSiteSerializer(serializers.ModelSerializer):
             'body_preview',
             'tech',
             'vhost',
+            'responseHeaders',  # HTTP响应头
             'subdomain',
             'created_at',
         ]
@@ -140,6 +142,7 @@ class EndpointListSerializer(serializers.ModelSerializer):
         source='matched_gf_patterns',
         read_only=True,
     )
+    responseHeaders = serializers.JSONField(source='response_headers', read_only=True)  # HTTP响应头
 
     class Meta:
         model = Endpoint
@@ -155,6 +158,7 @@ class EndpointListSerializer(serializers.ModelSerializer):
             'body_preview',
             'tech',
             'vhost',
+            'responseHeaders',  # HTTP响应头
             'gfPatterns',
             'created_at',
         ]
@@ -215,6 +219,7 @@ class WebsiteSnapshotSerializer(serializers.ModelSerializer):
     subdomain_name = serializers.CharField(source='subdomain.name', read_only=True)
     webserver = serializers.CharField(source='web_server', read_only=True)  # 映射字段名
     status_code = serializers.IntegerField(source='status', read_only=True)  # 映射字段名
+    responseHeaders = serializers.JSONField(source='response_headers', read_only=True)  # HTTP响应头
     
     class Meta:
         model = WebsiteSnapshot
@@ -230,6 +235,7 @@ class WebsiteSnapshotSerializer(serializers.ModelSerializer):
             'body_preview',
             'tech',
             'vhost',
+            'responseHeaders',  # HTTP响应头
             'subdomain_name',
             'created_at',
         ]
@@ -264,6 +270,7 @@ class EndpointSnapshotSerializer(serializers.ModelSerializer):
         source='matched_gf_patterns',
         read_only=True,
     )
+    responseHeaders = serializers.JSONField(source='response_headers', read_only=True)  # HTTP响应头
 
     class Meta:
         model = EndpointSnapshot
@@ -280,6 +287,7 @@ class EndpointSnapshotSerializer(serializers.ModelSerializer):
             'body_preview',
             'tech',
             'vhost',
+            'responseHeaders',  # HTTP响应头
             'gfPatterns',
             'created_at',
         ]

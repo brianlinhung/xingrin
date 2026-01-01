@@ -15,9 +15,10 @@
 """
 
 from django.core.management.base import BaseCommand
+from io import StringIO
 from pathlib import Path
 
-import yaml
+from ruamel.yaml import YAML
 
 from apps.engine.models import ScanEngine
 
@@ -44,10 +45,12 @@ class Command(BaseCommand):
         with open(config_path, 'r', encoding='utf-8') as f:
             default_config = f.read()
 
-        # 解析 YAML 为字典，后续用于生成子引擎配置
+        # 使用 ruamel.yaml 解析，保留注释
+        yaml_parser = YAML()
+        yaml_parser.preserve_quotes = True
         try:
-            config_dict = yaml.safe_load(default_config) or {}
-        except yaml.YAMLError as e:
+            config_dict = yaml_parser.load(default_config) or {}
+        except Exception as e:
             self.stdout.write(self.style.ERROR(f'引擎配置 YAML 解析失败: {e}'))
             return
 
@@ -83,16 +86,13 @@ class Command(BaseCommand):
             if scan_type != 'subdomain_discovery' and 'tools' not in scan_cfg:
                 continue
 
-            # 构造只包含当前扫描类型配置的 YAML
+            # 构造只包含当前扫描类型配置的 YAML（保留注释）
             single_config = {scan_type: scan_cfg}
             try:
-                single_yaml = yaml.safe_dump(
-                    single_config,
-                    sort_keys=False,
-                    allow_unicode=True,
-                    default_flow_style=None,
-                )
-            except yaml.YAMLError as e:
+                stream = StringIO()
+                yaml_parser.dump(single_config, stream)
+                single_yaml = stream.getvalue()
+            except Exception as e:
                 self.stdout.write(self.style.ERROR(f'生成子引擎 {scan_type} 配置失败: {e}'))
                 continue
 

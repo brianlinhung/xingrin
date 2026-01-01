@@ -18,6 +18,7 @@ export interface WebSite {
   tech: string[]
   vhost: boolean | null
   subdomain: string
+  responseHeaders?: Record<string, unknown>
   createdAt: string
 }
 

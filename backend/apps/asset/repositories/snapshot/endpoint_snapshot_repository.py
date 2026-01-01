@@ -44,6 +44,7 @@ class DjangoEndpointSnapshotRepository:
                 snapshots.append(EndpointSnapshot(
                     scan_id=item.scan_id,
                     url=item.url,
+                    host=item.host if item.host else '',
                     title=item.title,
                     status_code=item.status_code,
                     content_length=item.content_length,
@@ -53,7 +54,8 @@ class DjangoEndpointSnapshotRepository:
                     tech=item.tech if item.tech else [],
                     body_preview=item.body_preview,
                     vhost=item.vhost,
-                    matched_gf_patterns=item.matched_gf_patterns if item.matched_gf_patterns else []
+                    matched_gf_patterns=item.matched_gf_patterns if item.matched_gf_patterns else [],
+                    response_headers=item.response_headers if item.response_headers else {}
                 ))
             
             # 批量创建（忽略冲突，基于唯一约束去重）

@@ -1,7 +1,7 @@
 """WebsiteSnapshot DTO"""
 
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 
 @dataclass
@@ -25,10 +25,13 @@ class WebsiteSnapshotDTO:
     tech: List[str] = None
     body_preview: str = ''
     vhost: Optional[bool] = None
+    response_headers: Dict[str, Any] = None
     
     def __post_init__(self):
         if self.tech is None:
             self.tech = []
+        if self.response_headers is None:
+            self.response_headers = {}
     
     def to_asset_dto(self):
         """
@@ -51,5 +54,6 @@ class WebsiteSnapshotDTO:
             content_type=self.content_type,
             tech=self.tech if self.tech else [],
             body_preview=self.body_preview,
-            vhost=self.vhost
+            vhost=self.vhost,
+            response_headers=self.response_headers if self.response_headers else {},
         )

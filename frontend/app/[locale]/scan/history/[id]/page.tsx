@@ -8,7 +8,7 @@ export default function ScanHistoryDetailPage() {
   const router = useRouter()
 
   useEffect(() => {
-    router.replace(`/scan/history/${id}/subdomain/`)
+    router.replace(`/scan/history/${id}/websites/`)
   }, [id, router])
 
   return null

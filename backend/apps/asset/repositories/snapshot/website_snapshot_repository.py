@@ -53,7 +53,8 @@ class DjangoWebsiteSnapshotRepository:
                     content_type=item.content_type,
                     tech=item.tech if item.tech else [],
                     body_preview=item.body_preview,
-                    vhost=item.vhost
+                    vhost=item.vhost,
+                    response_headers=item.response_headers if item.response_headers else {}
                 ))
             
             # 批量创建（忽略冲突，基于唯一约束去重）

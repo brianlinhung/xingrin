@@ -22,6 +22,7 @@ export interface WebsiteTranslations {
     contentType: string
     bodyPreview: string
     vhost: string
+    responseHeaders: string
     createdAt: string
   }
   actions: {
@@ -228,6 +229,24 @@ export function createWebSiteColumns({
             {vhost ? "true" : "false"}
           </Badge>
         )
+      },
+    },
+    {
+      accessorKey: "responseHeaders",
+      meta: { title: t.columns.responseHeaders },
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t.columns.responseHeaders} />
+      ),
+      size: 250,
+      minSize: 150,
+      maxSize: 400,
+      cell: ({ row }) => {
+        const headers = row.getValue("responseHeaders") as Record<string, unknown> | null
+        if (!headers || Object.keys(headers).length === 0) return "-"
+        const formatted = Object.entries(headers)
+          .map(([key, value]) => `${key}: ${value}`)
+          .join("\n")
+        return <ExpandableCell value={formatted} maxLines={3} variant="mono" />
       },
     },
     {

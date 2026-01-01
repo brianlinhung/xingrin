@@ -12,6 +12,7 @@ import { ExpandableCell, ExpandableTagList } from "@/components/ui/data-table/ex
 export interface EndpointTranslations {
   columns: {
     url: string
+    host: string
     title: string
     status: string
     contentLength: string
@@ -22,6 +23,7 @@ export interface EndpointTranslations {
     bodyPreview: string
     vhost: string
     gfPatterns: string
+    responseHeaders: string
     responseTime: string
     createdAt: string
   }
@@ -110,6 +112,19 @@ export function createEndpointColumns({
       maxSize: 700,
       cell: ({ row }) => (
         <ExpandableCell value={row.getValue("url")} />
+      ),
+    },
+    {
+      accessorKey: "host",
+      meta: { title: t.columns.host },
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t.columns.host} />
+      ),
+      size: 200,
+      minSize: 100,
+      maxSize: 300,
+      cell: ({ row }) => (
+        <ExpandableCell value={row.getValue("host")} />
       ),
     },
     {
@@ -261,6 +276,24 @@ export function createEndpointColumns({
         )
       },
       enableSorting: false,
+    },
+    {
+      accessorKey: "responseHeaders",
+      meta: { title: t.columns.responseHeaders },
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t.columns.responseHeaders} />
+      ),
+      size: 250,
+      minSize: 150,
+      maxSize: 400,
+      cell: ({ row }) => {
+        const headers = row.getValue("responseHeaders") as Record<string, unknown> | null | undefined
+        if (!headers || Object.keys(headers).length === 0) return <span className="text-muted-foreground text-sm">-</span>
+        const formatted = Object.entries(headers)
+          .map(([key, value]) => `${key}: ${value}`)
+          .join("\n")
+        return <ExpandableCell value={formatted} maxLines={3} variant="mono" />
+      },
     },
     {
       accessorKey: "responseTime",

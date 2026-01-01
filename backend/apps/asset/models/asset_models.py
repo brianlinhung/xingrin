@@ -124,6 +124,11 @@ class Endpoint(models.Model):
         default=list,
         help_text='匹配的GF模式列表，用于识别敏感端点（如api, debug, config等）'
     )
+    response_headers = models.JSONField(
+        blank=True,
+        default=dict,
+        help_text='HTTP响应头（JSON格式）'
+    )
 
     class Meta:
         db_table = 'endpoint'
@@ -138,6 +143,7 @@ class Endpoint(models.Model):
             models.Index(fields=['status_code']),  # 状态码索引，优化筛选
             models.Index(fields=['title']),        # title索引，优化智能过滤搜索
             GinIndex(fields=['tech']),             # GIN索引，优化 tech 数组字段的 __contains 查询
+            GinIndex(fields=['response_headers']),  # GIN索引，优化 response_headers JSON 字段查询
         ]
         constraints = [
             # 普通唯一约束：url + target 组合唯一
@@ -221,6 +227,11 @@ class WebSite(models.Model):
         blank=True,
         help_text='是否支持虚拟主机'
     )
+    response_headers = models.JSONField(
+        blank=True,
+        default=dict,
+        help_text='HTTP响应头（JSON格式）'
+    )
 
     class Meta:
         db_table = 'website'
@@ -235,6 +246,7 @@ class WebSite(models.Model):
             models.Index(fields=['title']),      # title索引，优化智能过滤搜索
             models.Index(fields=['status_code']),  # 状态码索引，优化智能过滤搜索
             GinIndex(fields=['tech']),  # GIN索引，优化 tech 数组字段的 __contains 查询
+            GinIndex(fields=['response_headers']),  # GIN索引，优化 response_headers JSON 字段查询
         ]
         constraints = [
             # 普通唯一约束：url + target 组合唯一

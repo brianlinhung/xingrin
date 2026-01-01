@@ -48,6 +48,7 @@
     },
     "endpoint": {
       "title": "Title",
+      "host": "Host",
       "contentLength": "Content Length",
       "location": "Location",
       "webServer": "Web Server",
@@ -56,10 +57,12 @@
       "bodyPreview": "Body Preview",
       "vhost": "VHost",
       "gfPatterns": "GF Patterns",
+      "responseHeaders": "响应头",
       "responseTime": "Response Time"
     },
     "website": {
-      "host": "Host"
+      "host": "Host",
+      "responseHeaders": "响应头"
     },
     "directory": {
       "length": "Length",

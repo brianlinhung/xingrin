@@ -15,6 +15,7 @@ const ENDPOINT_FILTER_FIELDS: FilterField[] = [
   { key: "title", label: "Title", description: "Page title" },
   { key: "status", label: "Status", description: "HTTP status code" },
   { key: "tech", label: "Tech", description: "Technologies" },
+  { key: "responseHeaders", label: "Headers", description: "Response headers" },
 ]
 
 // Endpoint page filter examples

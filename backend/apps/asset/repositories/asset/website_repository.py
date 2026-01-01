@@ -54,7 +54,8 @@ class DjangoWebSiteRepository:
                     tech=item.tech if item.tech else [],
                     status_code=item.status_code,
                     content_length=item.content_length,
-                    vhost=item.vhost
+                    vhost=item.vhost,
+                    response_headers=item.response_headers if item.response_headers else {}
                 )
                 for item in unique_items
             ]
@@ -67,7 +68,7 @@ class DjangoWebSiteRepository:
                     update_fields=[
                         'host', 'location', 'title', 'webserver',
                         'body_preview', 'content_type', 'tech',
-                        'status_code', 'content_length', 'vhost'
+                        'status_code', 'content_length', 'vhost', 'response_headers'
                     ],
                     batch_size=1000
                 )
@@ -137,7 +138,8 @@ class DjangoWebSiteRepository:
                     tech=item.tech if item.tech else [],
                     status_code=item.status_code,
                     content_length=item.content_length,
-                    vhost=item.vhost
+                    vhost=item.vhost,
+                    response_headers=item.response_headers if item.response_headers else {}
                 )
                 for item in unique_items
             ]

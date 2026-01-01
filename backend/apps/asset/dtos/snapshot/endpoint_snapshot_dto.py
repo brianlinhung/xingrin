@@ -1,7 +1,7 @@
 """EndpointSnapshot DTO"""
 
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 
 @dataclass
@@ -26,12 +26,15 @@ class EndpointSnapshotDTO:
     vhost: Optional[bool] = None
     matched_gf_patterns: List[str] = None
     target_id: Optional[int] = None  # 冗余字段，用于同步到资产表
+    response_headers: Dict[str, Any] = None
     
     def __post_init__(self):
         if self.tech is None:
             self.tech = []
         if self.matched_gf_patterns is None:
             self.matched_gf_patterns = []
+        if self.response_headers is None:
+            self.response_headers = {}
     
     def to_asset_dto(self):
         """
@@ -58,5 +61,6 @@ class EndpointSnapshotDTO:
             tech=self.tech if self.tech else [],
             vhost=self.vhost,
             location=self.location,
-            matched_gf_patterns=self.matched_gf_patterns if self.matched_gf_patterns else []
+            matched_gf_patterns=self.matched_gf_patterns if self.matched_gf_patterns else [],
+            response_headers=self.response_headers if self.response_headers else {},
         )

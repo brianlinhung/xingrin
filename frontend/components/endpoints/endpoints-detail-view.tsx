@@ -62,6 +62,7 @@ export function EndpointsDetailView({
   const translations = useMemo(() => ({
     columns: {
       url: tColumns("common.url"),
+      host: tColumns("endpoint.host"),
       title: tColumns("endpoint.title"),
       status: tColumns("common.status"),
       contentLength: tColumns("endpoint.contentLength"),
@@ -72,6 +73,7 @@ export function EndpointsDetailView({
       bodyPreview: tColumns("endpoint.bodyPreview"),
       vhost: tColumns("endpoint.vhost"),
       gfPatterns: tColumns("endpoint.gfPatterns"),
+      responseHeaders: tColumns("endpoint.responseHeaders"),
       responseTime: tColumns("endpoint.responseTime"),
       createdAt: tColumns("common.createdAt"),
     },
