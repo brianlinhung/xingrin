@@ -5,11 +5,16 @@ import type {
   CreateScheduledScanRequest,
   UpdateScheduledScanRequest
 } from '@/types/scheduled-scan.types'
+import { USE_MOCK, mockDelay, getMockScheduledScans, getMockScheduledScanById } from '@/mock'
 
 /**
  * Get scheduled scan list
  */
 export async function getScheduledScans(params?: { page?: number; pageSize?: number; search?: string }): Promise<GetScheduledScansResponse> {
+  if (USE_MOCK) {
+    await mockDelay()
+    return getMockScheduledScans(params)
+  }
   const res = await api.get<GetScheduledScansResponse>('/scheduled-scans/', { params })
   return res.data
 }
@@ -18,6 +23,12 @@ export async function getScheduledScans(params?: { page?: number; pageSize?: num
  * Get scheduled scan details
  */
 export async function getScheduledScan(id: number): Promise<ScheduledScan> {
+  if (USE_MOCK) {
+    await mockDelay()
+    const scan = getMockScheduledScanById(id)
+    if (!scan) throw new Error('Scheduled scan not found')
+    return scan
+  }
   const res = await api.get<ScheduledScan>(`/scheduled-scans/${id}/`)
   return res.data
 }
