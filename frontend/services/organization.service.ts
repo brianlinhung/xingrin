@@ -1,5 +1,6 @@
 import { api } from "@/lib/api-client"
 import type { Organization, OrganizationsResponse } from "@/types/organization.types"
+import { USE_MOCK, mockDelay, getMockOrganizations, mockOrganizations } from '@/mock'
 
 
 export class OrganizationService {
@@ -18,6 +19,10 @@ export class OrganizationService {
     pageSize?: number
     search?: string
   }): Promise<OrganizationsResponse<Organization>> {
+    if (USE_MOCK) {
+      await mockDelay()
+      return getMockOrganizations(params)
+    }
     const response = await api.get<OrganizationsResponse<Organization>>(
       '/organizations/',
       { params }
@@ -31,6 +36,12 @@ export class OrganizationService {
    * @returns Promise<Organization>
    */
   static async getOrganizationById(id: string | number): Promise<Organization> {
+    if (USE_MOCK) {
+      await mockDelay()
+      const org = mockOrganizations.find(o => o.id === Number(id))
+      if (!org) throw new Error('Organization not found')
+      return org
+    }
     const response = await api.get<Organization>(`/organizations/${id}/`)
     return response.data
   }

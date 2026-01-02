@@ -190,10 +190,9 @@ export function SearchResultCard({ result, onViewVulnerability }: SearchResultCa
                   <Table className="table-fixed">
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="text-xs w-[40%]">{t('vulnName')}</TableHead>
-                        <TableHead className="text-xs w-[15%]">{t('severity')}</TableHead>
-                        <TableHead className="text-xs w-[15%]">{t('source')}</TableHead>
+                        <TableHead className="text-xs w-[50%]">{t('vulnName')}</TableHead>
                         <TableHead className="text-xs w-[20%]">{t('vulnType')}</TableHead>
+                        <TableHead className="text-xs w-[20%]">{t('severity')}</TableHead>
                         <TableHead className="text-xs w-[10%]"></TableHead>
                       </TableRow>
                     </TableHeader>
@@ -212,19 +211,6 @@ export function SearchResultCard({ result, onViewVulnerability }: SearchResultCa
                               </TooltipContent>
                             </Tooltip>
                           </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant="outline"
-                              className={`text-xs ${severityColors[vuln.severity] || severityColors.info}`}
-                            >
-                              {vuln.severity}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-xs">
-                            <Badge variant="outline" className="text-xs">
-                              {vuln.source}
-                            </Badge>
-                          </TableCell>
                           <TableCell className="text-xs">
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -236,6 +222,14 @@ export function SearchResultCard({ result, onViewVulnerability }: SearchResultCa
                                 {vuln.vulnType}
                               </TooltipContent>
                             </Tooltip>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={`text-xs ${severityColors[vuln.severity] || severityColors.info}`}
+                            >
+                              {vuln.severity}
+                            </Badge>
                           </TableCell>
                           <TableCell className="text-right">
                             <Button

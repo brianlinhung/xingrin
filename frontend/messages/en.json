@@ -317,13 +317,14 @@
   },
   "search": {
     "title": "Asset Search",
-    "hint": "Click search box to view available fields and syntax",
+    "hint": "Click search box to view available fields and syntax. Plain text defaults to hostname search",
     "searching": "Searching...",
     "loading": "Loading...",
     "resultsCount": "Found {count} results",
     "error": "Search failed, please try again later",
     "noResults": "No matching assets found",
     "noResultsHint": "Try adjusting your search criteria",
+    "vulnLoadError": "Failed to load vulnerability details",
     "fields": {
       "host": "Hostname",
       "url": "URL address",
@@ -342,6 +343,13 @@
       "severity": "Severity",
       "source": "Source",
       "vulnType": "Vuln Type"
+    },
+    "vulnDetail": {
+      "title": "Vulnerability Details",
+      "name": "Vulnerability Name",
+      "source": "Source",
+      "type": "Vulnerability Type",
+      "url": "Vulnerability URL"
     }
   },
   "dashboard": {
@@ -745,6 +753,7 @@
         "organizationMode": "Organization Scan",
         "organizationModeHint": "In organization scan mode, all targets under this organization will be dynamically fetched at execution",
         "noAvailableTarget": "No available targets",
+        "noEngine": "No engines available",
         "selected": "Selected",
         "selectedEngines": "{count} engines selected"
       },

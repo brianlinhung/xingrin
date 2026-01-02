@@ -125,6 +125,17 @@ class AssetSearchView(APIView):
                     except (json.JSONDecodeError, TypeError):
                         vulnerabilities = []
                 
+                # 格式化漏洞数据
+                formatted_vulns = []
+                for v in (vulnerabilities or []):
+                    formatted_vulns.append({
+                        'id': v.get('id'),
+                        'name': v.get('name', v.get('vuln_type', '')),
+                        'vulnType': v.get('vuln_type', ''),
+                        'severity': v.get('severity', 'info'),
+                        'url': v.get('url', ''),
+                    })
+                
                 formatted_results.append({
                     'url': result.get('url', ''),
                     'host': result.get('host', ''),
@@ -133,7 +144,7 @@ class AssetSearchView(APIView):
                     'statusCode': result.get('status_code'),
                     'responseHeaders': response_headers,
                     'responseBody': result.get('response_body', ''),
-                    'vulnerabilities': vulnerabilities or [],
+                    'vulnerabilities': formatted_vulns,
                 })
             
             return success_response(data={

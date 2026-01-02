@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev:mock": "NEXT_PUBLIC_USE_MOCK=true next dev --turbopack",
     "dev:noauth": "NEXT_PUBLIC_SKIP_AUTH=true next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",

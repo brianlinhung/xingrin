@@ -1,5 +1,6 @@
 import { api } from "@/lib/api-client"
 import type { Subdomain, GetSubdomainsParams, GetSubdomainsResponse, GetAllSubdomainsParams, GetAllSubdomainsResponse, GetSubdomainByIDResponse, BatchCreateSubdomainsResponse } from "@/types/subdomain.types"
+import { USE_MOCK, mockDelay, getMockSubdomains, getMockSubdomainById } from '@/mock'
 
 // Bulk create subdomains response type
 export interface BulkCreateSubdomainsResponse {
@@ -48,6 +49,12 @@ export class SubdomainService {
    * Get single subdomain details
    */
   static async getSubdomainById(id: string | number): Promise<GetSubdomainByIDResponse> {
+    if (USE_MOCK) {
+      await mockDelay()
+      const subdomain = getMockSubdomainById(Number(id))
+      if (!subdomain) throw new Error('Subdomain not found')
+      return subdomain
+    }
     const response = await api.get<GetSubdomainByIDResponse>(`/domains/${id}/`)
     return response.data
   }
@@ -164,6 +171,10 @@ export class SubdomainService {
 
   /** Get all subdomains list (server-side pagination) */
   static async getAllSubdomains(params?: GetAllSubdomainsParams): Promise<GetAllSubdomainsResponse> {
+    if (USE_MOCK) {
+      await mockDelay()
+      return getMockSubdomains(params)
+    }
     const response = await api.get<GetAllSubdomainsResponse>('/domains/', {
       params: {
         page: params?.page || 1,

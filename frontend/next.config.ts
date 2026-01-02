@@ -3,9 +3,12 @@ import createNextIntlPlugin from 'next-intl/plugin';
 
 const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 
+// Check if running on Vercel
+const isVercel = process.env.VERCEL === '1';
+
 const nextConfig: NextConfig = {
-  // Use standalone mode for Docker deployment
-  output: 'standalone',
+  // Use standalone mode for Docker deployment (not needed on Vercel)
+  ...(isVercel ? {} : { output: 'standalone' }),
   // Disable Next.js automatic add/remove trailing slash behavior
   // Let us manually control URL format
   skipTrailingSlashRedirect: true,
@@ -17,6 +20,10 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ['192.168.*.*', '10.*.*.*', '172.16.*.*'],
 
   async rewrites() {
+    // Skip rewrites on Vercel when using mock data
+    if (isVercel) {
+      return [];
+    }
     // Use server service name in Docker environment, localhost for local development
     const apiHost = process.env.API_HOST || 'localhost';
     return [

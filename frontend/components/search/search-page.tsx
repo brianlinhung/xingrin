@@ -4,11 +4,15 @@ import { useState, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Search, AlertCircle } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { toast } from "sonner"
 import { SmartFilterInput, type FilterField } from "@/components/common/smart-filter-input"
 import { SearchResultCard } from "./search-result-card"
 import { SearchPagination } from "./search-pagination"
 import { useAssetSearch } from "@/hooks/use-search"
-import type { SearchParams, SearchState } from "@/types/search.types"
+import { VulnerabilityDetailDialog } from "@/components/vulnerabilities/vulnerability-detail-dialog"
+import { VulnerabilityService } from "@/services/vulnerability.service"
+import type { SearchParams, SearchState, Vulnerability as SearchVuln } from "@/types/search.types"
+import type { Vulnerability } from "@/types/vulnerability.types"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
 // 搜索示例 - 展示各种查询语法
@@ -37,29 +41,6 @@ const SEARCH_FILTER_EXAMPLES = [
   'host="example" && status!="404" && tech="nginx"',
 ]
 
-// 验证搜索查询语法
-function validateSearchQuery(query: string): { valid: boolean; error?: string } {
-  if (!query.trim()) {
-    return { valid: false, error: 'Query cannot be empty' }
-  }
-  
-  // 检查是否有未闭合的引号
-  const quoteCount = (query.match(/"/g) || []).length
-  if (quoteCount % 2 !== 0) {
-    return { valid: false, error: 'Unclosed quote detected' }
-  }
-  
-  // 检查基本语法：field="value" 或 field=="value" 或 field!="value"
-  const conditionPattern = /(\w+)\s*(==|!=|=)\s*"([^"]*)"/g
-  const conditions = query.match(conditionPattern)
-  
-  if (!conditions || conditions.length === 0) {
-    return { valid: false, error: 'Invalid syntax. Use: field="value", field=="value", or field!="value"' }
-  }
-  
-  return { valid: true }
-}
-
 export function SearchPage() {
   const t = useTranslations('search')
   const [searchState, setSearchState] = useState<SearchState>("initial")
@@ -67,6 +48,9 @@ export function SearchPage() {
   const [searchParams, setSearchParams] = useState<SearchParams>({})
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
+  const [selectedVuln, setSelectedVuln] = useState<Vulnerability | null>(null)
+  const [vulnDialogOpen, setVulnDialogOpen] = useState(false)
+  const [loadingVuln, setLoadingVuln] = useState(false)
 
   // 搜索过滤字段配置
   const SEARCH_FILTER_FIELDS: FilterField[] = [
@@ -88,15 +72,7 @@ export function SearchPage() {
   const handleSearch = useCallback((_filters: unknown, rawQuery: string) => {
     if (!rawQuery.trim()) return
 
-    // 验证语法
-    const validation = validateSearchQuery(rawQuery)
-    if (!validation.valid) {
-      // 可以显示错误提示，这里简单处理
-      console.warn('Search validation:', validation.error)
-    }
-
     setQuery(rawQuery)
-    // 直接将原始查询发送给后端解析
     setSearchParams({ q: rawQuery })
     setPage(1)
     setSearchState("searching")
@@ -115,6 +91,21 @@ export function SearchPage() {
     setPageSize(newPageSize)
     setPage(1)
   }, [])
+
+  const handleViewVulnerability = useCallback(async (vuln: SearchVuln) => {
+    if (!vuln.id) return
+    
+    setLoadingVuln(true)
+    try {
+      const fullVuln = await VulnerabilityService.getVulnerabilityById(vuln.id)
+      setSelectedVuln(fullVuln)
+      setVulnDialogOpen(true)
+    } catch {
+      toast.error(t('vulnLoadError'))
+    } finally {
+      setLoadingVuln(false)
+    }
+  }, [t])
 
   return (
     <div className="flex-1 w-full flex flex-col">
@@ -233,7 +224,10 @@ export function SearchPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3, delay: index * 0.05 }}
                       >
-                        <SearchResultCard result={result} />
+                        <SearchResultCard 
+                          result={result} 
+                          onViewVulnerability={handleViewVulnerability}
+                        />
                       </motion.div>
                     ))}
                   </div>
@@ -257,6 +251,13 @@ export function SearchPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* 漏洞详情弹窗 - 复用现有组件 */}
+      <VulnerabilityDetailDialog
+        vulnerability={selectedVuln}
+        open={vulnDialogOpen}
+        onOpenChange={setVulnDialogOpen}
+      />
     </div>
   )
 }

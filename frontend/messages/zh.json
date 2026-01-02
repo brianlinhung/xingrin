@@ -317,13 +317,14 @@
   },
   "search": {
     "title": "资产搜索",
-    "hint": "点击搜索框查看可用字段和语法",
+    "hint": "点击搜索框查看可用字段和语法，直接输入文本默认搜索主机名",
     "searching": "搜索中...",
     "loading": "加载中...",
     "resultsCount": "找到 {count} 条结果",
     "error": "搜索失败，请稍后重试",
     "noResults": "未找到匹配的资产",
     "noResultsHint": "请尝试调整搜索条件",
+    "vulnLoadError": "加载漏洞详情失败",
     "fields": {
       "host": "主机名",
       "url": "URL 地址",
@@ -342,6 +343,13 @@
       "severity": "严重程度",
       "source": "来源",
       "vulnType": "漏洞类型"
+    },
+    "vulnDetail": {
+      "title": "漏洞详情",
+      "name": "漏洞名称",
+      "source": "来源",
+      "type": "漏洞类型",
+      "url": "漏洞 URL"
     }
   },
   "dashboard": {
@@ -745,6 +753,7 @@
         "organizationMode": "组织扫描",
         "organizationModeHint": "组织扫描模式下，执行时将动态获取该组织下所有目标",
         "noAvailableTarget": "暂无可用目标",
+        "noEngine": "暂无可用引擎",
         "selected": "已选择",
         "selectedEngines": "已选择 {count} 个引擎"
       },

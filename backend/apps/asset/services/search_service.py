@@ -68,6 +68,11 @@ class SearchQueryParser:
         
         query = query.strip()
         
+        # 检查是否包含操作符语法，如果不包含则作为 host 模糊搜索
+        if not cls.CONDITION_PATTERN.search(query):
+            # 裸文本，默认作为 host 模糊搜索
+            return "host ILIKE %s", [f"%{query}%"]
+        
         # 按 || 分割为 OR 组
         or_groups = cls._split_by_or(query)
         

@@ -11,9 +11,9 @@ export interface SearchResult {
 }
 
 export interface Vulnerability {
+  id?: number
   name: string
-  severity: 'critical' | 'high' | 'medium' | 'low' | 'info'
-  source: string
+  severity: 'critical' | 'high' | 'medium' | 'low' | 'info' | 'unknown'
   vulnType: string
   url?: string
 }

@@ -57,6 +57,7 @@ class Migration(migrations.Migration):
                         json_agg(
                             json_build_object(
                                 'id', v.id,
+                                'name', v.vuln_type,
                                 'vuln_type', v.vuln_type,
                                 'severity', v.severity,
                                 'url', v.url
