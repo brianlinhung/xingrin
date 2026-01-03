@@ -8,7 +8,7 @@ services:
     build:
       context: ./postgres
       dockerfile: Dockerfile
-    image: ${DOCKER_USER:-yyhuni}/xingrin-postgres:15
+    image: ${DOCKER_USER:-yyhuni}/xingrin-postgres:${IMAGE_TAG:-dev}
     restart: always
     environment:
       POSTGRES_DB: ${DB_NAME}

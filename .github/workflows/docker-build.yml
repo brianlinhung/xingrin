@@ -44,6 +44,10 @@ jobs:
             dockerfile: docker/agent/Dockerfile
             context: .
             platforms: linux/amd64,linux/arm64
+          - image: xingrin-postgres
+            dockerfile: docker/postgres/Dockerfile
+            context: docker/postgres
+            platforms: linux/amd64,linux/arm64
 
     steps:
       - name: Checkout
