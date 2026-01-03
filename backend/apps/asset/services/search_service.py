@@ -11,7 +11,8 @@
 
 import logging
 import re
-from typing import Optional, List, Dict, Any, Tuple, Literal
+import uuid
+from typing import Optional, List, Dict, Any, Tuple, Literal, Iterator
 
 from django.db import connection
 
@@ -400,7 +401,7 @@ class AssetSearchService:
         query: str, 
         asset_type: AssetType = 'website',
         batch_size: int = 1000
-    ):
+    ) -> Iterator[Dict[str, Any]]:
         """
         流式搜索资产（使用服务端游标，内存友好）
         
@@ -425,9 +426,12 @@ class AssetSearchService:
             ORDER BY created_at DESC
         """
         
+        # 生成唯一的游标名称，避免并发请求冲突
+        cursor_name = f'export_cursor_{uuid.uuid4().hex[:8]}'
+        
         try:
             # 使用服务端游标，避免一次性加载所有数据到内存
-            with connection.cursor(name='export_cursor') as cursor:
+            with connection.cursor(name=cursor_name) as cursor:
                 cursor.itersize = batch_size
                 cursor.execute(sql, params)
                 columns = [col[0] for col in cursor.description]

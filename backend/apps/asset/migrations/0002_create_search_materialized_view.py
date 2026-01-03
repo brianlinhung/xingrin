@@ -18,7 +18,13 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # 1. 确保 pg_ivm 扩展已启用
+        # 1. 确保 pg_trgm 扩展已启用（用于文本模糊搜索索引）
+        migrations.RunSQL(
+            sql="CREATE EXTENSION IF NOT EXISTS pg_trgm;",
+            reverse_sql="-- pg_trgm extension kept for other uses"
+        ),
+        
+        # 2. 确保 pg_ivm 扩展已启用（用于 IMMV 增量维护）
         migrations.RunSQL(
             sql="CREATE EXTENSION IF NOT EXISTS pg_ivm;",
             reverse_sql="-- pg_ivm extension kept for other uses"
