@@ -25,6 +25,13 @@
 
 ---
 
+## 🌐 在线 Demo
+
+👉 **[https://xingrin.vercel.app/](https://xingrin.vercel.app/)**
+
+> ⚠️ 仅用于 UI 展示，未接入后端数据库
+
+---
 
 <p align="center">
   <b>🎨 现代化 UI </b>
