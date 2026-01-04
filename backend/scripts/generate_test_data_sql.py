@@ -636,7 +636,7 @@ class TestDataGenerator:
                 
                 cur.execute("""
                     INSERT INTO scan (
-                        target_id, engine_ids, engine_names, merged_configuration, status, worker_id, progress, current_stage,
+                        target_id, engine_ids, engine_names, yaml_configuration, status, worker_id, progress, current_stage,
                         results_dir, error_message, container_ids, stage_progress,
                         cached_subdomains_count, cached_websites_count, cached_endpoints_count,
                         cached_ips_count, cached_directories_count, cached_vulns_total,
@@ -749,7 +749,7 @@ class TestDataGenerator:
             
             cur.execute("""
                 INSERT INTO scheduled_scan (
-                    name, engine_ids, engine_names, merged_configuration, organization_id, target_id, cron_expression, is_enabled,
+                    name, engine_ids, engine_names, yaml_configuration, organization_id, target_id, cron_expression, is_enabled,
                     run_count, last_run_time, next_run_time, created_at, updated_at
                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW() - INTERVAL '%s days', NOW())
                 ON CONFLICT DO NOTHING

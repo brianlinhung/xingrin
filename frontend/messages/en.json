@@ -179,7 +179,8 @@
       "syntaxError": "Syntax Error",
       "syntaxValid": "Syntax Valid",
       "errorLocation": "Line {line}, Column {column}",
-      "loading": "Loading editor..."
+      "loading": "Loading editor...",
+      "duplicateKey": "Duplicate key '{key}' found. Later values will override earlier ones. Please remove duplicates."
     },
     "theme": {
       "switchToLight": "Switch to light mode",
@@ -660,7 +661,40 @@
       "noConfig": "No config",
       "initiating": "Initiating...",
       "startScan": "Start Scan",
-      "selectedCount": "{count} engines selected"
+      "selectedCount": "{count} engines selected",
+      "configTitle": "Scan Configuration",
+      "configEdited": "Edited",
+      "stepIndicator": "Step {current}/{total}",
+      "back": "Back",
+      "next": "Next",
+      "steps": {
+        "selectEngine": "Select Engine",
+        "editConfig": "Edit Config"
+      },
+      "presets": {
+        "title": "Quick Select",
+        "fullScan": "Full Scan",
+        "fullScanDesc": "Complete security assessment covering asset discovery to vulnerability detection",
+        "recon": "Reconnaissance",
+        "reconDesc": "Discover and identify target assets including subdomains, ports, sites and fingerprints",
+        "vulnScan": "Vulnerability Scan",
+        "vulnScanDesc": "Detect security vulnerabilities on known assets",
+        "custom": "Custom",
+        "customDesc": "Manually select engine combination",
+        "customHint": "Click to manually select engines",
+        "selectHint": "Please select a scan preset",
+        "selectEngines": "Select Engines",
+        "enginesCount": "engines",
+        "capabilities": "Capabilities",
+        "usedEngines": "Used Engines",
+        "noCapabilities": "Please select engines"
+      },
+      "overwriteConfirm": {
+        "title": "Overwrite Configuration",
+        "description": "You have manually edited the configuration. Changing engines will overwrite your changes. Continue?",
+        "cancel": "Cancel",
+        "confirm": "Overwrite"
+      }
     },
     "cron": {
       "everyMinute": "Every minute",
@@ -742,10 +776,13 @@
       "createDesc": "Configure scheduled scan task and set execution plan",
       "editTitle": "Edit Scheduled Scan",
       "editDesc": "Modify scheduled scan task configuration",
+      "stepIndicator": "Step {current}/{total}",
       "steps": {
         "basicInfo": "Basic Info",
         "scanMode": "Scan Mode",
         "selectTarget": "Select Target",
+        "selectEngine": "Select Engine",
+        "editConfig": "Edit Config",
         "scheduleSettings": "Schedule Settings"
       },
       "form": {
@@ -794,6 +831,8 @@
         "organizationModeHint": "In organization scan mode, all targets under this organization will be dynamically fetched at execution",
         "noAvailableTarget": "No available targets",
         "noEngine": "No engines available",
+        "noConfig": "No config",
+        "capabilitiesCount": "{count} capabilities",
         "selected": "Selected",
         "selectedEngines": "{count} engines selected"
       },
@@ -1730,7 +1769,8 @@
     },
     "step1Title": "Enter Targets",
     "step2Title": "Select Engines",
-    "step3Title": "Confirm",
+    "step3Title": "Edit Config",
+    "stepIndicator": "Step {current}/{total}",
     "step1Hint": "Enter scan targets in the left input box, one per line",
     "step": "Step {current}/{total} · {title}",
     "targetPlaceholder": "Enter one target per line, supported formats:\n\nDomain: example.com, sub.example.com\nIP Address: 192.168.1.1, 10.0.0.1\nCIDR: 192.168.1.0/24, 10.0.0.0/8\nURL: https://example.com/api/v1",
@@ -1758,6 +1798,14 @@
     "andMore": "{count} more...",
     "selectedEngines": "Selected Engines",
     "confirmSummary": "Will scan {targetCount} targets with {engineCount} engines",
+    "configTitle": "Scan Configuration",
+    "configEdited": "Edited",
+    "overwriteConfirm": {
+      "title": "Overwrite Configuration",
+      "description": "You have manually edited the configuration. Changing engines will overwrite your changes. Continue?",
+      "cancel": "Cancel",
+      "confirm": "Overwrite"
+    },
     "toast": {
       "noValidTarget": "Please enter at least one valid target",
       "hasInvalidInputs": "{count} invalid inputs, please fix before continuing",

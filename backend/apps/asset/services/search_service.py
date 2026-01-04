@@ -11,7 +11,6 @@
 
 import logging
 import re
-import uuid
 from typing import Optional, List, Dict, Any, Tuple, Literal, Iterator
 
 from django.db import connection
@@ -370,13 +369,14 @@ class AssetSearchService:
             logger.error(f"搜索查询失败: {e}, SQL: {sql}, params: {params}")
             raise
     
-    def count(self, query: str, asset_type: AssetType = 'website') -> int:
+    def count(self, query: str, asset_type: AssetType = 'website', statement_timeout_ms: int = 300000) -> int:
         """
         统计搜索结果数量
         
         Args:
             query: 搜索查询字符串
             asset_type: 资产类型 ('website' 或 'endpoint')
+            statement_timeout_ms: SQL 语句超时时间（毫秒），默认 5 分钟
         
         Returns:
             int: 结果总数
@@ -390,6 +390,8 @@ class AssetSearchService:
         
         try:
             with connection.cursor() as cursor:
+                # 为导出设置更长的超时时间（仅影响当前会话）
+                cursor.execute(f"SET LOCAL statement_timeout = {statement_timeout_ms}")
                 cursor.execute(sql, params)
                 return cursor.fetchone()[0]
         except Exception as e:
@@ -400,15 +402,17 @@ class AssetSearchService:
         self, 
         query: str, 
         asset_type: AssetType = 'website',
-        batch_size: int = 1000
+        batch_size: int = 1000,
+        statement_timeout_ms: int = 300000
     ) -> Iterator[Dict[str, Any]]:
         """
-        流式搜索资产（使用服务端游标，内存友好）
+        流式搜索资产（使用分批查询，内存友好）
         
         Args:
             query: 搜索查询字符串
             asset_type: 资产类型 ('website' 或 'endpoint')
             batch_size: 每批获取的数量
+            statement_timeout_ms: SQL 语句超时时间（毫秒），默认 5 分钟
         
         Yields:
             Dict: 单条搜索结果
@@ -419,25 +423,38 @@ class AssetSearchService:
         view_name = VIEW_MAPPING.get(asset_type, 'asset_search_view')
         select_fields = ENDPOINT_SELECT_FIELDS if asset_type == 'endpoint' else WEBSITE_SELECT_FIELDS
         
-        sql = f"""
-            SELECT {select_fields}
-            FROM {view_name}
-            WHERE {where_clause}
-            ORDER BY created_at DESC
-        """
-        
-        # 生成唯一的游标名称，避免并发请求冲突
-        cursor_name = f'export_cursor_{uuid.uuid4().hex[:8]}'
+        # 使用 OFFSET/LIMIT 分批查询（Django 不支持命名游标）
+        offset = 0
         
         try:
-            # 使用服务端游标，避免一次性加载所有数据到内存
-            with connection.cursor(name=cursor_name) as cursor:
-                cursor.itersize = batch_size
-                cursor.execute(sql, params)
-                columns = [col[0] for col in cursor.description]
+            while True:
+                sql = f"""
+                    SELECT {select_fields}
+                    FROM {view_name}
+                    WHERE {where_clause}
+                    ORDER BY created_at DESC
+                    LIMIT {batch_size} OFFSET {offset}
+                """
                 
-                for row in cursor:
+                with connection.cursor() as cursor:
+                    # 为导出设置更长的超时时间（仅影响当前会话）
+                    cursor.execute(f"SET LOCAL statement_timeout = {statement_timeout_ms}")
+                    cursor.execute(sql, params)
+                    columns = [col[0] for col in cursor.description]
+                    rows = cursor.fetchall()
+                
+                if not rows:
+                    break
+                
+                for row in rows:
                     yield dict(zip(columns, row))
+                
+                # 如果返回的行数少于 batch_size，说明已经是最后一批
+                if len(rows) < batch_size:
+                    break
+                
+                offset += batch_size
+                
         except Exception as e:
             logger.error(f"流式搜索查询失败: {e}, SQL: {sql}, params: {params}")
             raise

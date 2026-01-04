@@ -42,34 +42,17 @@ export class SearchService {
   /**
    * 导出搜索结果为 CSV
    * GET /api/assets/search/export/
+   * 
+   * 使用浏览器原生下载，支持显示下载进度
    */
   static async exportCSV(query: string, assetType: AssetType): Promise<void> {
     const queryParams = new URLSearchParams()
     queryParams.append('q', query)
     queryParams.append('asset_type', assetType)
     
-    const response = await api.get(
-      `/assets/search/export/?${queryParams.toString()}`,
-      { responseType: 'blob' }
-    )
-    
-    // 从响应头获取文件名
-    const contentDisposition = response.headers?.['content-disposition']
-    let filename = `search_${assetType}_${new Date().toISOString().slice(0, 10)}.csv`
-    if (contentDisposition) {
-      const match = contentDisposition.match(/filename="?([^"]+)"?/)
-      if (match) filename = match[1]
-    }
-    
-    // 创建下载链接
-    const blob = new Blob([response.data as BlobPart], { type: 'text/csv;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = filename
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
+    // 直接打开下载链接，使用浏览器原生下载管理器
+    // 这样可以显示下载进度，且不会阻塞页面
+    const downloadUrl = `/api/assets/search/export/?${queryParams.toString()}`
+    window.open(downloadUrl, '_blank')
   }
 }

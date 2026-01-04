@@ -33,9 +33,7 @@ from urllib.parse import urlparse, urlunparse
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.request import Request
-from django.http import StreamingHttpResponse
-from django.db import connection, transaction
-from django.utils.decorators import method_decorator
+from django.db import connection
 
 from apps.common.response_helpers import success_response, error_response
 from apps.common.error_codes import ErrorCodes
@@ -286,10 +284,7 @@ class AssetSearchExportView(APIView):
         asset_type: 资产类型 ('website' 或 'endpoint'，默认 'website')
     
     Response:
-        CSV 文件流（使用服务端游标，支持大数据量导出）
-    
-    注意：使用 @transaction.non_atomic_requests 装饰器，
-    因为服务端游标不能在事务块内使用。
+        CSV 文件（带 Content-Length，支持浏览器显示下载进度）
     """
     
     def __init__(self, **kwargs):
@@ -316,10 +311,9 @@ class AssetSearchExportView(APIView):
         
         return headers, formatters
     
-    @method_decorator(transaction.non_atomic_requests)
     def get(self, request: Request):
-        """导出搜索结果为 CSV（流式导出，无数量限制）"""
-        from apps.common.utils import generate_csv_rows
+        """导出搜索结果为 CSV（带 Content-Length，支持下载进度显示）"""
+        from apps.common.utils import create_csv_export_response
         
         # 获取搜索查询
         query = request.query_params.get('q', '').strip()
@@ -352,18 +346,16 @@ class AssetSearchExportView(APIView):
         # 获取表头和格式化器
         headers, formatters = self._get_headers_and_formatters(asset_type)
         
-        # 获取流式数据迭代器
-        data_iterator = self.service.search_iter(query, asset_type)
-        
         # 生成文件名
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         filename = f'search_{asset_type}_{timestamp}.csv'
         
-        # 返回流式响应
-        response = StreamingHttpResponse(
-            generate_csv_rows(data_iterator, headers, formatters),
-            content_type='text/csv; charset=utf-8'
+        # 使用通用导出工具
+        data_iterator = self.service.search_iter(query, asset_type)
+        return create_csv_export_response(
+            data_iterator=data_iterator,
+            headers=headers,
+            filename=filename,
+            field_formatters=formatters,
+            show_progress=True  # 显示下载进度
         )
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
-        
-        return response

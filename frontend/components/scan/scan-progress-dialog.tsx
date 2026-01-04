@@ -195,7 +195,7 @@ export function ScanProgressDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-fit sm:min-w-[450px]">
+      <DialogContent className="sm:max-w-[500px] sm:min-w-[450px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ScanStatusIcon status={data.status} />
@@ -211,7 +211,7 @@ export function ScanProgressDialog({
           </div>
           <div className="flex items-start justify-between text-sm gap-4">
             <span className="text-muted-foreground shrink-0">{t("engine")}</span>
-            <div className="grid grid-cols-[repeat(2,auto)] gap-1.5 justify-end">
+            <div className="flex flex-wrap gap-1.5 justify-end">
               {data.engineNames?.length ? (
                 data.engineNames.map((name) => (
                   <Badge key={name} variant="secondary" className="text-xs whitespace-nowrap">

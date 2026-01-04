@@ -179,7 +179,8 @@
       "syntaxError": "语法错误",
       "syntaxValid": "语法正确",
       "errorLocation": "第 {line} 行，第 {column} 列",
-      "loading": "加载编辑器..."
+      "loading": "加载编辑器...",
+      "duplicateKey": "发现重复的配置项 '{key}'，后面的配置会覆盖前面的，请删除重复项"
     },
     "theme": {
       "switchToLight": "切换到亮色模式",
@@ -660,7 +661,40 @@
       "noConfig": "无配置",
       "initiating": "发起中...",
       "startScan": "开始扫描",
-      "selectedCount": "已选择 {count} 个引擎"
+      "selectedCount": "已选择 {count} 个引擎",
+      "configTitle": "扫描配置",
+      "configEdited": "已编辑",
+      "stepIndicator": "步骤 {current}/{total}",
+      "back": "上一步",
+      "next": "下一步",
+      "steps": {
+        "selectEngine": "选择引擎",
+        "editConfig": "编辑配置"
+      },
+      "presets": {
+        "title": "推荐组合",
+        "fullScan": "全量扫描",
+        "fullScanDesc": "完整的安全评估，覆盖资产发现到漏洞检测的全部流程",
+        "recon": "信息收集",
+        "reconDesc": "发现和识别目标资产，包括子域名、端口、站点和指纹",
+        "vulnScan": "漏洞扫描",
+        "vulnScanDesc": "对已知资产进行安全漏洞检测",
+        "custom": "自定义",
+        "customDesc": "手动选择引擎组合",
+        "customHint": "点击选择后手动勾选引擎",
+        "selectHint": "请选择一个扫描方案",
+        "selectEngines": "选择引擎",
+        "enginesCount": "个引擎",
+        "capabilities": "涉及能力",
+        "usedEngines": "使用引擎",
+        "noCapabilities": "请选择引擎"
+      },
+      "overwriteConfirm": {
+        "title": "覆盖配置确认",
+        "description": "您已手动编辑过配置，切换引擎将覆盖当前配置。是否继续？",
+        "cancel": "取消",
+        "confirm": "确认覆盖"
+      }
     },
     "cron": {
       "everyMinute": "每分钟",
@@ -742,10 +776,13 @@
       "createDesc": "配置定时扫描任务，设置执行计划",
       "editTitle": "编辑定时扫描",
       "editDesc": "修改定时扫描任务配置",
+      "stepIndicator": "步骤 {current}/{total}",
       "steps": {
         "basicInfo": "基本信息",
         "scanMode": "扫描模式",
         "selectTarget": "选择目标",
+        "selectEngine": "选择引擎",
+        "editConfig": "编辑配置",
         "scheduleSettings": "调度设置"
       },
       "form": {
@@ -794,6 +831,8 @@
         "organizationModeHint": "组织扫描模式下，执行时将动态获取该组织下所有目标",
         "noAvailableTarget": "暂无可用目标",
         "noEngine": "暂无可用引擎",
+        "noConfig": "无配置",
+        "capabilitiesCount": "{count} 项能力",
         "selected": "已选择",
         "selectedEngines": "已选择 {count} 个引擎"
       },
@@ -1730,7 +1769,8 @@
     },
     "step1Title": "输入目标",
     "step2Title": "选择引擎",
-    "step3Title": "确认",
+    "step3Title": "编辑配置",
+    "stepIndicator": "步骤 {current}/{total}",
     "step1Hint": "在左侧输入框中输入扫描目标，每行一个",
     "step": "步骤 {current}/{total} · {title}",
     "targetPlaceholder": "每行输入一个目标，支持以下格式：\n\n域名: example.com, sub.example.com\nIP地址: 192.168.1.1, 10.0.0.1\nCIDR网段: 192.168.1.0/24, 10.0.0.0/8\nURL: https://example.com/api/v1",
@@ -1758,6 +1798,14 @@
     "andMore": "还有 {count} 个...",
     "selectedEngines": "已选引擎",
     "confirmSummary": "将使用 {engineCount} 个引擎扫描 {targetCount} 个目标",
+    "configTitle": "扫描配置",
+    "configEdited": "已编辑",
+    "overwriteConfirm": {
+      "title": "覆盖配置确认",
+      "description": "您已手动编辑过配置，切换引擎将覆盖当前配置。是否继续？",
+      "cancel": "取消",
+      "confirm": "确认覆盖"
+    },
     "toast": {
       "noValidTarget": "请输入至少一个有效目标",
       "hasInvalidInputs": "存在 {count} 个无效输入，请修正后继续",

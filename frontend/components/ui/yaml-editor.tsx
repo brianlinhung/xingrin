@@ -1,9 +1,9 @@
 "use client"
 
-import React, { useState, useCallback } from "react"
+import React, { useState, useCallback, useEffect } from "react"
 import Editor from "@monaco-editor/react"
 import * as yaml from "js-yaml"
-import { AlertCircle, CheckCircle2 } from "lucide-react"
+import { AlertCircle } from "lucide-react"
 import { useColorTheme } from "@/hooks/use-color-theme"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
@@ -15,7 +15,6 @@ interface YamlEditorProps {
   disabled?: boolean
   height?: string
   className?: string
-  showValidation?: boolean
   onValidationChange?: (isValid: boolean, error?: { message: string; line?: number; column?: number }) => void
 }
 
@@ -30,13 +29,44 @@ export function YamlEditor({
   disabled = false,
   height = "100%",
   className,
-  showValidation = true,
   onValidationChange,
 }: YamlEditorProps) {
   const t = useTranslations("common.yamlEditor")
   const { currentTheme } = useColorTheme()
-  const [isEditorReady, setIsEditorReady] = useState(false)
+  const [shouldMount, setShouldMount] = useState(false)
   const [yamlError, setYamlError] = useState<{ message: string; line?: number; column?: number } | null>(null)
+
+  // Delay mounting to avoid Monaco hitTest error on rapid container changes
+  useEffect(() => {
+    const timer = setTimeout(() => setShouldMount(true), 50)
+    return () => clearTimeout(timer)
+  }, [])
+
+  // Check for duplicate keys in YAML content
+  const checkDuplicateKeys = useCallback((content: string): { key: string; line: number } | null => {
+    const lines = content.split('\n')
+    const keyStack: { indent: number; keys: Set<string> }[] = [{ indent: -1, keys: new Set() }]
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]
+      // Skip empty lines and comments
+      if (!line.trim() || line.trim().startsWith('#')) continue
+      
+      // Match top-level keys (no leading whitespace, ends with colon)
+      const topLevelMatch = line.match(/^([a-zA-Z_][a-zA-Z0-9_-]*):\s*(?:#.*)?$/)
+      if (topLevelMatch) {
+        const key = topLevelMatch[1]
+        const currentLevel = keyStack[0]
+        
+        if (currentLevel.keys.has(key)) {
+          return { key, line: i + 1 }
+        }
+        currentLevel.keys.add(key)
+      }
+    }
+    
+    return null
+  }, [])
 
   // Validate YAML syntax
   const validateYaml = useCallback((content: string) => {
@@ -44,6 +74,19 @@ export function YamlEditor({
       setYamlError(null)
       onValidationChange?.(true)
       return true
+    }
+
+    // First check for duplicate keys
+    const duplicateKey = checkDuplicateKeys(content)
+    if (duplicateKey) {
+      const errorInfo = {
+        message: t("duplicateKey", { key: duplicateKey.key }),
+        line: duplicateKey.line,
+        column: 1,
+      }
+      setYamlError(errorInfo)
+      onValidationChange?.(false, errorInfo)
+      return false
     }
 
     try {
@@ -62,7 +105,7 @@ export function YamlEditor({
       onValidationChange?.(false, errorInfo)
       return false
     }
-  }, [onValidationChange])
+  }, [onValidationChange, checkDuplicateKeys, t])
 
   // Handle editor content change
   const handleEditorChange = useCallback((newValue: string | undefined) => {
@@ -73,74 +116,63 @@ export function YamlEditor({
 
   // Handle editor mount
   const handleEditorDidMount = useCallback(() => {
-    setIsEditorReady(true)
     // Validate initial content
     validateYaml(value)
   }, [validateYaml, value])
 
   return (
     <div className={cn("flex flex-col h-full", className)}>
-      {/* Validation status */}
-      {showValidation && (
-        <div className="flex items-center justify-end px-2 py-1 border-b bg-muted/30">
-          {value.trim() && (
-            yamlError ? (
-              <div className="flex items-center gap-1 text-xs text-destructive">
-                <AlertCircle className="h-3.5 w-3.5" />
-                <span>{t("syntaxError")}</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                <span>{t("syntaxValid")}</span>
-              </div>
-            )
-          )}
-        </div>
-      )}
-
       {/* Monaco Editor */}
       <div className={cn("flex-1 overflow-hidden", yamlError ? 'border-destructive' : '')}>
-        <Editor
-          height={height}
-          defaultLanguage="yaml"
-          value={value}
-          onChange={handleEditorChange}
-          onMount={handleEditorDidMount}
-          theme={currentTheme.isDark ? "vs-dark" : "light"}
-          options={{
-            minimap: { enabled: false },
-            fontSize: 12,
-            lineNumbers: "on",
-            wordWrap: "off",
-            scrollBeyondLastLine: false,
-            automaticLayout: true,
-            tabSize: 2,
-            insertSpaces: true,
-            formatOnPaste: true,
-            formatOnType: true,
-            folding: true,
-            foldingStrategy: "indentation",
-            showFoldingControls: "mouseover",
-            bracketPairColorization: {
-              enabled: true,
-            },
-            padding: {
-              top: 8,
-              bottom: 8,
-            },
-            readOnly: disabled,
-            placeholder: placeholder,
-          }}
-          loading={
-            <div className="flex items-center justify-center h-full bg-muted/30">
-              <div className="flex flex-col items-center gap-2">
-                <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                <p className="text-xs text-muted-foreground">{t("loading")}</p>
+        {shouldMount ? (
+          <Editor
+            height={height}
+            defaultLanguage="yaml"
+            value={value}
+            onChange={handleEditorChange}
+            onMount={handleEditorDidMount}
+            theme={currentTheme.isDark ? "vs-dark" : "light"}
+            options={{
+              minimap: { enabled: false },
+              fontSize: 12,
+              lineNumbers: "off",
+              wordWrap: "off",
+              scrollBeyondLastLine: false,
+              automaticLayout: true,
+              tabSize: 2,
+              insertSpaces: true,
+              formatOnPaste: true,
+              formatOnType: true,
+              folding: true,
+              foldingStrategy: "indentation",
+              showFoldingControls: "mouseover",
+              bracketPairColorization: {
+                enabled: true,
+              },
+              padding: {
+                top: 8,
+                bottom: 8,
+              },
+              readOnly: disabled,
+              placeholder: placeholder,
+            }}
+            loading={
+              <div className="flex items-center justify-center h-full bg-muted/30">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  <p className="text-xs text-muted-foreground">{t("loading")}</p>
+                </div>
               </div>
+            }
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full bg-muted/30">
+            <div className="flex flex-col items-center gap-2">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              <p className="text-xs text-muted-foreground">{t("loading")}</p>
             </div>
-          }
-        />
+          </div>
+        )}
       </div>
 
       {/* Error message display */}
