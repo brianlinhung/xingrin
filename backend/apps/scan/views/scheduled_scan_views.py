@@ -68,29 +68,21 @@ class ScheduledScanViewSet(viewsets.ModelViewSet):
             data = serializer.validated_data
             dto = ScheduledScanDTO(
                 name=data['name'],
-                engine_ids=data['engine_ids'],
+                engine_ids=data.get('engine_ids', []),
+                engine_names=data.get('engine_names', []),
+                yaml_configuration=data['configuration'],
                 organization_id=data.get('organization_id'),
                 target_id=data.get('target_id'),
                 cron_expression=data.get('cron_expression', '0 2 * * *'),
                 is_enabled=data.get('is_enabled', True),
             )
             
-            scheduled_scan = self.service.create(dto)
+            scheduled_scan = self.service.create_with_configuration(dto)
             response_serializer = ScheduledScanSerializer(scheduled_scan)
             
             return success_response(
                 data=response_serializer.data,
                 status_code=status.HTTP_201_CREATED
-            )
-        except ConfigConflictError as e:
-            return error_response(
-                code='CONFIG_CONFLICT',
-                message=str(e),
-                details=[
-                    {'key': k, 'engines': [e1, e2]} 
-                    for k, e1, e2 in e.conflicts
-                ],
-                status_code=status.HTTP_400_BAD_REQUEST
             )
         except ValidationError as e:
             return error_response(

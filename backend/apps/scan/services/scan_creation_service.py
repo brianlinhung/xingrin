@@ -282,7 +282,7 @@ class ScanCreationService:
         targets: List[Target],
         engine_ids: List[int],
         engine_names: List[str],
-        merged_configuration: str,
+        yaml_configuration: str,
         scheduled_scan_name: str | None = None
     ) -> List[Scan]:
         """
@@ -292,7 +292,7 @@ class ScanCreationService:
             targets: 目标列表
             engine_ids: 引擎 ID 列表
             engine_names: 引擎名称列表
-            merged_configuration: 合并后的 YAML 配置
+            yaml_configuration: YAML 格式的扫描配置
             scheduled_scan_name: 定时扫描任务名称（可选，用于通知显示）
         
         Returns:
@@ -312,7 +312,7 @@ class ScanCreationService:
                     target=target,
                     engine_ids=engine_ids,
                     engine_names=engine_names,
-                    merged_configuration=merged_configuration,
+                    yaml_configuration=yaml_configuration,
                     results_dir=scan_workspace_dir,
                     status=ScanStatus.INITIATED,
                     container_ids=[],

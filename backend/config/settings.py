@@ -219,6 +219,8 @@ REST_FRAMEWORK = {
 # 允许所有来源（前后端分离项目，安全性由认证系统保障）
 CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL_ORIGINS', 'True').lower() == 'true'
 CORS_ALLOW_CREDENTIALS = True
+# 暴露额外的响应头给前端（Content-Disposition 用于文件下载获取文件名）
+CORS_EXPOSE_HEADERS = ['Content-Disposition']
 
 # ==================== CSRF 配置 ====================
 CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000').split(',')

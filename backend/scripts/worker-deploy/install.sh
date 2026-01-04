@@ -27,10 +27,50 @@ BLUE='\033[0;34m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-log_info() { echo -e "${BLUE}[XingRin]${NC} $1"; }
-log_success() { echo -e "${GREEN}[XingRin]${NC} $1"; }
-log_warn() { echo -e "${YELLOW}[XingRin]${NC} $1"; }
-log_error() { echo -e "${RED}[XingRin]${NC} $1"; }
+# 渐变色定义
+CYAN='\033[0;36m'
+MAGENTA='\033[0;35m'
+BOLD='\033[1m'
+DIM='\033[2m'
+
+log_info() { echo -e "${CYAN}  ▸${NC} $1"; }
+log_success() { echo -e "${GREEN}  ✔${NC} $1"; }
+log_warn() { echo -e "${YELLOW}  ⚠${NC} $1"; }
+log_error() { echo -e "${RED}  ✖${NC} $1"; }
+
+# 炫酷 Banner
+show_banner() {
+    echo -e ""
+    echo -e "${CYAN}${BOLD}    ██╗  ██╗██╗███╗   ██╗ ██████╗ ██████╗ ██╗███╗   ██╗${NC}"
+    echo -e "${CYAN}    ╚██╗██╔╝██║████╗  ██║██╔════╝ ██╔══██╗██║████╗  ██║${NC}"
+    echo -e "${BLUE}${BOLD}     ╚███╔╝ ██║██╔██╗ ██║██║  ███╗██████╔╝██║██╔██╗ ██║${NC}"
+    echo -e "${BLUE}     ██╔██╗ ██║██║╚██╗██║██║   ██║██╔══██╗██║██║╚██╗██║${NC}"
+    echo -e "${MAGENTA}${BOLD}    ██╔╝ ██╗██║██║ ╚████║╚██████╔╝██║  ██║██║██║ ╚████║${NC}"
+    echo -e "${MAGENTA}    ╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝${NC}"
+    echo -e ""
+    echo -e "${DIM}    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${BOLD}      🚀 分布式安全扫描平台 │ Worker 节点部署${NC}"
+    echo -e "${DIM}    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e ""
+}
+
+# 完成 Banner
+show_complete() {
+    echo -e ""
+    echo -e "${GREEN}${BOLD}    ╔═══════════════════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}${BOLD}    ║                                                   ║${NC}"
+    echo -e "${GREEN}${BOLD}    ║   ██████╗  ██████╗ ███╗   ██╗███████╗██╗          ║${NC}"
+    echo -e "${GREEN}${BOLD}    ║   ██╔══██╗██╔═══██╗████╗  ██║██╔════╝██║          ║${NC}"
+    echo -e "${GREEN}${BOLD}    ║   ██║  ██║██║   ██║██╔██╗ ██║█████╗  ██║          ║${NC}"
+    echo -e "${GREEN}${BOLD}    ║   ██║  ██║██║   ██║██║╚██╗██║██╔══╝  ╚═╝          ║${NC}"
+    echo -e "${GREEN}${BOLD}    ║   ██████╔╝╚██████╔╝██║ ╚████║███████╗██╗          ║${NC}"
+    echo -e "${GREEN}${BOLD}    ║   ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚══════╝╚═╝          ║${NC}"
+    echo -e "${GREEN}${BOLD}    ║                                                   ║${NC}"
+    echo -e "${GREEN}${BOLD}    ║       ✨ XingRin Worker 节点部署完成！            ║${NC}"
+    echo -e "${GREEN}${BOLD}    ║                                                   ║${NC}"
+    echo -e "${GREEN}${BOLD}    ╚═══════════════════════════════════════════════════╝${NC}"
+    echo -e ""
+}
 
 # 等待 apt 锁释放
 wait_for_apt_lock() {
@@ -150,9 +190,7 @@ pull_image() {
 
 # 主流程
 main() {
-    log_info "=========================================="
-    log_info "  XingRin 节点安装"
-    log_info "=========================================="
+    show_banner
     
     detect_os
     install_docker
@@ -162,9 +200,7 @@ main() {
     
     touch "$DOCKER_MARKER"
     
-    log_success "=========================================="
-    log_success "  ✓ 安装完成"
-    log_success "=========================================="
+    show_complete
 }
 
 main "$@"

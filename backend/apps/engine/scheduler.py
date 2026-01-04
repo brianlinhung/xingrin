@@ -88,6 +88,8 @@ def _register_scheduled_jobs(scheduler: BackgroundScheduler):
         replace_existing=True,
     )
     logger.info("  - 已注册: 扫描结果清理（每天 03:00）")
+    
+    # 注意：搜索物化视图刷新已迁移到 pg_ivm 增量维护，无需定时任务
 
 
 def _trigger_scheduled_scans():

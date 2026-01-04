@@ -175,6 +175,13 @@
       "website": "Website",
       "description": "Description"
     },
+    "yamlEditor": {
+      "syntaxError": "Syntax Error",
+      "syntaxValid": "Syntax Valid",
+      "errorLocation": "Line {line}, Column {column}",
+      "loading": "Loading editor...",
+      "duplicateKey": "Duplicate key '{key}' found. Later values will override earlier ones. Please remove duplicates."
+    },
     "theme": {
       "switchToLight": "Switch to light mode",
       "switchToDark": "Switch to dark mode",
@@ -296,6 +303,7 @@
   "navigation": {
     "mainFeatures": "Main Features",
     "dashboard": "Dashboard",
+    "search": "Search",
     "organization": "Organization",
     "target": "Targets",
     "vulnerabilities": "Vulnerabilities",
@@ -313,6 +321,71 @@
     "notifications": "Notifications",
     "help": "Get Help",
     "feedback": "Feedback"
+  },
+  "search": {
+    "title": "Asset Search",
+    "hint": "Click search box to view available fields and syntax. Plain text defaults to hostname search",
+    "searching": "Searching...",
+    "loading": "Loading...",
+    "resultsCount": "Found {count} results",
+    "error": "Search failed, please try again later",
+    "noResults": "No matching assets found",
+    "noResultsHint": "Try adjusting your search criteria",
+    "vulnLoadError": "Failed to load vulnerability details",
+    "recentSearches": "Recent Searches",
+    "export": "Export",
+    "exporting": "Exporting...",
+    "exportSuccess": "Export successful",
+    "exportFailed": "Export failed",
+    "stats": {
+      "vulnerabilities": "Vulnerabilities"
+    },
+    "assetTypes": {
+      "website": "Website",
+      "endpoint": "Endpoint"
+    },
+    "fields": {
+      "host": "Hostname",
+      "url": "URL address",
+      "title": "Page title",
+      "tech": "Technology stack",
+      "status": "HTTP status code",
+      "body": "Response body content",
+      "header": "Response header content"
+    },
+    "table": {
+      "url": "URL",
+      "host": "Host",
+      "title": "Title",
+      "status": "Status",
+      "technologies": "Technologies",
+      "contentLength": "Content Length",
+      "location": "Location",
+      "webserver": "Web Server",
+      "contentType": "Content Type",
+      "responseBody": "Response Body",
+      "responseHeaders": "Response Headers",
+      "vhost": "VHost",
+      "createdAt": "Created At",
+      "gfPatterns": "GF Patterns"
+    },
+    "card": {
+      "title": "Title",
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "vulnerabilities": "Vulnerabilities ({count})",
+      "vulnName": "Vulnerability Name",
+      "severity": "Severity",
+      "source": "Source",
+      "vulnType": "Vuln Type"
+    },
+    "vulnDetail": {
+      "title": "Vulnerability Details",
+      "name": "Vulnerability Name",
+      "source": "Source",
+      "type": "Vulnerability Type",
+      "url": "Vulnerability URL"
+    }
   },
   "dashboard": {
     "title": "Dashboard",
@@ -588,7 +661,40 @@
       "noConfig": "No config",
       "initiating": "Initiating...",
       "startScan": "Start Scan",
-      "selectedCount": "{count} engines selected"
+      "selectedCount": "{count} engines selected",
+      "configTitle": "Scan Configuration",
+      "configEdited": "Edited",
+      "stepIndicator": "Step {current}/{total}",
+      "back": "Back",
+      "next": "Next",
+      "steps": {
+        "selectEngine": "Select Engine",
+        "editConfig": "Edit Config"
+      },
+      "presets": {
+        "title": "Quick Select",
+        "fullScan": "Full Scan",
+        "fullScanDesc": "Complete security assessment covering asset discovery to vulnerability detection",
+        "recon": "Reconnaissance",
+        "reconDesc": "Discover and identify target assets including subdomains, ports, sites and fingerprints",
+        "vulnScan": "Vulnerability Scan",
+        "vulnScanDesc": "Detect security vulnerabilities on known assets",
+        "custom": "Custom",
+        "customDesc": "Manually select engine combination",
+        "customHint": "Click to manually select engines",
+        "selectHint": "Please select a scan preset",
+        "selectEngines": "Select Engines",
+        "enginesCount": "engines",
+        "capabilities": "Capabilities",
+        "usedEngines": "Used Engines",
+        "noCapabilities": "Please select engines"
+      },
+      "overwriteConfirm": {
+        "title": "Overwrite Configuration",
+        "description": "You have manually edited the configuration. Changing engines will overwrite your changes. Continue?",
+        "cancel": "Cancel",
+        "confirm": "Overwrite"
+      }
     },
     "cron": {
       "everyMinute": "Every minute",
@@ -631,6 +737,8 @@
       "status": "Status",
       "errorReason": "Error Reason",
       "totalProgress": "Total Progress",
+      "tab_stages": "Stages",
+      "tab_logs": "Logs",
       "status_running": "Scanning",
       "status_cancelled": "Cancelled",
       "status_completed": "Completed",
@@ -670,10 +778,13 @@
       "createDesc": "Configure scheduled scan task and set execution plan",
       "editTitle": "Edit Scheduled Scan",
       "editDesc": "Modify scheduled scan task configuration",
+      "stepIndicator": "Step {current}/{total}",
       "steps": {
         "basicInfo": "Basic Info",
         "scanMode": "Scan Mode",
         "selectTarget": "Select Target",
+        "selectEngine": "Select Engine",
+        "editConfig": "Edit Config",
         "scheduleSettings": "Schedule Settings"
       },
       "form": {
@@ -683,8 +794,14 @@
         "taskNameRequired": "Please enter task name",
         "scanEngine": "Scan Engine",
         "scanEnginePlaceholder": "Select scan engine",
-        "scanEngineDesc": "Select the scan engine configuration to use",
+        "scanEngineDesc": "Select engine to auto-fill configuration, or edit directly",
         "scanEngineRequired": "Please select a scan engine",
+        "configuration": "Scan Configuration",
+        "configurationPlaceholder": "Enter YAML scan configuration...",
+        "configurationDesc": "YAML format scan configuration, select engine to auto-fill or edit manually",
+        "configurationRequired": "Please enter scan configuration",
+        "yamlInvalid": "Invalid YAML configuration, please check syntax",
+        "configEdited": "Edited",
         "selectScanMode": "Select Scan Mode",
         "organizationScan": "Organization Scan",
         "organizationScanDesc": "Select organization, dynamically fetch all targets at execution",
@@ -715,6 +832,9 @@
         "organizationMode": "Organization Scan",
         "organizationModeHint": "In organization scan mode, all targets under this organization will be dynamically fetched at execution",
         "noAvailableTarget": "No available targets",
+        "noEngine": "No engines available",
+        "noConfig": "No config",
+        "capabilitiesCount": "{count} capabilities",
         "selected": "Selected",
         "selectedEngines": "{count} engines selected"
       },
@@ -736,7 +856,14 @@
       },
       "toast": {
         "selectOrganization": "Please select an organization",
-        "selectTarget": "Please select a scan target"
+        "selectTarget": "Please select a scan target",
+        "configConflict": "Configuration conflict"
+      },
+      "overwriteConfirm": {
+        "title": "Overwrite Configuration",
+        "description": "You have manually edited the configuration. Changing engines will overwrite your changes. Do you want to continue?",
+        "cancel": "Cancel",
+        "confirm": "Overwrite"
       }
     },
     "engine": {
@@ -1338,6 +1465,8 @@
     "initiateScanFailed": "Failed to initiate scan",
     "noScansCreated": "No scan tasks were created",
     "unknownError": "Unknown error",
+    "noEngineSelected": "Please select at least one scan engine",
+    "emptyConfig": "Scan configuration cannot be empty",
     "engineNameRequired": "Please enter engine name",
     "configRequired": "Configuration content is required",
     "yamlSyntaxError": "YAML syntax error",
@@ -1642,7 +1771,8 @@
     },
     "step1Title": "Enter Targets",
     "step2Title": "Select Engines",
-    "step3Title": "Confirm",
+    "step3Title": "Edit Config",
+    "stepIndicator": "Step {current}/{total}",
     "step1Hint": "Enter scan targets in the left input box, one per line",
     "step": "Step {current}/{total} · {title}",
     "targetPlaceholder": "Enter one target per line, supported formats:\n\nDomain: example.com, sub.example.com\nIP Address: 192.168.1.1, 10.0.0.1\nCIDR: 192.168.1.0/24, 10.0.0.0/8\nURL: https://example.com/api/v1",
@@ -1670,10 +1800,19 @@
     "andMore": "{count} more...",
     "selectedEngines": "Selected Engines",
     "confirmSummary": "Will scan {targetCount} targets with {engineCount} engines",
+    "configTitle": "Scan Configuration",
+    "configEdited": "Edited",
+    "overwriteConfirm": {
+      "title": "Overwrite Configuration",
+      "description": "You have manually edited the configuration. Changing engines will overwrite your changes. Continue?",
+      "cancel": "Cancel",
+      "confirm": "Overwrite"
+    },
     "toast": {
       "noValidTarget": "Please enter at least one valid target",
       "hasInvalidInputs": "{count} invalid inputs, please fix before continuing",
       "selectEngine": "Please select a scan engine",
+      "emptyConfig": "Scan configuration cannot be empty",
       "getEnginesFailed": "Failed to get engine list",
       "createFailed": "Failed to create scan task",
       "createSuccess": "Created {count} scan tasks",
@@ -1907,6 +2046,16 @@
       "bulkAdd": "Bulk Add",
       "formatInvalid": "Invalid format"
     }
+  },
+  "globalSearch": {
+    "search": "Search",
+    "placeholder": "Search assets... (host=\"api\" && tech=\"nginx\")",
+    "noResults": "No results found",
+    "searchFor": "Search for",
+    "recent": "Recent Searches",
+    "quickSearch": "Quick Search",
+    "hint": "Supports FOFA-style syntax",
+    "toSearch": "to search"
   },
   "errors": {
     "unknown": "Operation failed, please try again later",

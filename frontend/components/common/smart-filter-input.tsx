@@ -67,6 +67,45 @@ const DEFAULT_FIELDS: FilterField[] = [
   PREDEFINED_FIELDS.host,
 ]
 
+// History storage key
+const FILTER_HISTORY_KEY = 'smart_filter_history'
+const MAX_HISTORY_PER_FIELD = 10
+
+// Get history values for a field
+function getFieldHistory(field: string): string[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const history = JSON.parse(localStorage.getItem(FILTER_HISTORY_KEY) || '{}')
+    return history[field] || []
+  } catch {
+    return []
+  }
+}
+
+// Save a value to field history
+function saveFieldHistory(field: string, value: string) {
+  if (typeof window === 'undefined' || !value.trim()) return
+  try {
+    const history = JSON.parse(localStorage.getItem(FILTER_HISTORY_KEY) || '{}')
+    const fieldHistory = (history[field] || []).filter((v: string) => v !== value)
+    fieldHistory.unshift(value)
+    history[field] = fieldHistory.slice(0, MAX_HISTORY_PER_FIELD)
+    localStorage.setItem(FILTER_HISTORY_KEY, JSON.stringify(history))
+  } catch {
+    // ignore
+  }
+}
+
+// Extract field-value pairs from query and save to history
+function saveQueryHistory(query: string) {
+  const regex = /(\w+)(==|!=|=)"([^"]+)"/g
+  let match
+  while ((match = regex.exec(query)) !== null) {
+    const [, field, , value] = match
+    saveFieldHistory(field, value)
+  }
+}
+
 // Parse filter expression (FOFA style)
 interface ParsedFilter {
   field: string
@@ -115,9 +154,113 @@ export function SmartFilterInput({
   const [open, setOpen] = React.useState(false)
   const [inputValue, setInputValue] = React.useState(value ?? "")
   const inputRef = React.useRef<HTMLInputElement>(null)
+  const ghostRef = React.useRef<HTMLSpanElement>(null)
   const listRef = React.useRef<HTMLDivElement>(null)
   const savedScrollTop = React.useRef<number | null>(null)
   const hasInitialized = React.useRef(false)
+
+  // Calculate ghost text suggestion
+  const ghostText = React.useMemo(() => {
+    if (!inputValue) return ""
+    
+    // Get the last word/token being typed
+    const lastSpaceIndex = inputValue.lastIndexOf(' ')
+    const currentToken = lastSpaceIndex === -1 ? inputValue : inputValue.slice(lastSpaceIndex + 1)
+    const lowerToken = currentToken.toLowerCase()
+    
+    // If empty token after space, check if previous expression is complete
+    if (!currentToken && inputValue.trim()) {
+      // Check if last expression is complete (ends with ")
+      if (inputValue.trimEnd().endsWith('"')) {
+        return '&& '
+      }
+      return ""
+    }
+    
+    if (!currentToken) return ""
+    
+    // Priority 1: Field name completion (no = in token)
+    if (!currentToken.includes('=') && !currentToken.includes('!')) {
+      // Find matching field first
+      const matchingField = fields.find(f => 
+        f.key.toLowerCase().startsWith(lowerToken) && 
+        f.key.toLowerCase() !== lowerToken
+      )
+      if (matchingField) {
+        return matchingField.key.slice(currentToken.length) + '="'
+      }
+      
+      // If exact match of field name, suggest =" 
+      const exactField = fields.find(f => f.key.toLowerCase() === lowerToken)
+      if (exactField) {
+        return '="'
+      }
+      
+      // Priority 2: Logical operators (only if no field matches)
+      if ('&&'.startsWith(currentToken) && currentToken.startsWith('&')) {
+        return '&&'.slice(currentToken.length) + ' '
+      }
+      if ('||'.startsWith(currentToken) && currentToken.startsWith('|')) {
+        return '||'.slice(currentToken.length) + ' '
+      }
+      // 'and' / 'or' only if no field name starts with these
+      if (!matchingField) {
+        if ('and'.startsWith(lowerToken) && lowerToken.length > 0 && !fields.some(f => f.key.toLowerCase().startsWith(lowerToken))) {
+          return 'and'.slice(lowerToken.length) + ' '
+        }
+        if ('or'.startsWith(lowerToken) && lowerToken.length > 0 && !fields.some(f => f.key.toLowerCase().startsWith(lowerToken))) {
+          return 'or'.slice(lowerToken.length) + ' '
+        }
+      }
+      
+      return ""
+    }
+    
+    // Check if typing ! for != operator
+    if (currentToken.match(/^(\w+)!$/)) {
+      return '="'
+    }
+    
+    // Check if typing = and might want == 
+    const singleEqMatch = currentToken.match(/^(\w+)=$/)
+    if (singleEqMatch) {
+      // Suggest " for fuzzy match (most common)
+      return '"'
+    }
+    
+    // Check if typed == or != (no opening quote yet)
+    const doubleOpMatch = currentToken.match(/^(\w+)(==|!=)$/)
+    if (doubleOpMatch) {
+      return '"'
+    }
+    
+    // Check if typing a value (has = and opening quote)
+    const eqMatch = currentToken.match(/^(\w+)(==|!=|=)"([^"]*)$/)
+    if (eqMatch) {
+      const [, field, , partialValue] = eqMatch
+      // Get history for this field
+      const history = getFieldHistory(field)
+      // Find matching history value
+      const matchingValue = history.find(v => 
+        v.toLowerCase().startsWith(partialValue.toLowerCase()) &&
+        v.toLowerCase() !== partialValue.toLowerCase()
+      )
+      if (matchingValue) {
+        return matchingValue.slice(partialValue.length) + '"'
+      }
+      // If value has content but no closing quote, suggest closing quote
+      if (partialValue.length > 0) {
+        return '"'
+      }
+    }
+    
+    // Check if a complete expression just finished (ends with ")
+    if (currentToken.match(/^\w+(==|!=|=)"[^"]+"$/)) {
+      return ' && '
+    }
+    
+    return ""
+  }, [inputValue, fields])
 
   // Synchronize external value changes
   React.useEffect(() => {
@@ -189,18 +332,41 @@ export function SmartFilterInput({
 
   // Handle search
   const handleSearch = () => {
+    // Save query values to history
+    saveQueryHistory(inputValue)
     onSearch?.(parsedFilters, inputValue)
     setOpen(false)
   }
 
+  // Accept ghost text suggestion
+  const acceptGhostText = () => {
+    if (ghostText) {
+      setInputValue(inputValue + ghostText)
+      return true
+    }
+    return false
+  }
+
   // Handle keyboard events
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Tab" && ghostText) {
+      e.preventDefault()
+      acceptGhostText()
+    }
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
       handleSearch()
     }
     if (e.key === "Escape") {
       setOpen(false)
+    }
+    // Right arrow at end of input accepts ghost text
+    if (e.key === "ArrowRight" && ghostText) {
+      const input = inputRef.current
+      if (input && input.selectionStart === input.value.length) {
+        e.preventDefault()
+        acceptGhostText()
+      }
     }
   }
 
@@ -215,36 +381,46 @@ export function SmartFilterInput({
 
   return (
     <div className={className}>
-      <Popover open={open} onOpenChange={setOpen} modal={false}>
-        <PopoverAnchor asChild>
-          <div className="flex items-center gap-2">
-            <Input
-              ref={inputRef}
-              type="text"
-              value={inputValue}
-              onChange={(e) => {
-                setInputValue(e.target.value)
-                if (!open) setOpen(true)
-              }}
-              onFocus={() => setOpen(true)}
-              onBlur={(e) => {
-                // If focus moves to inside Popover or input itself, don't close
-                const relatedTarget = e.relatedTarget as HTMLElement | null
-                if (relatedTarget?.closest('[data-radix-popper-content-wrapper]')) {
-                  return
-                }
-                // Delay close to let CommandItem's onSelect execute first
-                setTimeout(() => setOpen(false), 150)
-              }}
-              onKeyDown={handleKeyDown}
-              placeholder={placeholder || defaultPlaceholder}
-              className="h-8 w-full"
-            />
-            <Button variant="outline" size="sm" onClick={handleSearch}>
-              <IconSearch className="h-4 w-4" />
-            </Button>
-          </div>
-        </PopoverAnchor>
+      <div className="flex items-center gap-2">
+        <Popover open={open} onOpenChange={setOpen} modal={false}>
+          <PopoverAnchor asChild>
+            <div className="relative flex-1">
+              <Input
+                ref={inputRef}
+                type="text"
+                value={inputValue}
+                onChange={(e) => {
+                  setInputValue(e.target.value)
+                  if (!open) setOpen(true)
+                }}
+                onFocus={() => setOpen(true)}
+                onBlur={(e) => {
+                  // If focus moves to inside Popover or input itself, don't close
+                  const relatedTarget = e.relatedTarget as HTMLElement | null
+                  if (relatedTarget?.closest('[data-radix-popper-content-wrapper]')) {
+                    return
+                  }
+                  // Delay close to let CommandItem's onSelect execute first
+                  setTimeout(() => setOpen(false), 150)
+                }}
+                onKeyDown={handleKeyDown}
+                placeholder={placeholder || defaultPlaceholder}
+                className="h-8 w-full font-mono text-sm"
+              />
+              {/* Ghost text overlay */}
+              {ghostText && (
+                <div 
+                  className="absolute inset-0 flex items-center pointer-events-none overflow-hidden px-3"
+                  aria-hidden="true"
+                >
+                  <span className="font-mono text-sm">
+                    <span className="invisible">{inputValue}</span>
+                    <span ref={ghostRef} className="text-muted-foreground/40">{ghostText}</span>
+                  </span>
+                </div>
+              )}
+            </div>
+          </PopoverAnchor>
         <PopoverContent
           className="w-[var(--radix-popover-trigger-width)] p-0"
           align="start"
@@ -343,6 +519,10 @@ export function SmartFilterInput({
           </Command>
         </PopoverContent>
       </Popover>
+        <Button variant="outline" size="sm" onClick={handleSearch}>
+          <IconSearch className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   )
 }

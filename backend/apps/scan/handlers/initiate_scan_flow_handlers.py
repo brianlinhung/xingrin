@@ -162,6 +162,8 @@ def on_initiate_scan_flow_completed(flow: Flow, flow_run: FlowRun, state: State)
     # 执行状态更新并获取统计数据
     stats = _update_completed_status()
     
+    # 注意：物化视图刷新已迁移到 pg_ivm 增量维护，无需手动标记刷新
+    
     # 发送通知（包含统计摘要）
     logger.info("准备发送扫描完成通知 - Scan ID: %s, Target: %s", scan_id, target_name)
     try:

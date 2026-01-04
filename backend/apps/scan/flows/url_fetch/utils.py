@@ -152,7 +152,8 @@ def run_tools_parallel(
     tools: dict,
     input_file: str,
     input_type: str,
-    output_dir: Path
+    output_dir: Path,
+    scan_id: int
 ) -> tuple[list, list, list]:
     """
     并行执行工具列表
@@ -162,11 +163,13 @@ def run_tools_parallel(
         input_file: 输入文件路径
         input_type: 输入类型
         output_dir: 输出目录
+        scan_id: 扫描任务 ID（用于记录日志）
         
     Returns:
         tuple: (result_files, failed_tools, successful_tool_names)
     """
     from apps.scan.tasks.url_fetch import run_url_fetcher_task
+    from apps.scan.utils import user_log
 
     futures: dict[str, object] = {}
     failed_tools: list[dict] = []
@@ -192,6 +195,9 @@ def run_tools_parallel(
             exec_params["timeout"],
         )
 
+        # 记录工具开始执行日志
+        user_log(scan_id, "url_fetch", f"Running {tool_name}: {exec_params['command']}")
+
         # 提交并行任务
         future = run_url_fetcher_task.submit(
             tool_name=tool_name,
@@ -208,22 +214,28 @@ def run_tools_parallel(
             result = future.result()
             if result and result['success']:
                 result_files.append(result['output_file'])
+                url_count = result['url_count']
                 logger.info(
                     "✓ 工具 %s 执行成功 - 发现 URL: %d",
-                    tool_name, result['url_count']
+                    tool_name, url_count
                 )
+                user_log(scan_id, "url_fetch", f"{tool_name} completed: found {url_count} urls")
             else:
+                reason = '未生成结果或无有效URL'
                 failed_tools.append({
                     'tool': tool_name,
-                    'reason': '未生成结果或无有效URL'
+                    'reason': reason
                 })
                 logger.warning("⚠️ 工具 %s 未生成有效结果", tool_name)
+                user_log(scan_id, "url_fetch", f"{tool_name} failed: {reason}", "error")
         except Exception as e:
+            reason = str(e)
             failed_tools.append({
                 'tool': tool_name,
-                'reason': str(e)
+                'reason': reason
             })
             logger.warning("⚠️ 工具 %s 执行失败: %s", tool_name, e)
+            user_log(scan_id, "url_fetch", f"{tool_name} failed: {reason}", "error")
 
     # 计算成功的工具列表
     failed_tool_names = [f['tool'] for f in failed_tools]

@@ -54,7 +54,7 @@ class ScheduledScanService:
     
     def create(self, dto: ScheduledScanDTO) -> ScheduledScan:
         """
-        创建定时扫描任务
+        创建定时扫描任务（使用引擎 ID 合并配置）
         
         流程：
         1. 验证参数
@@ -88,7 +88,7 @@ class ScheduledScanService:
         
         # 设置 DTO 的合并配置和引擎名称
         dto.engine_names = engine_names
-        dto.merged_configuration = merged_configuration
+        dto.yaml_configuration = merged_configuration
         
         # 3. 创建数据库记录
         scheduled_scan = self.repo.create(dto)
@@ -107,12 +107,49 @@ class ScheduledScanService:
         
         return scheduled_scan
     
-    def _validate_create_dto(self, dto: ScheduledScanDTO) -> None:
-        """验证创建 DTO"""
-        from apps.targets.repositories import DjangoOrganizationRepository
+    def create_with_configuration(self, dto: ScheduledScanDTO) -> ScheduledScan:
+        """
+        创建定时扫描任务（直接使用前端传递的配置）
         
-        if not dto.name:
-            raise ValidationError('任务名称不能为空')
+        流程：
+        1. 验证参数
+        2. 直接使用 dto.yaml_configuration
+        3. 创建数据库记录
+        4. 计算并设置 next_run_time
+        
+        Args:
+            dto: 定时扫描 DTO（必须包含 yaml_configuration）
+        
+        Returns:
+            创建的 ScheduledScan 对象
+        
+        Raises:
+            ValidationError: 参数验证失败
+        """
+        # 1. 验证参数
+        self._validate_create_dto_with_configuration(dto)
+        
+        # 2. 创建数据库记录（直接使用 dto 中的配置）
+        scheduled_scan = self.repo.create(dto)
+        
+        # 3. 如果有 cron 表达式且已启用，计算下次执行时间
+        if scheduled_scan.cron_expression and scheduled_scan.is_enabled:
+            next_run_time = self._calculate_next_run_time(scheduled_scan)
+            if next_run_time:
+                self.repo.update_next_run_time(scheduled_scan.id, next_run_time)
+                scheduled_scan.next_run_time = next_run_time
+        
+        logger.info(
+            "创建定时扫描任务 - ID: %s, 名称: %s, 下次执行: %s",
+            scheduled_scan.id, scheduled_scan.name, scheduled_scan.next_run_time
+        )
+        
+        return scheduled_scan
+    
+    def _validate_create_dto(self, dto: ScheduledScanDTO) -> None:
+        """验证创建 DTO（使用引擎 ID）"""
+        # 基础验证
+        self._validate_base_dto(dto)
         
         if not dto.engine_ids:
             raise ValidationError('必须选择扫描引擎')
@@ -121,6 +158,21 @@ class ScheduledScanService:
         for engine_id in dto.engine_ids:
             if not self.engine_repo.get_by_id(engine_id):
                 raise ValidationError(f'扫描引擎 ID {engine_id} 不存在')
+    
+    def _validate_create_dto_with_configuration(self, dto: ScheduledScanDTO) -> None:
+        """验证创建 DTO（使用前端传递的配置）"""
+        # 基础验证
+        self._validate_base_dto(dto)
+        
+        if not dto.yaml_configuration:
+            raise ValidationError('配置不能为空')
+    
+    def _validate_base_dto(self, dto: ScheduledScanDTO) -> None:
+        """验证 DTO 的基础字段（公共逻辑）"""
+        from apps.targets.repositories import DjangoOrganizationRepository
+        
+        if not dto.name:
+            raise ValidationError('任务名称不能为空')
         
         # 验证扫描模式（organization_id 和 target_id 互斥）
         if not dto.organization_id and not dto.target_id:
@@ -178,7 +230,7 @@ class ScheduledScanService:
             
             merged_configuration = merge_engine_configs(engines)
             dto.engine_names = engine_names
-            dto.merged_configuration = merged_configuration
+            dto.yaml_configuration = merged_configuration
         
         # 更新数据库记录
         scheduled_scan = self.repo.update(scheduled_scan_id, dto)
@@ -329,7 +381,7 @@ class ScheduledScanService:
         立即触发扫描（支持组织扫描和目标扫描两种模式）
         
         复用 ScanService 的逻辑，与 API 调用保持一致。
-        使用存储的 merged_configuration 而不是重新合并。
+        使用存储的 yaml_configuration 而不是重新合并。
         """
         from apps.scan.services.scan_service import ScanService
         
@@ -347,7 +399,7 @@ class ScheduledScanService:
             targets=targets,
             engine_ids=scheduled_scan.engine_ids,
             engine_names=scheduled_scan.engine_names,
-            merged_configuration=scheduled_scan.merged_configuration,
+            yaml_configuration=scheduled_scan.yaml_configuration,
             scheduled_scan_name=scheduled_scan.name
         )
         

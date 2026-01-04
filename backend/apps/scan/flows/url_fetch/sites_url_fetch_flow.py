@@ -116,7 +116,8 @@ def sites_url_fetch_flow(
             tools=enabled_tools,
             input_file=sites_file,
             input_type="sites_file",
-            output_dir=output_path
+            output_dir=output_path,
+            scan_id=scan_id
         )
         
         logger.info(

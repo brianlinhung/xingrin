@@ -8,6 +8,7 @@ import type {
   BatchDeleteEndpointsRequest,
   BatchDeleteEndpointsResponse
 } from "@/types/endpoint.types"
+import { USE_MOCK, mockDelay, getMockEndpoints, getMockEndpointById } from '@/mock'
 
 // Bulk create endpoints response type
 export interface BulkCreateEndpointsResponse {
@@ -38,6 +39,12 @@ export class EndpointService {
    * @returns Promise<Endpoint>
    */
   static async getEndpointById(id: number): Promise<Endpoint> {
+    if (USE_MOCK) {
+      await mockDelay()
+      const endpoint = getMockEndpointById(id)
+      if (!endpoint) throw new Error('Endpoint not found')
+      return endpoint
+    }
     const response = await api.get<Endpoint>(`/endpoints/${id}/`)
     return response.data
   }
@@ -48,6 +55,10 @@ export class EndpointService {
    * @returns Promise<GetEndpointsResponse>
    */
   static async getEndpoints(params: GetEndpointsRequest): Promise<GetEndpointsResponse> {
+    if (USE_MOCK) {
+      await mockDelay()
+      return getMockEndpoints(params)
+    }
     // api-client.ts automatically converts camelCase params to snake_case
     const response = await api.get<GetEndpointsResponse>('/endpoints/', {
       params

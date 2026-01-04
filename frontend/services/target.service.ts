@@ -12,11 +12,16 @@ import type {
   BatchCreateTargetsRequest,
   BatchCreateTargetsResponse,
 } from '@/types/target.types'
+import { USE_MOCK, mockDelay, getMockTargets, getMockTargetById } from '@/mock'
 
 /**
  * Get all targets list (paginated)
  */
 export async function getTargets(page = 1, pageSize = 10, search?: string): Promise<TargetsResponse> {
+  if (USE_MOCK) {
+    await mockDelay()
+    return getMockTargets({ page, pageSize, search })
+  }
   const response = await api.get<TargetsResponse>('/targets/', {
     params: {
       page,
@@ -31,6 +36,12 @@ export async function getTargets(page = 1, pageSize = 10, search?: string): Prom
  * Get single target details
  */
 export async function getTargetById(id: number): Promise<Target> {
+  if (USE_MOCK) {
+    await mockDelay()
+    const target = getMockTargetById(id)
+    if (!target) throw new Error('Target not found')
+    return target
+  }
   const response = await api.get<Target>(`/targets/${id}/`)
   return response.data
 }

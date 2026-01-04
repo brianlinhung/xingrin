@@ -8,19 +8,18 @@ from rest_framework.request import Request
 from rest_framework.exceptions import NotFound, ValidationError as DRFValidationError
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db import DatabaseError, IntegrityError, OperationalError
-from django.http import StreamingHttpResponse
 
-from .serializers import (
+from ..serializers import (
     SubdomainListSerializer, WebSiteSerializer, DirectorySerializer, 
     VulnerabilitySerializer, EndpointListSerializer, IPAddressAggregatedSerializer,
     SubdomainSnapshotSerializer, WebsiteSnapshotSerializer, DirectorySnapshotSerializer,
     EndpointSnapshotSerializer, VulnerabilitySnapshotSerializer
 )
-from .services import (
+from ..services import (
     SubdomainService, WebSiteService, DirectoryService, 
     VulnerabilityService, AssetStatisticsService, EndpointService, HostPortMappingService
 )
-from .services.snapshot import (
+from ..services.snapshot import (
     SubdomainSnapshotsService, WebsiteSnapshotsService, DirectorySnapshotsService,
     EndpointSnapshotsService, HostPortMappingSnapshotsService, VulnerabilitySnapshotsService
 )
@@ -243,7 +242,7 @@ class SubdomainViewSet(viewsets.ModelViewSet):
         
         CSV 列：name, created_at
         """
-        from apps.common.utils import generate_csv_rows, format_datetime
+        from apps.common.utils import create_csv_export_response, format_datetime
         
         target_pk = self.kwargs.get('target_pk')
         if not target_pk:
@@ -254,12 +253,12 @@ class SubdomainViewSet(viewsets.ModelViewSet):
         headers = ['name', 'created_at']
         formatters = {'created_at': format_datetime}
         
-        response = StreamingHttpResponse(
-            generate_csv_rows(data_iterator, headers, formatters),
-            content_type='text/csv; charset=utf-8'
+        return create_csv_export_response(
+            data_iterator=data_iterator,
+            headers=headers,
+            filename=f"target-{target_pk}-subdomains.csv",
+            field_formatters=formatters
         )
-        response['Content-Disposition'] = f'attachment; filename="target-{target_pk}-subdomains.csv"'
-        return response
 
 
 class WebSiteViewSet(viewsets.ModelViewSet):
@@ -369,7 +368,7 @@ class WebSiteViewSet(viewsets.ModelViewSet):
         
         CSV 列：url, host, location, title, status_code, content_length, content_type, webserver, tech, response_body, response_headers, vhost, created_at
         """
-        from apps.common.utils import generate_csv_rows, format_datetime, format_list_field
+        from apps.common.utils import create_csv_export_response, format_datetime, format_list_field
         
         target_pk = self.kwargs.get('target_pk')
         if not target_pk:
@@ -387,12 +386,12 @@ class WebSiteViewSet(viewsets.ModelViewSet):
             'tech': lambda x: format_list_field(x, separator=','),
         }
         
-        response = StreamingHttpResponse(
-            generate_csv_rows(data_iterator, headers, formatters),
-            content_type='text/csv; charset=utf-8'
+        return create_csv_export_response(
+            data_iterator=data_iterator,
+            headers=headers,
+            filename=f"target-{target_pk}-websites.csv",
+            field_formatters=formatters
         )
-        response['Content-Disposition'] = f'attachment; filename="target-{target_pk}-websites.csv"'
-        return response
 
 
 class DirectoryViewSet(viewsets.ModelViewSet):
@@ -499,7 +498,7 @@ class DirectoryViewSet(viewsets.ModelViewSet):
         
         CSV 列：url, status, content_length, words, lines, content_type, duration, created_at
         """
-        from apps.common.utils import generate_csv_rows, format_datetime
+        from apps.common.utils import create_csv_export_response, format_datetime
         
         target_pk = self.kwargs.get('target_pk')
         if not target_pk:
@@ -515,12 +514,12 @@ class DirectoryViewSet(viewsets.ModelViewSet):
             'created_at': format_datetime,
         }
         
-        response = StreamingHttpResponse(
-            generate_csv_rows(data_iterator, headers, formatters),
-            content_type='text/csv; charset=utf-8'
+        return create_csv_export_response(
+            data_iterator=data_iterator,
+            headers=headers,
+            filename=f"target-{target_pk}-directories.csv",
+            field_formatters=formatters
         )
-        response['Content-Disposition'] = f'attachment; filename="target-{target_pk}-directories.csv"'
-        return response
 
 
 class EndpointViewSet(viewsets.ModelViewSet):
@@ -630,7 +629,7 @@ class EndpointViewSet(viewsets.ModelViewSet):
         
         CSV 列：url, host, location, title, status_code, content_length, content_type, webserver, tech, response_body, response_headers, vhost, matched_gf_patterns, created_at
         """
-        from apps.common.utils import generate_csv_rows, format_datetime, format_list_field
+        from apps.common.utils import create_csv_export_response, format_datetime, format_list_field
         
         target_pk = self.kwargs.get('target_pk')
         if not target_pk:
@@ -649,12 +648,12 @@ class EndpointViewSet(viewsets.ModelViewSet):
             'matched_gf_patterns': lambda x: format_list_field(x, separator=','),
         }
         
-        response = StreamingHttpResponse(
-            generate_csv_rows(data_iterator, headers, formatters),
-            content_type='text/csv; charset=utf-8'
+        return create_csv_export_response(
+            data_iterator=data_iterator,
+            headers=headers,
+            filename=f"target-{target_pk}-endpoints.csv",
+            field_formatters=formatters
         )
-        response['Content-Disposition'] = f'attachment; filename="target-{target_pk}-endpoints.csv"'
-        return response
 
 
 class HostPortMappingViewSet(viewsets.ModelViewSet):
@@ -707,7 +706,7 @@ class HostPortMappingViewSet(viewsets.ModelViewSet):
         
         CSV 列：ip, host, port, created_at
         """
-        from apps.common.utils import generate_csv_rows, format_datetime
+        from apps.common.utils import create_csv_export_response, format_datetime
         
         target_pk = self.kwargs.get('target_pk')
         if not target_pk:
@@ -722,14 +721,12 @@ class HostPortMappingViewSet(viewsets.ModelViewSet):
             'created_at': format_datetime
         }
         
-        # 生成流式响应
-        response = StreamingHttpResponse(
-            generate_csv_rows(data_iterator, headers, formatters),
-            content_type='text/csv; charset=utf-8'
+        return create_csv_export_response(
+            data_iterator=data_iterator,
+            headers=headers,
+            filename=f"target-{target_pk}-ip-addresses.csv",
+            field_formatters=formatters
         )
-        response['Content-Disposition'] = f'attachment; filename="target-{target_pk}-ip-addresses.csv"'
-        
-        return response
 
 
 class VulnerabilityViewSet(viewsets.ModelViewSet):
@@ -801,7 +798,7 @@ class SubdomainSnapshotViewSet(viewsets.ModelViewSet):
         
         CSV 列：name, created_at
         """
-        from apps.common.utils import generate_csv_rows, format_datetime
+        from apps.common.utils import create_csv_export_response, format_datetime
         
         scan_pk = self.kwargs.get('scan_pk')
         if not scan_pk:
@@ -812,12 +809,12 @@ class SubdomainSnapshotViewSet(viewsets.ModelViewSet):
         headers = ['name', 'created_at']
         formatters = {'created_at': format_datetime}
         
-        response = StreamingHttpResponse(
-            generate_csv_rows(data_iterator, headers, formatters),
-            content_type='text/csv; charset=utf-8'
+        return create_csv_export_response(
+            data_iterator=data_iterator,
+            headers=headers,
+            filename=f"scan-{scan_pk}-subdomains.csv",
+            field_formatters=formatters
         )
-        response['Content-Disposition'] = f'attachment; filename="scan-{scan_pk}-subdomains.csv"'
-        return response
 
 
 class WebsiteSnapshotViewSet(viewsets.ModelViewSet):
@@ -855,7 +852,7 @@ class WebsiteSnapshotViewSet(viewsets.ModelViewSet):
         
         CSV 列：url, host, location, title, status_code, content_length, content_type, webserver, tech, response_body, response_headers, vhost, created_at
         """
-        from apps.common.utils import generate_csv_rows, format_datetime, format_list_field
+        from apps.common.utils import create_csv_export_response, format_datetime, format_list_field
         
         scan_pk = self.kwargs.get('scan_pk')
         if not scan_pk:
@@ -873,12 +870,12 @@ class WebsiteSnapshotViewSet(viewsets.ModelViewSet):
             'tech': lambda x: format_list_field(x, separator=','),
         }
         
-        response = StreamingHttpResponse(
-            generate_csv_rows(data_iterator, headers, formatters),
-            content_type='text/csv; charset=utf-8'
+        return create_csv_export_response(
+            data_iterator=data_iterator,
+            headers=headers,
+            filename=f"scan-{scan_pk}-websites.csv",
+            field_formatters=formatters
         )
-        response['Content-Disposition'] = f'attachment; filename="scan-{scan_pk}-websites.csv"'
-        return response
 
 
 class DirectorySnapshotViewSet(viewsets.ModelViewSet):
@@ -913,7 +910,7 @@ class DirectorySnapshotViewSet(viewsets.ModelViewSet):
         
         CSV 列：url, status, content_length, words, lines, content_type, duration, created_at
         """
-        from apps.common.utils import generate_csv_rows, format_datetime
+        from apps.common.utils import create_csv_export_response, format_datetime
         
         scan_pk = self.kwargs.get('scan_pk')
         if not scan_pk:
@@ -929,12 +926,12 @@ class DirectorySnapshotViewSet(viewsets.ModelViewSet):
             'created_at': format_datetime,
         }
         
-        response = StreamingHttpResponse(
-            generate_csv_rows(data_iterator, headers, formatters),
-            content_type='text/csv; charset=utf-8'
+        return create_csv_export_response(
+            data_iterator=data_iterator,
+            headers=headers,
+            filename=f"scan-{scan_pk}-directories.csv",
+            field_formatters=formatters
         )
-        response['Content-Disposition'] = f'attachment; filename="scan-{scan_pk}-directories.csv"'
-        return response
 
 
 class EndpointSnapshotViewSet(viewsets.ModelViewSet):
@@ -972,7 +969,7 @@ class EndpointSnapshotViewSet(viewsets.ModelViewSet):
         
         CSV 列：url, host, location, title, status_code, content_length, content_type, webserver, tech, response_body, response_headers, vhost, matched_gf_patterns, created_at
         """
-        from apps.common.utils import generate_csv_rows, format_datetime, format_list_field
+        from apps.common.utils import create_csv_export_response, format_datetime, format_list_field
         
         scan_pk = self.kwargs.get('scan_pk')
         if not scan_pk:
@@ -991,12 +988,12 @@ class EndpointSnapshotViewSet(viewsets.ModelViewSet):
             'matched_gf_patterns': lambda x: format_list_field(x, separator=','),
         }
         
-        response = StreamingHttpResponse(
-            generate_csv_rows(data_iterator, headers, formatters),
-            content_type='text/csv; charset=utf-8'
+        return create_csv_export_response(
+            data_iterator=data_iterator,
+            headers=headers,
+            filename=f"scan-{scan_pk}-endpoints.csv",
+            field_formatters=formatters
         )
-        response['Content-Disposition'] = f'attachment; filename="scan-{scan_pk}-endpoints.csv"'
-        return response
 
 
 class HostPortMappingSnapshotViewSet(viewsets.ModelViewSet):
@@ -1031,7 +1028,7 @@ class HostPortMappingSnapshotViewSet(viewsets.ModelViewSet):
         
         CSV 列：ip, host, port, created_at
         """
-        from apps.common.utils import generate_csv_rows, format_datetime
+        from apps.common.utils import create_csv_export_response, format_datetime
         
         scan_pk = self.kwargs.get('scan_pk')
         if not scan_pk:
@@ -1046,14 +1043,12 @@ class HostPortMappingSnapshotViewSet(viewsets.ModelViewSet):
             'created_at': format_datetime
         }
         
-        # 生成流式响应
-        response = StreamingHttpResponse(
-            generate_csv_rows(data_iterator, headers, formatters),
-            content_type='text/csv; charset=utf-8'
+        return create_csv_export_response(
+            data_iterator=data_iterator,
+            headers=headers,
+            filename=f"scan-{scan_pk}-ip-addresses.csv",
+            field_formatters=formatters
         )
-        response['Content-Disposition'] = f'attachment; filename="scan-{scan_pk}-ip-addresses.csv"'
-        
-        return response
 
 
 class VulnerabilitySnapshotViewSet(viewsets.ModelViewSet):

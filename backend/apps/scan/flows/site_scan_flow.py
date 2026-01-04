@@ -17,6 +17,7 @@ from apps.common.prefect_django_setup import setup_django_for_prefect
 import logging
 import os
 import subprocess
+import time
 from pathlib import Path
 from typing import Callable
 from prefect import flow
@@ -26,7 +27,7 @@ from apps.scan.handlers.scan_flow_handlers import (
     on_scan_flow_completed,
     on_scan_flow_failed,
 )
-from apps.scan.utils import config_parser, build_scan_command
+from apps.scan.utils import config_parser, build_scan_command, user_log
 
 logger = logging.getLogger(__name__)
 
@@ -198,20 +199,20 @@ def _run_scans_sequentially(
             "开始执行 %s 站点扫描 - URL数: %d, 最终超时: %ds",
             tool_name, total_urls, timeout
         )
+        user_log(scan_id, "site_scan", f"Running {tool_name}: {command}")
         
         # 3. 执行扫描任务
         try:
             # 流式执行扫描并实时保存结果
             result = run_and_stream_save_websites_task(
                 cmd=command,
-                tool_name=tool_name,  # 新增：工具名称
+                tool_name=tool_name,
                 scan_id=scan_id,
                 target_id=target_id,
                 cwd=str(site_scan_dir),
                 shell=True,
-                batch_size=1000,
                 timeout=timeout,
-                log_file=str(log_file)  # 新增：日志文件路径
+                log_file=str(log_file)
             )
             
             tool_stats[tool_name] = {
@@ -219,29 +220,35 @@ def _run_scans_sequentially(
                 'result': result,
                 'timeout': timeout
             }
-            processed_records += result.get('processed_records', 0)
+            tool_records = result.get('processed_records', 0)
+            tool_created = result.get('created_websites', 0)
+            processed_records += tool_records
             
             logger.info(
                 "✓ 工具 %s 流式处理完成 - 处理记录: %d, 创建站点: %d, 跳过: %d",
                 tool_name,
-                result.get('processed_records', 0),
-                result.get('created_websites', 0),
+                tool_records,
+                tool_created,
                 result.get('skipped_no_subdomain', 0) + result.get('skipped_failed', 0)
             )
+            user_log(scan_id, "site_scan", f"{tool_name} completed: found {tool_created} websites")
             
         except subprocess.TimeoutExpired as exc:
             # 超时异常单独处理
-            reason = f"执行超时（配置: {timeout}秒）"
+            reason = f"timeout after {timeout}s"
             failed_tools.append({'tool': tool_name, 'reason': reason})
             logger.warning(
                 "⚠️ 工具 %s 执行超时 - 超时配置: %d秒\n"
                 "注意：超时前已解析的站点数据已保存到数据库，但扫描未完全完成。",
                 tool_name, timeout
             )
+            user_log(scan_id, "site_scan", f"{tool_name} failed: {reason}", "error")
         except Exception as exc:
             # 其他异常
-            failed_tools.append({'tool': tool_name, 'reason': str(exc)})
+            reason = str(exc)
+            failed_tools.append({'tool': tool_name, 'reason': reason})
             logger.error("工具 %s 执行失败: %s", tool_name, exc, exc_info=True)
+            user_log(scan_id, "site_scan", f"{tool_name} failed: {reason}", "error")
     
     if failed_tools:
         logger.warning(
@@ -380,6 +387,8 @@ def site_scan_flow(
         if not scan_workspace_dir:
             raise ValueError("scan_workspace_dir 不能为空")
         
+        user_log(scan_id, "site_scan", "Starting site scan")
+        
         # Step 0: 创建工作目录
         from apps.scan.utils import setup_scan_directory
         site_scan_dir = setup_scan_directory(scan_workspace_dir, 'site_scan')
@@ -390,7 +399,8 @@ def site_scan_flow(
         )
         
         if total_urls == 0:
-            logger.warning("目标下没有可用的站点URL，跳过站点扫描")
+            logger.warning("跳过站点扫描：没有站点 URL 可扫描 - Scan ID: %s", scan_id)
+            user_log(scan_id, "site_scan", "Skipped: no site URLs to scan", "warning")
             return {
                 'success': True,
                 'scan_id': scan_id,
@@ -433,8 +443,6 @@ def site_scan_flow(
             target_name=target_name
         )
         
-        logger.info("="*60 + "\n✓ 站点扫描完成\n" + "="*60)
-        
         # 动态生成已执行的任务列表
         executed_tasks = ['export_site_urls', 'parse_config']
         executed_tasks.extend([f'run_and_stream_save_websites ({tool})' for tool in tool_stats.keys()])
@@ -443,6 +451,10 @@ def site_scan_flow(
         total_created = sum(stats['result'].get('created_websites', 0) for stats in tool_stats.values())
         total_skipped_no_subdomain = sum(stats['result'].get('skipped_no_subdomain', 0) for stats in tool_stats.values())
         total_skipped_failed = sum(stats['result'].get('skipped_failed', 0) for stats in tool_stats.values())
+        
+        # 记录 Flow 完成
+        logger.info("✓ 站点扫描完成 - 创建站点: %d", total_created)
+        user_log(scan_id, "site_scan", f"site_scan completed: found {total_created} websites")
         
         return {
             'success': True,

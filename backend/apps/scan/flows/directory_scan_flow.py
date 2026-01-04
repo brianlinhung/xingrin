@@ -33,7 +33,7 @@ from apps.scan.handlers.scan_flow_handlers import (
     on_scan_flow_completed,
     on_scan_flow_failed,
 )
-from apps.scan.utils import config_parser, build_scan_command, ensure_wordlist_local
+from apps.scan.utils import config_parser, build_scan_command, ensure_wordlist_local, user_log
 
 logger = logging.getLogger(__name__)
 
@@ -413,6 +413,7 @@ def _run_scans_concurrently(
         logger.info("="*60)
         logger.info("使用工具: %s (并发模式, max_workers=%d)", tool_name, max_workers)
         logger.info("="*60)
+        user_log(scan_id, "directory_scan", f"Running {tool_name}")
 
         # 如果配置了 wordlist_name，则先确保本地存在对应的字典文件（含 hash 校验）
         wordlist_name = tool_config.get('wordlist_name')
@@ -467,6 +468,11 @@ def _run_scans_concurrently(
         total_tasks = len(scan_params_list)
         logger.info("开始分批执行 %d 个扫描任务（每批 %d 个）...", total_tasks, max_workers)
         
+        # 进度里程碑跟踪
+        last_progress_percent = 0
+        tool_directories = 0
+        tool_processed = 0
+        
         batch_num = 0
         for batch_start in range(0, total_tasks, max_workers):
             batch_end = min(batch_start + max_workers, total_tasks)
@@ -498,7 +504,9 @@ def _run_scans_concurrently(
                     result = future.result()  # 阻塞等待单个任务完成
                     directories_found = result.get('created_directories', 0)
                     total_directories += directories_found
+                    tool_directories += directories_found
                     processed_sites_count += 1
+                    tool_processed += 1
                     
                     logger.info(
                         "✓ [%d/%d] 站点扫描完成: %s - 发现 %d 个目录",
@@ -517,6 +525,19 @@ def _run_scans_concurrently(
                             "✗ [%d/%d] 站点扫描失败: %s - 错误: %s",
                             idx, len(sites), site_url, exc
                         )
+            
+            # 进度里程碑：每 20% 输出一次
+            current_progress = int((batch_end / total_tasks) * 100)
+            if current_progress >= last_progress_percent + 20:
+                user_log(scan_id, "directory_scan", f"Progress: {batch_end}/{total_tasks} sites scanned")
+                last_progress_percent = (current_progress // 20) * 20
+    
+        # 工具完成日志（开发者日志 + 用户日志）
+        logger.info(
+            "✓ 工具 %s 执行完成 - 已处理站点: %d/%d, 发现目录: %d",
+            tool_name, tool_processed, total_tasks, tool_directories
+        )
+        user_log(scan_id, "directory_scan", f"{tool_name} completed: found {tool_directories} directories")
     
     # 输出汇总信息
     if failed_sites:
@@ -605,6 +626,8 @@ def directory_scan_flow(
             "="*60
         )
         
+        user_log(scan_id, "directory_scan", "Starting directory scan")
+        
         # 参数验证
         if scan_id is None:
             raise ValueError("scan_id 不能为空")
@@ -625,7 +648,8 @@ def directory_scan_flow(
         sites_file, site_count = _export_site_urls(target_id, target_name, directory_scan_dir)
         
         if site_count == 0:
-            logger.warning("目标下没有站点，跳过目录扫描")
+            logger.warning("跳过目录扫描：没有站点可扫描 - Scan ID: %s", scan_id)
+            user_log(scan_id, "directory_scan", "Skipped: no sites to scan", "warning")
             return {
                 'success': True,
                 'scan_id': scan_id,
@@ -664,7 +688,9 @@ def directory_scan_flow(
             logger.warning("所有站点扫描均失败 - 总站点数: %d, 失败数: %d", site_count, len(failed_sites))
             # 不抛出异常，让扫描继续
         
-        logger.info("="*60 + "\n✓ 目录扫描完成\n" + "="*60)
+        # 记录 Flow 完成
+        logger.info("✓ 目录扫描完成 - 发现目录: %d", total_directories)
+        user_log(scan_id, "directory_scan", f"directory_scan completed: found {total_directories} directories")
         
         return {
             'success': True,

@@ -117,12 +117,12 @@ class ScanService:
         targets: List[Target],
         engine_ids: List[int],
         engine_names: List[str],
-        merged_configuration: str,
+        yaml_configuration: str,
         scheduled_scan_name: str | None = None
     ) -> List[Scan]:
         """批量创建扫描任务（委托给 ScanCreationService）"""
         return self.creation_service.create_scans(
-            targets, engine_ids, engine_names, merged_configuration, scheduled_scan_name
+            targets, engine_ids, engine_names, yaml_configuration, scheduled_scan_name
         )
     
     # ==================== 状态管理方法（委托给 ScanStateService） ====================

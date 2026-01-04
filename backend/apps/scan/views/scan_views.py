@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 from ..models import Scan, ScheduledScan
 from ..serializers import (
     ScanSerializer, ScanHistorySerializer, QuickScanSerializer,
-    ScheduledScanSerializer, CreateScheduledScanSerializer,
+    InitiateScanSerializer, ScheduledScanSerializer, CreateScheduledScanSerializer,
     UpdateScheduledScanSerializer, ToggleScheduledScanSerializer
 )
 from ..services.scan_service import ScanService
@@ -111,7 +111,7 @@ class ScanViewSet(viewsets.ModelViewSet):
         快速扫描接口
         
         功能：
-        1. 接收目标列表和引擎配置
+        1. 接收目标列表和 YAML 配置
         2. 自动解析输入（支持 URL、域名、IP、CIDR）
         3. 批量创建 Target、Website、Endpoint 资产
         4. 立即发起批量扫描
@@ -119,7 +119,9 @@ class ScanViewSet(viewsets.ModelViewSet):
         请求参数：
         {
             "targets": [{"name": "example.com"}, {"name": "https://example.com/api"}],
-            "engine_ids": [1, 2]
+            "configuration": "subdomain_discovery:\n  enabled: true\n  ...",
+            "engine_ids": [1, 2],  // 可选，用于记录
+            "engine_names": ["引擎A", "引擎B"]  // 可选，用于记录
         }
         
         支持的输入格式：
@@ -134,7 +136,9 @@ class ScanViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         
         targets_data = serializer.validated_data['targets']
-        engine_ids = serializer.validated_data.get('engine_ids')
+        configuration = serializer.validated_data['configuration']
+        engine_ids = serializer.validated_data.get('engine_ids', [])
+        engine_names = serializer.validated_data.get('engine_names', [])
         
         try:
             # 提取输入字符串列表
@@ -154,19 +158,13 @@ class ScanViewSet(viewsets.ModelViewSet):
                     status_code=status.HTTP_400_BAD_REQUEST
                 )
             
-            # 2. 准备多引擎扫描
+            # 2. 直接使用前端传递的配置创建扫描
             scan_service = ScanService()
-            _, merged_configuration, engine_names, engine_ids = scan_service.prepare_initiate_scan_multi_engine(
-                target_id=targets[0].id,  # 使用第一个目标来验证引擎
-                engine_ids=engine_ids
-            )
-            
-            # 3. 批量发起扫描
             created_scans = scan_service.create_scans(
                 targets=targets,
                 engine_ids=engine_ids,
                 engine_names=engine_names,
-                merged_configuration=merged_configuration
+                yaml_configuration=configuration
             )
             
             # 检查是否成功创建扫描任务
@@ -195,17 +193,6 @@ class ScanViewSet(viewsets.ModelViewSet):
                 },
                 status_code=status.HTTP_201_CREATED
             )
-        
-        except ConfigConflictError as e:
-            return error_response(
-                code='CONFIG_CONFLICT',
-                message=str(e),
-                details=[
-                    {'key': k, 'engines': [e1, e2]} 
-                    for k, e1, e2 in e.conflicts
-                ],
-                status_code=status.HTTP_400_BAD_REQUEST
-            )
             
         except ValidationError as e:
             return error_response(
@@ -228,48 +215,53 @@ class ScanViewSet(viewsets.ModelViewSet):
         请求参数:
         - organization_id: 组织ID (int, 可选)
         - target_id: 目标ID (int, 可选)
+        - configuration: YAML 配置字符串 (str, 必填)
         - engine_ids: 扫描引擎ID列表 (list[int], 必填)
+        - engine_names: 引擎名称列表 (list[str], 必填)
         
         注意: organization_id 和 target_id 二选一
         
         返回:
         - 扫描任务详情（单个或多个）
         """
-        # 获取请求数据
-        organization_id = request.data.get('organization_id')
-        target_id = request.data.get('target_id')
-        engine_ids = request.data.get('engine_ids')
+        # 使用 serializer 验证请求数据
+        serializer = InitiateScanSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         
-        # 验证 engine_ids
-        if not engine_ids:
-            return error_response(
-                code=ErrorCodes.VALIDATION_ERROR,
-                message='缺少必填参数: engine_ids',
-                status_code=status.HTTP_400_BAD_REQUEST
-            )
-        
-        if not isinstance(engine_ids, list):
-            return error_response(
-                code=ErrorCodes.VALIDATION_ERROR,
-                message='engine_ids 必须是数组',
-                status_code=status.HTTP_400_BAD_REQUEST
-            )
+        # 获取验证后的数据
+        organization_id = serializer.validated_data.get('organization_id')
+        target_id = serializer.validated_data.get('target_id')
+        configuration = serializer.validated_data['configuration']
+        engine_ids = serializer.validated_data['engine_ids']
+        engine_names = serializer.validated_data['engine_names']
         
         try:
-            # 步骤1：准备多引擎扫描所需的数据
+            # 获取目标列表
             scan_service = ScanService()
-            targets, merged_configuration, engine_names, engine_ids = scan_service.prepare_initiate_scan_multi_engine(
-                organization_id=organization_id,
-                target_id=target_id,
-                engine_ids=engine_ids
-            )
             
-            # 步骤2：批量创建扫描记录并分发扫描任务
+            if organization_id:
+                from apps.targets.repositories import DjangoOrganizationRepository
+                org_repo = DjangoOrganizationRepository()
+                organization = org_repo.get_by_id(organization_id)
+                if not organization:
+                    raise ObjectDoesNotExist(f'Organization ID {organization_id} 不存在')
+                targets = org_repo.get_targets(organization_id)
+                if not targets:
+                    raise ValidationError(f'组织 ID {organization_id} 下没有目标')
+            else:
+                from apps.targets.repositories import DjangoTargetRepository
+                target_repo = DjangoTargetRepository()
+                target = target_repo.get_by_id(target_id)
+                if not target:
+                    raise ObjectDoesNotExist(f'Target ID {target_id} 不存在')
+                targets = [target]
+            
+            # 直接使用前端传递的配置创建扫描
             created_scans = scan_service.create_scans(
                 targets=targets,
                 engine_ids=engine_ids,
                 engine_names=engine_names,
-                merged_configuration=merged_configuration
+                yaml_configuration=configuration
             )
             
             # 检查是否成功创建扫描任务
@@ -289,17 +281,6 @@ class ScanViewSet(viewsets.ModelViewSet):
                     'scans': scan_serializer.data
                 },
                 status_code=status.HTTP_201_CREATED
-            )
-        
-        except ConfigConflictError as e:
-            return error_response(
-                code='CONFIG_CONFLICT',
-                message=str(e),
-                details=[
-                    {'key': k, 'engines': [e1, e2]} 
-                    for k, e1, e2 in e.conflicts
-                ],
-                status_code=status.HTTP_400_BAD_REQUEST
             )
             
         except ObjectDoesNotExist as e:

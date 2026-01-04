@@ -115,7 +115,7 @@ def initiate_scan_flow(
         # ==================== Task 2: 获取引擎配置 ====================
         from apps.scan.models import Scan
         scan = Scan.objects.get(id=scan_id)
-        engine_config = scan.merged_configuration
+        engine_config = scan.yaml_configuration
         
         # 使用 engine_names 进行显示
         display_engine_name = ', '.join(scan.engine_names) if scan.engine_names else engine_name

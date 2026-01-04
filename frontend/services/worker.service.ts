@@ -9,6 +9,7 @@ import type {
   CreateWorkerRequest,
   UpdateWorkerRequest,
 } from '@/types/worker.types'
+import { USE_MOCK, mockDelay, getMockWorkers, getMockWorkerById } from '@/mock'
 
 const BASE_URL = '/workers'
 
@@ -17,6 +18,10 @@ export const workerService = {
    * Get Worker list
    */
   async getWorkers(page = 1, pageSize = 10): Promise<WorkersResponse> {
+    if (USE_MOCK) {
+      await mockDelay()
+      return getMockWorkers(page, pageSize)
+    }
     const response = await apiClient.get<WorkersResponse>(
       `${BASE_URL}/?page=${page}&page_size=${pageSize}`
     )
@@ -27,6 +32,12 @@ export const workerService = {
    * Get single Worker details
    */
   async getWorker(id: number): Promise<WorkerNode> {
+    if (USE_MOCK) {
+      await mockDelay()
+      const worker = getMockWorkerById(id)
+      if (!worker) throw new Error('Worker not found')
+      return worker
+    }
     const response = await apiClient.get<WorkerNode>(`${BASE_URL}/${id}/`)
     return response.data
   },

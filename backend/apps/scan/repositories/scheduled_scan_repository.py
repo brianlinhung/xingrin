@@ -31,7 +31,7 @@ class ScheduledScanDTO:
     name: str = ''
     engine_ids: List[int] = None  # 多引擎支持
     engine_names: List[str] = None  # 引擎名称列表
-    merged_configuration: str = ''  # 合并后的配置
+    yaml_configuration: str = ''  # YAML 格式的扫描配置
     organization_id: Optional[int] = None  # 组织扫描模式
     target_id: Optional[int] = None  # 目标扫描模式
     cron_expression: Optional[str] = None
@@ -114,7 +114,7 @@ class DjangoScheduledScanRepository:
                 name=dto.name,
                 engine_ids=dto.engine_ids,
                 engine_names=dto.engine_names,
-                merged_configuration=dto.merged_configuration,
+                yaml_configuration=dto.yaml_configuration,
                 organization_id=dto.organization_id,  # 组织扫描模式
                 target_id=dto.target_id if not dto.organization_id else None,  # 目标扫描模式
                 cron_expression=dto.cron_expression,
@@ -147,8 +147,8 @@ class DjangoScheduledScanRepository:
                     scheduled_scan.engine_ids = dto.engine_ids
                 if dto.engine_names is not None:
                     scheduled_scan.engine_names = dto.engine_names
-                if dto.merged_configuration is not None:
-                    scheduled_scan.merged_configuration = dto.merged_configuration
+                if dto.yaml_configuration is not None:
+                    scheduled_scan.yaml_configuration = dto.yaml_configuration
                 if dto.cron_expression is not None:
                     scheduled_scan.cron_expression = dto.cron_expression
                 if dto.is_enabled is not None:

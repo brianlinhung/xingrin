@@ -1,5 +1,6 @@
 import apiClient from '@/lib/api-client'
 import type { ScanEngine } from '@/types/engine.types'
+import { USE_MOCK, mockDelay, getMockEngines, getMockEngineById } from '@/mock'
 
 /**
  * Engine API service
@@ -9,6 +10,10 @@ import type { ScanEngine } from '@/types/engine.types'
  * Get engine list
  */
 export async function getEngines(): Promise<ScanEngine[]> {
+  if (USE_MOCK) {
+    await mockDelay()
+    return getMockEngines()
+  }
   // Engines are usually not many, get all
   const response = await apiClient.get('/engines/', {
     params: { pageSize: 1000 }
@@ -21,6 +26,12 @@ export async function getEngines(): Promise<ScanEngine[]> {
  * Get engine details
  */
 export async function getEngine(id: number): Promise<ScanEngine> {
+  if (USE_MOCK) {
+    await mockDelay()
+    const engine = getMockEngineById(id)
+    if (!engine) throw new Error('Engine not found')
+    return engine
+  }
   const response = await apiClient.get(`/engines/${id}/`)
   return response.data
 }

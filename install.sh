@@ -43,48 +43,60 @@ BOLD='\033[1m'
 RESET='\033[0m'
 
 # ==============================================================================
+# 额外颜色定义
+# ==============================================================================
+MAGENTA='\033[0;35m'
+DIM='\033[2m'
+BG_BLUE='\033[44m'
+BG_CYAN='\033[46m'
+
+# ==============================================================================
 # 日志函数
 # ==============================================================================
 info() {
-    echo -e "${BLUE}[INFO]${RESET} $1"
+    echo -e "  ${CYAN}▸${RESET} $1"
 }
 
 success() {
-    echo -e "${GREEN}[OK]${RESET} $1"
+    echo -e "  ${GREEN}✔${RESET} $1"
 }
 
 warn() {
-    echo -e "${YELLOW}[WARN]${RESET} $1"
+    echo -e "  ${YELLOW}⚠${RESET} $1"
 }
 
 error() {
-    echo -e "${RED}[ERROR]${RESET} $1"
+    echo -e "  ${RED}✖${RESET} $1"
 }
 
 step() {
-    echo -e "\n${BOLD}${CYAN}>>> $1${RESET}"
+    echo -e "\n${BOLD}${CYAN}┌── $1${RESET}"
 }
 
 header() {
-    echo -e "${BOLD}${BLUE}============================================================${RESET}"
-    echo -e "${BOLD}${BLUE}   $1${RESET}"
-    echo -e "${BOLD}${BLUE}============================================================${RESET}"
+    echo -e ""
+    echo -e "${BOLD}${BLUE}╔══════════════════════════════════════════════════════════╗${RESET}"
+    echo -e "${BOLD}${BLUE}║${RESET}   $1"
+    echo -e "${BOLD}${BLUE}╚══════════════════════════════════════════════════════════╝${RESET}"
 }
 
 # ==============================================================================
 # 显示横幅
 # ==============================================================================
 show_banner() {
-    echo -e "${CYAN}"
-    cat << 'EOF'
-    __  __ _             ____  _       
-    \ \/ /(_)_ __   __ _|  _ \(_)_ __  
-     \  / | | '_ \ / _` | |_) | | '_ \ 
-     /  \ | | | | | (_| |  _ <| | | | |
-    /_/\_\|_|_| |_|\__, |_| \_\_|_| |_|
-                   |___/                
-EOF
-    echo -e "${RESET}"
+    clear
+    echo -e ""
+    echo -e "${CYAN}${BOLD}       ██╗  ██╗██╗███╗   ██╗ ██████╗ ██████╗ ██╗███╗   ██╗${RESET}"
+    echo -e "${CYAN}       ╚██╗██╔╝██║████╗  ██║██╔════╝ ██╔══██╗██║████╗  ██║${RESET}"
+    echo -e "${BLUE}${BOLD}        ╚███╔╝ ██║██╔██╗ ██║██║  ███╗██████╔╝██║██╔██╗ ██║${RESET}"
+    echo -e "${BLUE}        ██╔██╗ ██║██║╚██╗██║██║   ██║██╔══██╗██║██║╚██╗██║${RESET}"
+    echo -e "${MAGENTA}${BOLD}       ██╔╝ ██╗██║██║ ╚████║╚██████╔╝██║  ██║██║██║ ╚████║${RESET}"
+    echo -e "${MAGENTA}       ╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝${RESET}"
+    echo -e ""
+    echo -e "${DIM}       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo -e "${BOLD}         🔒 分布式安全扫描平台  │  一键部署 (Ubuntu)${RESET}"
+    echo -e "${DIM}       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo -e ""
 }
 
 # ==============================================================================
@@ -120,7 +132,6 @@ fi
 
 # 显示标题
 show_banner
-header "XingRin 一键安装脚本 (Ubuntu)"
 info "当前用户: ${BOLD}$REAL_USER${RESET}"
 info "项目路径: ${BOLD}$ROOT_DIR${RESET}"
 info "安装版本: ${BOLD}$APP_VERSION${RESET}"
@@ -272,11 +283,62 @@ get_accelerated_image() {
     echo "$image"
 }
 
+# 检测远程 PostgreSQL 是否有 pg_ivm 扩展
+check_pg_ivm() {
+    local db_host="$1"
+    local db_port="$2"
+    local db_user="$3"
+    local db_password="$4"
+    local db_name="$5"
+    
+    info "检测 pg_ivm 扩展..."
+    
+    # 尝试创建 pg_ivm 扩展
+    if docker run --rm \
+        -e PGPASSWORD="$db_password" \
+        postgres:15 \
+        psql "postgresql://$db_user@$db_host:$db_port/$db_name" \
+        -c "CREATE EXTENSION IF NOT EXISTS pg_ivm;" 2>/dev/null; then
+        success "pg_ivm 扩展已启用"
+        return 0
+    else
+        echo
+        error "pg_ivm 扩展未安装或无法启用"
+        echo
+        echo -e "${YELLOW}=========================================="
+        echo -e "pg_ivm 是必需的扩展，用于增量维护物化视图"
+        echo -e "要求: PostgreSQL 13+ 版本"
+        echo -e "==========================================${RESET}"
+        echo
+        echo -e "请在远程 PostgreSQL 服务器上执行以下命令一键安装:"
+        echo
+        echo -e "  ${BOLD}curl -sSL https://raw.githubusercontent.com/yyhuni/xingrin/main/docker/scripts/install-pg-ivm.sh | sudo bash${RESET}"
+        echo
+        echo -e "安装完成后，请重新运行 install.sh"
+        echo -e "${YELLOW}==========================================${RESET}"
+        return 1
+    fi
+}
+
 # 显示安装总结信息
 show_summary() {
     echo
-    if [ "$1" == "success" ]; then
-        header "服务已成功启动！"
+    if [ "$1" = "success" ]; then
+        # 成功 Banner
+        echo -e ""
+        echo -e "${GREEN}${BOLD}    ╔═══════════════════════════════════════════════════╗${RESET}"
+        echo -e "${GREEN}${BOLD}    ║                                                   ║${RESET}"
+        echo -e "${GREEN}${BOLD}    ║   ██████╗  ██████╗ ███╗   ██╗███████╗██║          ║${RESET}"
+        echo -e "${GREEN}${BOLD}    ║   ██╔══██╗██╔═══██╗████╗  ██║██╔════╝██║          ║${RESET}"
+        echo -e "${GREEN}${BOLD}    ║   ██║  ██║██║   ██║██╔██╗ ██║█████╗  ██║          ║${RESET}"
+        echo -e "${GREEN}${BOLD}    ║   ██║  ██║██║   ██║██║╚██╗██║██╔══╝  ╚═╝          ║${RESET}"
+        echo -e "${GREEN}${BOLD}    ║   ██████╔╝╚██████╔╝██║ ╚████║███████╗██║          ║${RESET}"
+        echo -e "${GREEN}${BOLD}    ║   ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚══════╝╚═╝          ║${RESET}"
+        echo -e "${GREEN}${BOLD}    ║                                                   ║${RESET}"
+        echo -e "${GREEN}${BOLD}    ║       ✨ XingRin 平台部署成功！                  ║${RESET}"
+        echo -e "${GREEN}${BOLD}    ║                                                   ║${RESET}"
+        echo -e "${GREEN}${BOLD}    ╚═══════════════════════════════════════════════════╝${RESET}"
+        echo -e ""
     else
         header "安装完成 Summary"
     fi
@@ -287,12 +349,11 @@ show_summary() {
         DB_USER=$(grep "^DB_USER=" "$DOCKER_DIR/.env" | cut -d= -f2)
         DB_PASSWORD=$(grep "^DB_PASSWORD=" "$DOCKER_DIR/.env" | cut -d= -f2)
         
-        echo -e "${YELLOW}数据库配置：${RESET}"
-        echo -e "------------------------------------------------------------"
-        echo -e "  服务器地址: ${DB_HOST:-未知}"
-        echo -e "  用户名: ${DB_USER:-未知}"
-        echo -e "  密码: ${DB_PASSWORD:-未知}"
-        echo -e "------------------------------------------------------------"
+        echo -e "${DIM}    ──────────────────────────────────────────────────────${RESET}"
+        echo -e "    ${YELLOW}🗄  数据库配置${RESET}"
+        echo -e "    ${DIM}├─${RESET} 服务器地址: ${BOLD}${DB_HOST:-未知}${RESET}"
+        echo -e "    ${DIM}├─${RESET} 用户名:     ${BOLD}${DB_USER:-未知}${RESET}"
+        echo -e "    ${DIM}└─${RESET} 密码:       ${BOLD}${DB_PASSWORD:-未知}${RESET}"
         echo
     fi
 
@@ -304,27 +365,33 @@ show_summary() {
         ACCESS_HOST="localhost"
     fi
     
-    echo -e "${GREEN}访问地址：${RESET}"
-    printf "   %-16s %s\n" "XingRin:" "https://${ACCESS_HOST}:8083/"
+    echo -e "${DIM}    ──────────────────────────────────────────────────────${RESET}"
+    echo -e "    ${GREEN}🌐 访问地址${RESET}"
+    echo -e "    ${DIM}└─${RESET} XingRin:    ${BOLD}${CYAN}https://${ACCESS_HOST}:8083/${RESET}"
     echo
     
-    echo -e "${YELLOW}默认登录账号：${RESET}"
-    printf "   %-16s %s\n" "用户名:" "admin"
-    printf "   %-16s %s\n" "密码:" "admin"
-    echo -e "${YELLOW}   [!] 请首次登录后修改密码!${RESET}"
+    echo -e "${DIM}    ──────────────────────────────────────────────────────${RESET}"
+    echo -e "    ${MAGENTA}🔑 默认登录${RESET}"
+    echo -e "    ${DIM}├─${RESET} 用户名:     ${BOLD}admin${RESET}"
+    echo -e "    ${DIM}└─${RESET} 密码:       ${BOLD}admin${RESET}"
+    echo -e "    ${YELLOW}   ⚠  请首次登录后修改密码!${RESET}"
     echo
     
-    if [ "$1" != "success" ]; then
-        echo -e "${GREEN}后续启动命令：${RESET}"
-        echo -e "   ./start.sh              # 启动所有服务"
-        echo -e "   ./start.sh --no-frontend # 只启动后端"
-        echo -e "   ./stop.sh               # 停止所有服务"
+    if [ "$1" = "success" ]; then
+        :  # 成功模式，不显示后续命令
+    else
+        echo -e "${DIM}    ──────────────────────────────────────────────────────${RESET}"
+        echo -e "    ${BLUE}🚀 后续命令${RESET}"
+        echo -e "    ${DIM}├─${RESET} ./start.sh              ${DIM}# 启动所有服务${RESET}"
+        echo -e "    ${DIM}├─${RESET} ./start.sh --no-frontend ${DIM}# 只启动后端${RESET}"
+        echo -e "    ${DIM}└─${RESET} ./stop.sh               ${DIM}# 停止所有服务${RESET}"
         echo
     fi
     
-    echo -e "${YELLOW}[!] 云服务器某些厂商默认开启了安全策略（阿里云/腾讯云/华为云等）：${RESET}"
-    echo -e "   端口未放行可能导致无法访问或无法扫描，强烈推荐用国外vps，或者在云控制台放行："
-    echo -e "   ${RESET}8083, 5432"
+    echo -e "${DIM}    ──────────────────────────────────────────────────────${RESET}"
+    echo -e "    ${YELLOW}⚠  云服务器端口提醒${RESET}"
+    echo -e "    ${DIM}└─${RESET} 某些厂商默认开启安全策略（阿里云/腾讯云/华为云）"
+    echo -e "       端口未放行可能导致无法访问，请在云控制台放行: ${BOLD}8083, 5432${RESET}"
     echo
 }
 
@@ -553,6 +620,11 @@ if [ -f "$DOCKER_DIR/.env.example" ]; then
             -c "CREATE DATABASE $prefect_db;" 2>/dev/null || true
         success "数据库准备完成"
         
+        # 检测 pg_ivm 扩展
+        if ! check_pg_ivm "$db_host" "$db_port" "$db_user" "$db_password" "$db_name"; then
+            exit 1
+        fi
+        
         sed_inplace "s/^DB_HOST=.*/DB_HOST=$db_host/" "$DOCKER_DIR/.env"
         sed_inplace "s/^DB_PORT=.*/DB_PORT=$db_port/" "$DOCKER_DIR/.env"
         sed_inplace "s/^DB_USER=.*/DB_USER=$db_user/" "$DOCKER_DIR/.env"
@@ -672,7 +744,7 @@ fi
 # 启动服务
 # ==============================================================================
 step "正在启动服务..."
-"$ROOT_DIR/start.sh" $START_ARGS
+"$ROOT_DIR/start.sh" ${START_ARGS} --quiet
 
 # ==============================================================================
 # 完成总结

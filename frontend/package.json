@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev:mock": "NEXT_PUBLIC_USE_MOCK=true next dev --turbopack",
     "dev:noauth": "NEXT_PUBLIC_SKIP_AUTH=true next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
@@ -53,6 +54,7 @@
     "cron-parser": "^5.4.0",
     "cronstrue": "^3.9.0",
     "date-fns": "^4.1.0",
+    "framer-motion": "^12.23.26",
     "geist": "^1.5.1",
     "is-ip": "^5.0.1",
     "js-yaml": "^4.1.0",

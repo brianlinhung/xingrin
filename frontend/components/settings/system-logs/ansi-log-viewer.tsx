@@ -36,6 +36,7 @@ const converter = new AnsiToHtml({
 
 export function AnsiLogViewer({ content, className }: AnsiLogViewerProps) {
   const containerRef = useRef<HTMLPreElement>(null)
+  const isAtBottomRef = useRef(true)  // 跟踪用户是否在底部
 
   // 将 ANSI 转换为 HTML
   const htmlContent = useMemo(() => {
@@ -43,9 +44,24 @@ export function AnsiLogViewer({ content, className }: AnsiLogViewerProps) {
     return converter.toHtml(content)
   }, [content])
 
-  // 自动滚动到底部
+  // 监听滚动事件，检测用户是否在底部
   useEffect(() => {
-    if (containerRef.current) {
+    const container = containerRef.current
+    if (!container) return
+    
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container
+      // 允许 30px 的容差，认为在底部附近
+      isAtBottomRef.current = scrollHeight - scrollTop - clientHeight < 30
+    }
+    
+    container.addEventListener('scroll', handleScroll)
+    return () => container.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  // 只有用户在底部时才自动滚动
+  useEffect(() => {
+    if (containerRef.current && isAtBottomRef.current) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight
     }
   }, [htmlContent])

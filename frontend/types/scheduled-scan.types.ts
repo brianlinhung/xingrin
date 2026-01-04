@@ -31,7 +31,9 @@ export interface ScheduledScan {
 // Create scheduled scan request (organizationId and targetId are mutually exclusive)
 export interface CreateScheduledScanRequest {
   name: string
-  engineIds: number[] // Engine ID list
+  configuration: string // YAML configuration string (required)
+  engineIds: number[] // Engine ID list (required)
+  engineNames: string[] // Engine name list (required)
   organizationId?: number // Organization scan mode
   targetId?: number // Target scan mode
   cronExpression: string // Cron expression, format: minute hour day month weekday
@@ -41,7 +43,9 @@ export interface CreateScheduledScanRequest {
 // Update scheduled scan request (organizationId and targetId are mutually exclusive)
 export interface UpdateScheduledScanRequest {
   name?: string
-  engineIds?: number[] // Engine ID list
+  configuration?: string // YAML configuration string
+  engineIds?: number[] // Engine ID list (optional, for reference)
+  engineNames?: string[] // Engine name list (optional, for reference)
   organizationId?: number // Organization scan mode (clears targetId when set)
   targetId?: number // Target scan mode (clears organizationId when set)
   cronExpression?: string

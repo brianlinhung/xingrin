@@ -14,6 +14,7 @@ from prefect import Flow
 from prefect.client.schemas import FlowRun, State
 
 from apps.scan.utils.performance import FlowPerformanceTracker
+from apps.scan.utils import user_log
 
 logger = logging.getLogger(__name__)
 
@@ -136,6 +137,7 @@ def on_scan_flow_failed(flow: Flow, flow_run: FlowRun, state: State) -> None:
     - 更新阶段进度为 failed
     - 发送扫描失败通知
     - 记录性能指标（含错误信息）
+    - 写入 ScanLog 供前端显示
     
     Args:
         flow: Prefect Flow 对象
@@ -151,6 +153,11 @@ def on_scan_flow_failed(flow: Flow, flow_run: FlowRun, state: State) -> None:
     
     # 提取错误信息
     error_message = str(state.message) if state.message else "未知错误"
+    
+    # 写入 ScanLog 供前端显示
+    stage = _get_stage_from_flow_name(flow.name)
+    if scan_id and stage:
+        user_log(scan_id, stage, f"Failed: {error_message}", "error")
     
     # 记录性能指标（失败情况）
     tracker = _flow_trackers.pop(str(flow_run.id), None)

@@ -80,3 +80,14 @@ export function parseEngineCapabilities(configuration: string): string[] {
     return []
   }
 }
+
+/**
+ * Merge multiple engine configurations into a single YAML string
+ * Simply concatenates configurations with separators
+ */
+export function mergeEngineConfigurations(configurations: string[]): string {
+  const validConfigs = configurations.filter(c => c && c.trim())
+  if (validConfigs.length === 0) return ""
+  if (validConfigs.length === 1) return validConfigs[0]
+  return validConfigs.join("\n\n# ---\n\n")
+}

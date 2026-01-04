@@ -104,7 +104,7 @@ class DjangoScanRepository:
         target: Target,
         engine_ids: List[int],
         engine_names: List[str],
-        merged_configuration: str,
+        yaml_configuration: str,
         results_dir: str,
         status: ScanStatus = ScanStatus.INITIATED
     ) -> Scan:
@@ -115,7 +115,7 @@ class DjangoScanRepository:
             target: 扫描目标
             engine_ids: 引擎 ID 列表
             engine_names: 引擎名称列表
-            merged_configuration: 合并后的 YAML 配置
+            yaml_configuration: YAML 格式的扫描配置
             results_dir: 结果目录
             status: 初始状态
         
@@ -126,7 +126,7 @@ class DjangoScanRepository:
             target=target,
             engine_ids=engine_ids,
             engine_names=engine_names,
-            merged_configuration=merged_configuration,
+            yaml_configuration=yaml_configuration,
             results_dir=results_dir,
             status=status,
             container_ids=[]

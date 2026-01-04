@@ -11,6 +11,7 @@ from .wordlist_helpers import ensure_wordlist_local
 from .nuclei_helpers import ensure_nuclei_templates_local
 from .performance import FlowPerformanceTracker, CommandPerformanceTracker
 from .workspace_utils import setup_scan_workspace, setup_scan_directory
+from .user_logger import user_log
 from . import config_parser
 
 __all__ = [
@@ -31,6 +32,8 @@ __all__ = [
     # 性能监控
     'FlowPerformanceTracker',      # Flow 性能追踪器（含系统资源采样）
     'CommandPerformanceTracker',   # 命令性能追踪器
+    # 扫描日志
+    'user_log',              # 用户可见扫描日志记录
     # 配置解析
     'config_parser',
 ]

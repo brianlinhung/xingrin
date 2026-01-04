@@ -82,7 +82,9 @@ export interface GetScansResponse {
 export interface InitiateScanRequest {
   organizationId?: number  // Organization ID (choose one)
   targetId?: number        // Target ID (choose one)
+  configuration: string    // YAML configuration string (required)
   engineIds: number[]      // Scan engine ID list (required)
+  engineNames: string[]    // Engine name list (required)
 }
 
 /**
@@ -90,7 +92,9 @@ export interface InitiateScanRequest {
  */
 export interface QuickScanRequest {
   targets: { name: string }[]  // Target list
+  configuration: string        // YAML configuration string (required)
   engineIds: number[]          // Scan engine ID list (required)
+  engineNames: string[]        // Engine name list (required)
 }
 
 /**

@@ -11,6 +11,7 @@ from apps.scan.handlers.scan_flow_handlers import (
     on_scan_flow_failed,
 )
 from apps.scan.configs.command_templates import get_command_template
+from apps.scan.utils import user_log
 from .endpoints_vuln_scan_flow import endpoints_vuln_scan_flow
 
 
@@ -72,6 +73,9 @@ def vuln_scan_flow(
         if not enabled_tools:
             raise ValueError("enabled_tools 不能为空")
 
+        logger.info("开始漏洞扫描 - Scan ID: %s, Target: %s", scan_id, target_name)
+        user_log(scan_id, "vuln_scan", "Starting vulnerability scan")
+
         # Step 1: 分类工具
         endpoints_tools, other_tools = _classify_vuln_tools(enabled_tools)
 
@@ -98,6 +102,14 @@ def vuln_scan_flow(
             scan_workspace_dir=scan_workspace_dir,
             enabled_tools=endpoints_tools,
         )
+
+        # 记录 Flow 完成
+        total_vulns = sum(
+            r.get("created_vulns", 0) 
+            for r in endpoint_result.get("tool_results", {}).values()
+        )
+        logger.info("✓ 漏洞扫描完成 - 新增漏洞: %d", total_vulns)
+        user_log(scan_id, "vuln_scan", f"vuln_scan completed: found {total_vulns} vulnerabilities")
 
         # 目前只有一个子 Flow，直接返回其结果
         return endpoint_result

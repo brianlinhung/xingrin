@@ -29,7 +29,7 @@ from apps.scan.tasks.fingerprint_detect import (
     export_urls_for_fingerprint_task,
     run_xingfinger_and_stream_update_tech_task,
 )
-from apps.scan.utils import build_scan_command
+from apps.scan.utils import build_scan_command, user_log
 from apps.scan.utils.fingerprint_helpers import get_fingerprint_paths
 
 logger = logging.getLogger(__name__)
@@ -168,6 +168,7 @@ def _run_fingerprint_detect(
             "开始执行 %s 指纹识别 - URL数: %d, 超时: %ds, 指纹库: %s",
             tool_name, url_count, timeout, list(fingerprint_paths.keys())
         )
+        user_log(scan_id, "fingerprint_detect", f"Running {tool_name}: {command}")
         
         # 6. 执行扫描任务
         try:
@@ -190,17 +191,21 @@ def _run_fingerprint_detect(
                 'fingerprint_libs': list(fingerprint_paths.keys())
             }
             
+            tool_updated = result.get('updated_count', 0)
             logger.info(
                 "✓ 工具 %s 执行完成 - 处理记录: %d, 更新: %d, 未找到: %d",
                 tool_name,
                 result.get('processed_records', 0),
-                result.get('updated_count', 0),
+                tool_updated,
                 result.get('not_found_count', 0)
             )
+            user_log(scan_id, "fingerprint_detect", f"{tool_name} completed: identified {tool_updated} fingerprints")
             
         except Exception as exc:
-            failed_tools.append({'tool': tool_name, 'reason': str(exc)})
+            reason = str(exc)
+            failed_tools.append({'tool': tool_name, 'reason': reason})
             logger.error("工具 %s 执行失败: %s", tool_name, exc, exc_info=True)
+            user_log(scan_id, "fingerprint_detect", f"{tool_name} failed: {reason}", "error")
     
     if failed_tools:
         logger.warning(
@@ -272,6 +277,8 @@ def fingerprint_detect_flow(
             "="*60
         )
         
+        user_log(scan_id, "fingerprint_detect", "Starting fingerprint detection")
+        
         # 参数验证
         if scan_id is None:
             raise ValueError("scan_id 不能为空")
@@ -293,7 +300,8 @@ def fingerprint_detect_flow(
         urls_file, url_count = _export_urls(target_id, fingerprint_dir, source)
         
         if url_count == 0:
-            logger.warning("目标下没有可用的 URL，跳过指纹识别")
+            logger.warning("跳过指纹识别：没有 URL 可扫描 - Scan ID: %s", scan_id)
+            user_log(scan_id, "fingerprint_detect", "Skipped: no URLs to scan", "warning")
             return {
                 'success': True,
                 'scan_id': scan_id,
@@ -332,8 +340,6 @@ def fingerprint_detect_flow(
             source=source
         )
         
-        logger.info("="*60 + "\n✓ 指纹识别完成\n" + "="*60)
-        
         # 动态生成已执行的任务列表
         executed_tasks = ['export_urls_for_fingerprint']
         executed_tasks.extend([f'run_xingfinger ({tool})' for tool in tool_stats.keys()])
@@ -343,6 +349,10 @@ def fingerprint_detect_flow(
         total_updated = sum(stats['result'].get('updated_count', 0) for stats in tool_stats.values())
         total_created = sum(stats['result'].get('created_count', 0) for stats in tool_stats.values())
         total_snapshots = sum(stats['result'].get('snapshot_count', 0) for stats in tool_stats.values())
+        
+        # 记录 Flow 完成
+        logger.info("✓ 指纹识别完成 - 识别指纹: %d", total_updated)
+        user_log(scan_id, "fingerprint_detect", f"fingerprint_detect completed: identified {total_updated} fingerprints")
         
         successful_tools = [name for name in enabled_tools.keys() 
                            if name not in [f['tool'] for f in failed_tools]]

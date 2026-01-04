@@ -28,7 +28,7 @@ from apps.scan.handlers.scan_flow_handlers import (
     on_scan_flow_completed,
     on_scan_flow_failed,
 )
-from apps.scan.utils import config_parser, build_scan_command
+from apps.scan.utils import config_parser, build_scan_command, user_log
 
 logger = logging.getLogger(__name__)
 
@@ -265,6 +265,7 @@ def _run_scans_sequentially(
         
         # 3. 执行扫描任务
         logger.info("开始执行 %s 扫描（超时: %d秒）...", tool_name, config_timeout)
+        user_log(scan_id, "port_scan", f"Running {tool_name}: {command}")
         
         try:
             # 直接调用 task（串行执行）
@@ -286,26 +287,31 @@ def _run_scans_sequentially(
                 'result': result,
                 'timeout': config_timeout
             }
-            processed_records += result.get('processed_records', 0)
+            tool_records = result.get('processed_records', 0)
+            processed_records += tool_records
             logger.info(
                 "✓ 工具 %s 流式处理完成 - 记录数: %d",
-                tool_name, result.get('processed_records', 0)
+                tool_name, tool_records
             )
+            user_log(scan_id, "port_scan", f"{tool_name} completed: found {tool_records} ports")
             
         except subprocess.TimeoutExpired as exc:
             # 超时异常单独处理
             # 注意：流式处理任务超时时，已解析的数据已保存到数据库
-            reason = f"执行超时（配置: {config_timeout}秒）"
+            reason = f"timeout after {config_timeout}s"
             failed_tools.append({'tool': tool_name, 'reason': reason})
             logger.warning(
                 "⚠️ 工具 %s 执行超时 - 超时配置: %d秒\n"
                 "注意：超时前已解析的端口数据已保存到数据库，但扫描未完全完成。",
                 tool_name, config_timeout
             )
+            user_log(scan_id, "port_scan", f"{tool_name} failed: {reason}", "error")
         except Exception as exc:
             # 其他异常
-            failed_tools.append({'tool': tool_name, 'reason': str(exc)})
+            reason = str(exc)
+            failed_tools.append({'tool': tool_name, 'reason': reason})
             logger.error("工具 %s 执行失败: %s", tool_name, exc, exc_info=True)
+            user_log(scan_id, "port_scan", f"{tool_name} failed: {reason}", "error")
     
     if failed_tools:
         logger.warning(
@@ -420,6 +426,8 @@ def port_scan_flow(
             "="*60
         )
         
+        user_log(scan_id, "port_scan", "Starting port scan")
+        
         # Step 0: 创建工作目录
         from apps.scan.utils import setup_scan_directory
         port_scan_dir = setup_scan_directory(scan_workspace_dir, 'port_scan')
@@ -428,7 +436,8 @@ def port_scan_flow(
         targets_file, target_count, target_type = _export_scan_targets(target_id, port_scan_dir)
         
         if target_count == 0:
-            logger.warning("目标下没有可扫描的地址，跳过端口扫描")
+            logger.warning("跳过端口扫描：没有目标可扫描 - Scan ID: %s", scan_id)
+            user_log(scan_id, "port_scan", "Skipped: no targets to scan", "warning")
             return {
                 'success': True,
                 'scan_id': scan_id,
@@ -467,7 +476,9 @@ def port_scan_flow(
             target_name=target_name
         )
         
-        logger.info("="*60 + "\n✓ 端口扫描完成\n" + "="*60)
+        # 记录 Flow 完成
+        logger.info("✓ 端口扫描完成 - 发现端口: %d", processed_records)
+        user_log(scan_id, "port_scan", f"port_scan completed: found {processed_records} ports")
         
         # 动态生成已执行的任务列表
         executed_tasks = ['export_scan_targets', 'parse_config']

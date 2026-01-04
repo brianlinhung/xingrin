@@ -30,7 +30,7 @@ from apps.scan.handlers.scan_flow_handlers import (
     on_scan_flow_completed,
     on_scan_flow_failed,
 )
-from apps.scan.utils import build_scan_command, ensure_wordlist_local
+from apps.scan.utils import build_scan_command, ensure_wordlist_local, user_log
 from apps.engine.services.wordlist_service import WordlistService
 from apps.common.normalizer import normalize_domain
 from apps.common.validators import validate_domain
@@ -77,7 +77,8 @@ def _validate_and_normalize_target(target_name: str) -> str:
 def _run_scans_parallel(
     enabled_tools: dict,
     domain_name: str,
-    result_dir: Path
+    result_dir: Path,
+    scan_id: int
 ) -> tuple[list, list, list]:
     """
     并行运行所有启用的子域名扫描工具
@@ -86,6 +87,7 @@ def _run_scans_parallel(
         enabled_tools: 启用的工具配置字典 {'tool_name': {'timeout': 600, ...}}
         domain_name: 目标域名
         result_dir: 结果输出目录
+        scan_id: 扫描任务 ID（用于记录日志）
         
     Returns:
         tuple: (result_files, failed_tools, successful_tool_names)
@@ -137,6 +139,9 @@ def _run_scans_parallel(
             f"提交任务 - 工具: {tool_name}, 超时: {timeout}s, 输出: {output_file}"
         )
         
+        # 记录工具开始执行日志
+        user_log(scan_id, "subdomain_discovery", f"Running {tool_name}: {command}")
+        
         future = run_subdomain_discovery_task.submit(
             tool=tool_name,
             command=command,
@@ -164,16 +169,19 @@ def _run_scans_parallel(
             if result:
                 result_files.append(result)
                 logger.info("✓ 扫描工具 %s 执行成功: %s", tool_name, result)
+                user_log(scan_id, "subdomain_discovery", f"{tool_name} completed")
             else:
                 failure_msg = f"{tool_name}: 未生成结果文件"
                 failures.append(failure_msg)
                 failed_tools.append({'tool': tool_name, 'reason': '未生成结果文件'})
                 logger.warning("⚠️ 扫描工具 %s 未生成结果文件", tool_name)
+                user_log(scan_id, "subdomain_discovery", f"{tool_name} failed: no output file", "error")
         except Exception as e:
             failure_msg = f"{tool_name}: {str(e)}"
             failures.append(failure_msg)
             failed_tools.append({'tool': tool_name, 'reason': str(e)})
             logger.warning("⚠️ 扫描工具 %s 执行失败: %s", tool_name, str(e))
+            user_log(scan_id, "subdomain_discovery", f"{tool_name} failed: {str(e)}", "error")
     
     # 4. 检查是否有成功的工具
     if not result_files:
@@ -203,7 +211,8 @@ def _run_single_tool(
     tool_config: dict,
     command_params: dict,
     result_dir: Path,
-    scan_type: str = 'subdomain_discovery'
+    scan_type: str = 'subdomain_discovery',
+    scan_id: int = None
 ) -> str:
     """
     运行单个扫描工具
@@ -214,6 +223,7 @@ def _run_single_tool(
         command_params: 命令参数
         result_dir: 结果目录
         scan_type: 扫描类型
+        scan_id: 扫描 ID（用于记录用户日志）
         
     Returns:
         str: 输出文件路径，失败返回空字符串
@@ -242,7 +252,9 @@ def _run_single_tool(
     if timeout == 'auto':
         timeout = 3600
     
-    logger.info(f"执行 {tool_name}: timeout={timeout}s")
+    logger.info(f"执行 {tool_name}: {command}")
+    if scan_id:
+        user_log(scan_id, scan_type, f"Running {tool_name}: {command}")
     
     try:
         result = run_subdomain_discovery_task(
@@ -401,7 +413,6 @@ def subdomain_discovery_flow(
             logger.warning("目标域名无效，跳过子域名发现扫描: %s", e)
             return _empty_result(scan_id, target_name, scan_workspace_dir)
         
-        # 验证成功后打印日志
         logger.info(
             "="*60 + "\n" +
             "开始子域名发现扫描\n" +
@@ -410,6 +421,7 @@ def subdomain_discovery_flow(
             f"  Workspace: {scan_workspace_dir}\n" +
             "="*60
         )
+        user_log(scan_id, "subdomain_discovery", f"Starting subdomain discovery for {domain_name}")
         
         # 解析配置
         passive_tools = scan_config.get('passive_tools', {})
@@ -429,23 +441,22 @@ def subdomain_discovery_flow(
         successful_tool_names = []
         
         # ==================== Stage 1: 被动收集（并行）====================
-        logger.info("=" * 40)
-        logger.info("Stage 1: 被动收集（并行）")
-        logger.info("=" * 40)
-        
         if enabled_passive_tools:
+            logger.info("=" * 40)
+            logger.info("Stage 1: 被动收集（并行）")
+            logger.info("=" * 40)
             logger.info("启用工具: %s", ', '.join(enabled_passive_tools.keys()))
+            user_log(scan_id, "subdomain_discovery", f"Stage 1: passive collection ({', '.join(enabled_passive_tools.keys())})")
             result_files, stage1_failed, stage1_success = _run_scans_parallel(
                 enabled_tools=enabled_passive_tools,
                 domain_name=domain_name,
-                result_dir=result_dir
+                result_dir=result_dir,
+                scan_id=scan_id
             )
             all_result_files.extend(result_files)
             failed_tools.extend(stage1_failed)
             successful_tool_names.extend(stage1_success)
             executed_tasks.extend([f'passive ({tool})' for tool in stage1_success])
-        else:
-            logger.warning("未启用任何被动收集工具")
         
         # 合并 Stage 1 结果
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -456,7 +467,6 @@ def subdomain_discovery_flow(
         else:
             # 创建空文件
             Path(current_result).touch()
-            logger.warning("Stage 1 无结果，创建空文件")
         
         # ==================== Stage 2: 字典爆破（可选）====================
         bruteforce_enabled = bruteforce_config.get('enabled', False)
@@ -464,6 +474,7 @@ def subdomain_discovery_flow(
             logger.info("=" * 40)
             logger.info("Stage 2: 字典爆破")
             logger.info("=" * 40)
+            user_log(scan_id, "subdomain_discovery", "Stage 2: bruteforce")
             
             bruteforce_tool_config = bruteforce_config.get('subdomain_bruteforce', {})
             wordlist_name = bruteforce_tool_config.get('wordlist_name', 'dns_wordlist.txt')
@@ -496,22 +507,16 @@ def subdomain_discovery_flow(
                         **bruteforce_tool_config,
                         'timeout': timeout_value,
                     }
-                    logger.info(
-                        "subdomain_bruteforce 使用自动 timeout: %s 秒 (字典行数=%s, 3秒/行)",
-                        timeout_value,
-                        line_count_int,
-                    )
 
-                brute_output = str(result_dir / f"subs_brute_{timestamp}.txt")
                 brute_result = _run_single_tool(
                     tool_name='subdomain_bruteforce',
                     tool_config=bruteforce_tool_config,
                     command_params={
                         'domain': domain_name,
                         'wordlist': local_wordlist_path,
-                        'output_file': brute_output
                     },
-                    result_dir=result_dir
+                    result_dir=result_dir,
+                    scan_id=scan_id
                 )
                 
                 if brute_result:
@@ -522,11 +527,16 @@ def subdomain_discovery_flow(
                     )
                     successful_tool_names.append('subdomain_bruteforce')
                     executed_tasks.append('bruteforce')
+                    logger.info("✓ subdomain_bruteforce 执行完成")
+                    user_log(scan_id, "subdomain_discovery", "subdomain_bruteforce completed")
                 else:
                     failed_tools.append({'tool': 'subdomain_bruteforce', 'reason': '执行失败'})
+                    logger.warning("⚠️ subdomain_bruteforce 执行失败")
+                    user_log(scan_id, "subdomain_discovery", "subdomain_bruteforce failed: execution failed", "error")
             except Exception as exc:
-                logger.warning("字典准备失败，跳过字典爆破: %s", exc)
                 failed_tools.append({'tool': 'subdomain_bruteforce', 'reason': str(exc)})
+                logger.warning("字典准备失败，跳过字典爆破: %s", exc)
+                user_log(scan_id, "subdomain_discovery", f"subdomain_bruteforce failed: {str(exc)}", "error")
         
         # ==================== Stage 3: 变异生成 + 验证（可选）====================
         permutation_enabled = permutation_config.get('enabled', False)
@@ -534,6 +544,7 @@ def subdomain_discovery_flow(
             logger.info("=" * 40)
             logger.info("Stage 3: 变异生成 + 存活验证（流式管道）")
             logger.info("=" * 40)
+            user_log(scan_id, "subdomain_discovery", "Stage 3: permutation + resolve")
             
             permutation_tool_config = permutation_config.get('subdomain_permutation_resolve', {})
             
@@ -587,20 +598,19 @@ def subdomain_discovery_flow(
                         'tool': 'subdomain_permutation_resolve',
                         'reason': f"采样检测到泛解析 (膨胀率 {ratio:.1f}x)"
                     })
+                    user_log(scan_id, "subdomain_discovery", f"subdomain_permutation_resolve skipped: wildcard detected (ratio {ratio:.1f}x)", "warning")
                 else:
                     # === Step 3.2: 采样通过，执行完整变异 ===
                     logger.info("采样检测通过，执行完整变异...")
-                    
-                    permuted_output = str(result_dir / f"subs_permuted_{timestamp}.txt")
                     
                     permuted_result = _run_single_tool(
                         tool_name='subdomain_permutation_resolve',
                         tool_config=permutation_tool_config,
                         command_params={
                             'input_file': current_result,
-                            'output_file': permuted_output,
                         },
-                        result_dir=result_dir
+                        result_dir=result_dir,
+                        scan_id=scan_id
                     )
                     
                     if permuted_result:
@@ -611,15 +621,21 @@ def subdomain_discovery_flow(
                         )
                         successful_tool_names.append('subdomain_permutation_resolve')
                         executed_tasks.append('permutation')
+                        logger.info("✓ subdomain_permutation_resolve 执行完成")
+                        user_log(scan_id, "subdomain_discovery", "subdomain_permutation_resolve completed")
                     else:
                         failed_tools.append({'tool': 'subdomain_permutation_resolve', 'reason': '执行失败'})
+                        logger.warning("⚠️ subdomain_permutation_resolve 执行失败")
+                        user_log(scan_id, "subdomain_discovery", "subdomain_permutation_resolve failed: execution failed", "error")
                         
             except subprocess.TimeoutExpired:
-                logger.warning(f"采样检测超时 ({SAMPLE_TIMEOUT}秒)，跳过变异")
                 failed_tools.append({'tool': 'subdomain_permutation_resolve', 'reason': '采样检测超时'})
+                logger.warning(f"采样检测超时 ({SAMPLE_TIMEOUT}秒)，跳过变异")
+                user_log(scan_id, "subdomain_discovery", "subdomain_permutation_resolve failed: sample detection timeout", "error")
             except Exception as e:
-                logger.warning(f"采样检测失败: {e}，跳过变异")
                 failed_tools.append({'tool': 'subdomain_permutation_resolve', 'reason': f'采样检测失败: {e}'})
+                logger.warning(f"采样检测失败: {e}，跳过变异")
+                user_log(scan_id, "subdomain_discovery", f"subdomain_permutation_resolve failed: {str(e)}", "error")
         
         # ==================== Stage 4: DNS 存活验证（可选）====================
         # 无论是否启用 Stage 3，只要 resolve.enabled 为 true 就会执行，对当前所有候选子域做统一 DNS 验证
@@ -628,6 +644,7 @@ def subdomain_discovery_flow(
             logger.info("=" * 40)
             logger.info("Stage 4: DNS 存活验证")
             logger.info("=" * 40)
+            user_log(scan_id, "subdomain_discovery", "Stage 4: DNS resolve")
             
             resolve_tool_config = resolve_config.get('subdomain_resolve', {})
 
@@ -651,30 +668,27 @@ def subdomain_discovery_flow(
                     **resolve_tool_config,
                     'timeout': timeout_value,
                 }
-                logger.info(
-                    "subdomain_resolve 使用自动 timeout: %s 秒 (候选子域数=%s, 3秒/域名)",
-                    timeout_value,
-                    line_count_int,
-                )
 
-            alive_output = str(result_dir / f"subs_alive_{timestamp}.txt")
-            
             alive_result = _run_single_tool(
                 tool_name='subdomain_resolve',
                 tool_config=resolve_tool_config,
                 command_params={
                     'input_file': current_result,
-                    'output_file': alive_output,
                 },
-                result_dir=result_dir
+                result_dir=result_dir,
+                scan_id=scan_id
             )
             
             if alive_result:
                 current_result = alive_result
                 successful_tool_names.append('subdomain_resolve')
                 executed_tasks.append('resolve')
+                logger.info("✓ subdomain_resolve 执行完成")
+                user_log(scan_id, "subdomain_discovery", "subdomain_resolve completed")
             else:
                 failed_tools.append({'tool': 'subdomain_resolve', 'reason': '执行失败'})
+                logger.warning("⚠️ subdomain_resolve 执行失败")
+                user_log(scan_id, "subdomain_discovery", "subdomain_resolve failed: execution failed", "error")
         
         # ==================== Final: 保存到数据库 ====================
         logger.info("=" * 40)
@@ -695,7 +709,9 @@ def subdomain_discovery_flow(
         processed_domains = save_result.get('processed_records', 0)
         executed_tasks.append('save_domains')
         
+        # 记录 Flow 完成
         logger.info("="*60 + "\n✓ 子域名发现扫描完成\n" + "="*60)
+        user_log(scan_id, "subdomain_discovery", f"subdomain_discovery completed: found {processed_domains} subdomains")
         
         return {
             'success': True,

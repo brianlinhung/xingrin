@@ -12,7 +12,7 @@ from apps.scan.handlers.scan_flow_handlers import (
     on_scan_flow_completed,
     on_scan_flow_failed,
 )
-from apps.scan.utils import build_scan_command, ensure_nuclei_templates_local
+from apps.scan.utils import build_scan_command, ensure_nuclei_templates_local, user_log
 from apps.scan.tasks.vuln_scan import (
     export_endpoints_task,
     run_vuln_tool_task,
@@ -141,6 +141,7 @@ def endpoints_vuln_scan_flow(
             # Dalfox XSS 使用流式任务，一边解析一边保存漏洞结果
             if tool_name == "dalfox_xss":
                 logger.info("开始执行漏洞扫描工具 %s（流式保存漏洞结果，已提交任务）", tool_name)
+                user_log(scan_id, "vuln_scan", f"Running {tool_name}: {command}")
                 future = run_and_stream_save_dalfox_vulns_task.submit(
                     cmd=command,
                     tool_name=tool_name,
@@ -163,6 +164,7 @@ def endpoints_vuln_scan_flow(
             elif tool_name == "nuclei":
                 # Nuclei 使用流式任务
                 logger.info("开始执行漏洞扫描工具 %s（流式保存漏洞结果，已提交任务）", tool_name)
+                user_log(scan_id, "vuln_scan", f"Running {tool_name}: {command}")
                 future = run_and_stream_save_nuclei_vulns_task.submit(
                     cmd=command,
                     tool_name=tool_name,
@@ -185,6 +187,7 @@ def endpoints_vuln_scan_flow(
             else:
                 # 其他工具仍使用非流式执行逻辑
                 logger.info("开始执行漏洞扫描工具 %s（已提交任务）", tool_name)
+                user_log(scan_id, "vuln_scan", f"Running {tool_name}: {command}")
                 future = run_vuln_tool_task.submit(
                     tool_name=tool_name,
                     command=command,
@@ -203,24 +206,34 @@ def endpoints_vuln_scan_flow(
         # 统一收集所有工具的执行结果
         for tool_name, meta in tool_futures.items():
             future = meta["future"]
-            result = future.result()
+            try:
+                result = future.result()
 
-            if meta["mode"] == "streaming":
-                tool_results[tool_name] = {
-                    "command": meta["command"],
-                    "timeout": meta["timeout"],
-                    "processed_records": result.get("processed_records"),
-                    "created_vulns": result.get("created_vulns"),
-                    "command_log_file": meta["log_file"],
-                }
-            else:
-                tool_results[tool_name] = {
-                    "command": meta["command"],
-                    "timeout": meta["timeout"],
-                    "duration": result.get("duration"),
-                    "returncode": result.get("returncode"),
-                    "command_log_file": result.get("command_log_file"),
-                }
+                if meta["mode"] == "streaming":
+                    created_vulns = result.get("created_vulns", 0)
+                    tool_results[tool_name] = {
+                        "command": meta["command"],
+                        "timeout": meta["timeout"],
+                        "processed_records": result.get("processed_records"),
+                        "created_vulns": created_vulns,
+                        "command_log_file": meta["log_file"],
+                    }
+                    logger.info("✓ 工具 %s 执行完成 - 漏洞: %d", tool_name, created_vulns)
+                    user_log(scan_id, "vuln_scan", f"{tool_name} completed: found {created_vulns} vulnerabilities")
+                else:
+                    tool_results[tool_name] = {
+                        "command": meta["command"],
+                        "timeout": meta["timeout"],
+                        "duration": result.get("duration"),
+                        "returncode": result.get("returncode"),
+                        "command_log_file": result.get("command_log_file"),
+                    }
+                    logger.info("✓ 工具 %s 执行完成 - returncode=%s", tool_name, result.get("returncode"))
+                    user_log(scan_id, "vuln_scan", f"{tool_name} completed")
+            except Exception as e:
+                reason = str(e)
+                logger.error("工具 %s 执行失败: %s", tool_name, e, exc_info=True)
+                user_log(scan_id, "vuln_scan", f"{tool_name} failed: {reason}", "error")
 
         return {
             "success": True,

@@ -59,6 +59,8 @@ def domain_name_url_fetch_flow(
     - IP 和 CIDR 类型会自动跳过（waymore 等工具不支持）
     - 工具会自动收集 *.target_name 的所有历史 URL，无需遍历子域名
     """
+    from apps.scan.utils import user_log
+    
     try:
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
@@ -145,6 +147,9 @@ def domain_name_url_fetch_flow(
                 timeout,
             )
 
+            # 记录工具开始执行日志
+            user_log(scan_id, "url_fetch", f"Running {tool_name}: {command}")
+
             future = run_url_fetcher_task.submit(
                 tool_name=tool_name,
                 command=command,
@@ -163,22 +168,28 @@ def domain_name_url_fetch_flow(
                 if result and result.get("success"):
                     result_files.append(result["output_file"])
                     successful_tools.append(tool_name)
+                    url_count = result.get("url_count", 0)
                     logger.info(
                         "✓ 工具 %s 执行成功 - 发现 URL: %d",
                         tool_name,
-                        result.get("url_count", 0),
+                        url_count,
                     )
+                    user_log(scan_id, "url_fetch", f"{tool_name} completed: found {url_count} urls")
                 else:
+                    reason = "未生成结果或无有效 URL"
                     failed_tools.append(
                         {
                             "tool": tool_name,
-                            "reason": "未生成结果或无有效 URL",
+                            "reason": reason,
                         }
                     )
                     logger.warning("⚠️ 工具 %s 未生成有效结果", tool_name)
+                    user_log(scan_id, "url_fetch", f"{tool_name} failed: {reason}", "error")
             except Exception as e:
-                failed_tools.append({"tool": tool_name, "reason": str(e)})
+                reason = str(e)
+                failed_tools.append({"tool": tool_name, "reason": reason})
                 logger.warning("⚠️ 工具 %s 执行失败: %s", tool_name, e)
+                user_log(scan_id, "url_fetch", f"{tool_name} failed: {reason}", "error")
 
         logger.info(
             "基于 domain_name 的 URL 获取完成 - 成功工具: %s, 失败工具: %s",

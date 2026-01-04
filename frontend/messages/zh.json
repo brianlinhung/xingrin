@@ -175,6 +175,13 @@
       "website": "官网",
       "description": "描述"
     },
+    "yamlEditor": {
+      "syntaxError": "语法错误",
+      "syntaxValid": "语法正确",
+      "errorLocation": "第 {line} 行，第 {column} 列",
+      "loading": "加载编辑器...",
+      "duplicateKey": "发现重复的配置项 '{key}'，后面的配置会覆盖前面的，请删除重复项"
+    },
     "theme": {
       "switchToLight": "切换到亮色模式",
       "switchToDark": "切换到暗色模式",
@@ -296,6 +303,7 @@
   "navigation": {
     "mainFeatures": "主要功能",
     "dashboard": "仪表盘",
+    "search": "搜索",
     "organization": "组织",
     "target": "目标",
     "vulnerabilities": "漏洞",
@@ -313,6 +321,71 @@
     "notifications": "通知设置",
     "help": "获取帮助",
     "feedback": "反馈建议"
+  },
+  "search": {
+    "title": "资产搜索",
+    "hint": "点击搜索框查看可用字段和语法，直接输入文本默认搜索主机名",
+    "searching": "搜索中...",
+    "loading": "加载中...",
+    "resultsCount": "找到 {count} 条结果",
+    "error": "搜索失败，请稍后重试",
+    "noResults": "未找到匹配的资产",
+    "noResultsHint": "请尝试调整搜索条件",
+    "vulnLoadError": "加载漏洞详情失败",
+    "recentSearches": "最近搜索",
+    "export": "导出",
+    "exporting": "导出中...",
+    "exportSuccess": "导出成功",
+    "exportFailed": "导出失败",
+    "stats": {
+      "vulnerabilities": "漏洞"
+    },
+    "assetTypes": {
+      "website": "网站",
+      "endpoint": "URL"
+    },
+    "fields": {
+      "host": "主机名",
+      "url": "URL 地址",
+      "title": "页面标题",
+      "tech": "技术栈",
+      "status": "HTTP 状态码",
+      "body": "响应体内容",
+      "header": "响应头内容"
+    },
+    "table": {
+      "url": "URL",
+      "host": "主机名",
+      "title": "标题",
+      "status": "状态码",
+      "technologies": "技术栈",
+      "contentLength": "内容长度",
+      "location": "跳转地址",
+      "webserver": "Web 服务器",
+      "contentType": "内容类型",
+      "responseBody": "响应体",
+      "responseHeaders": "响应头",
+      "vhost": "VHost",
+      "createdAt": "创建时间",
+      "gfPatterns": "GF 模式"
+    },
+    "card": {
+      "title": "标题",
+      "expand": "展开",
+      "collapse": "收起",
+      "vulnerabilities": "关联漏洞 ({count})",
+      "vulnName": "漏洞名称",
+      "severity": "严重程度",
+      "source": "来源",
+      "vulnType": "漏洞类型"
+    },
+    "vulnDetail": {
+      "title": "漏洞详情",
+      "name": "漏洞名称",
+      "source": "来源",
+      "type": "漏洞类型",
+      "url": "漏洞 URL"
+    }
   },
   "dashboard": {
     "title": "仪表盘",
@@ -588,7 +661,40 @@
       "noConfig": "无配置",
       "initiating": "发起中...",
       "startScan": "开始扫描",
-      "selectedCount": "已选择 {count} 个引擎"
+      "selectedCount": "已选择 {count} 个引擎",
+      "configTitle": "扫描配置",
+      "configEdited": "已编辑",
+      "stepIndicator": "步骤 {current}/{total}",
+      "back": "上一步",
+      "next": "下一步",
+      "steps": {
+        "selectEngine": "选择引擎",
+        "editConfig": "编辑配置"
+      },
+      "presets": {
+        "title": "推荐组合",
+        "fullScan": "全量扫描",
+        "fullScanDesc": "完整的安全评估，覆盖资产发现到漏洞检测的全部流程",
+        "recon": "信息收集",
+        "reconDesc": "发现和识别目标资产，包括子域名、端口、站点和指纹",
+        "vulnScan": "漏洞扫描",
+        "vulnScanDesc": "对已知资产进行安全漏洞检测",
+        "custom": "自定义",
+        "customDesc": "手动选择引擎组合",
+        "customHint": "点击选择后手动勾选引擎",
+        "selectHint": "请选择一个扫描方案",
+        "selectEngines": "选择引擎",
+        "enginesCount": "个引擎",
+        "capabilities": "涉及能力",
+        "usedEngines": "使用引擎",
+        "noCapabilities": "请选择引擎"
+      },
+      "overwriteConfirm": {
+        "title": "覆盖配置确认",
+        "description": "您已手动编辑过配置，切换引擎将覆盖当前配置。是否继续？",
+        "cancel": "取消",
+        "confirm": "确认覆盖"
+      }
     },
     "cron": {
       "everyMinute": "每分钟",
@@ -631,6 +737,8 @@
       "status": "状态",
       "errorReason": "错误原因",
       "totalProgress": "总进度",
+      "tab_stages": "阶段",
+      "tab_logs": "日志",
       "status_running": "扫描中",
       "status_cancelled": "已取消",
       "status_completed": "已完成",
@@ -670,10 +778,13 @@
       "createDesc": "配置定时扫描任务，设置执行计划",
       "editTitle": "编辑定时扫描",
       "editDesc": "修改定时扫描任务配置",
+      "stepIndicator": "步骤 {current}/{total}",
       "steps": {
         "basicInfo": "基本信息",
         "scanMode": "扫描模式",
         "selectTarget": "选择目标",
+        "selectEngine": "选择引擎",
+        "editConfig": "编辑配置",
         "scheduleSettings": "调度设置"
       },
       "form": {
@@ -683,8 +794,14 @@
         "taskNameRequired": "请输入任务名称",
         "scanEngine": "扫描引擎",
         "scanEnginePlaceholder": "选择扫描引擎",
-        "scanEngineDesc": "选择要使用的扫描引擎配置",
+        "scanEngineDesc": "选择引擎可快速填充配置，也可直接编辑配置",
         "scanEngineRequired": "请选择扫描引擎",
+        "configuration": "扫描配置",
+        "configurationPlaceholder": "请输入 YAML 格式的扫描配置...",
+        "configurationDesc": "YAML 格式的扫描配置，可选择引擎自动填充或手动编辑",
+        "configurationRequired": "请输入扫描配置",
+        "yamlInvalid": "YAML 配置格式错误，请检查语法",
+        "configEdited": "已编辑",
         "selectScanMode": "选择扫描模式",
         "organizationScan": "组织扫描",
         "organizationScanDesc": "选择组织，执行时动态获取其下所有目标",
@@ -715,6 +832,9 @@
         "organizationMode": "组织扫描",
         "organizationModeHint": "组织扫描模式下，执行时将动态获取该组织下所有目标",
         "noAvailableTarget": "暂无可用目标",
+        "noEngine": "暂无可用引擎",
+        "noConfig": "无配置",
+        "capabilitiesCount": "{count} 项能力",
         "selected": "已选择",
         "selectedEngines": "已选择 {count} 个引擎"
       },
@@ -736,7 +856,14 @@
       },
       "toast": {
         "selectOrganization": "请选择一个组织",
-        "selectTarget": "请选择一个扫描目标"
+        "selectTarget": "请选择一个扫描目标",
+        "configConflict": "配置冲突"
+      },
+      "overwriteConfirm": {
+        "title": "覆盖配置确认",
+        "description": "您已手动编辑了配置，切换引擎将覆盖当前配置。确定要继续吗？",
+        "cancel": "取消",
+        "confirm": "确定覆盖"
       }
     },
     "engine": {
@@ -1338,6 +1465,8 @@
     "initiateScanFailed": "发起扫描失败",
     "noScansCreated": "未创建任何扫描任务",
     "unknownError": "未知错误",
+    "noEngineSelected": "请选择至少一个扫描引擎",
+    "emptyConfig": "扫描配置不能为空",
     "engineNameRequired": "请输入引擎名称",
     "configRequired": "配置内容不能为空",
     "yamlSyntaxError": "YAML 语法错误",
@@ -1642,7 +1771,8 @@
     },
     "step1Title": "输入目标",
     "step2Title": "选择引擎",
-    "step3Title": "确认",
+    "step3Title": "编辑配置",
+    "stepIndicator": "步骤 {current}/{total}",
     "step1Hint": "在左侧输入框中输入扫描目标，每行一个",
     "step": "步骤 {current}/{total} · {title}",
     "targetPlaceholder": "每行输入一个目标，支持以下格式：\n\n域名: example.com, sub.example.com\nIP地址: 192.168.1.1, 10.0.0.1\nCIDR网段: 192.168.1.0/24, 10.0.0.0/8\nURL: https://example.com/api/v1",
@@ -1670,10 +1800,19 @@
     "andMore": "还有 {count} 个...",
     "selectedEngines": "已选引擎",
     "confirmSummary": "将使用 {engineCount} 个引擎扫描 {targetCount} 个目标",
+    "configTitle": "扫描配置",
+    "configEdited": "已编辑",
+    "overwriteConfirm": {
+      "title": "覆盖配置确认",
+      "description": "您已手动编辑过配置，切换引擎将覆盖当前配置。是否继续？",
+      "cancel": "取消",
+      "confirm": "确认覆盖"
+    },
     "toast": {
       "noValidTarget": "请输入至少一个有效目标",
       "hasInvalidInputs": "存在 {count} 个无效输入，请修正后继续",
       "selectEngine": "请选择扫描引擎",
+      "emptyConfig": "扫描配置不能为空",
       "getEnginesFailed": "获取引擎列表失败",
       "createFailed": "创建扫描任务失败",
       "createSuccess": "已创建 {count} 个扫描任务",
@@ -1907,6 +2046,16 @@
       "bulkAdd": "批量添加",
       "formatInvalid": "格式无效"
     }
+  },
+  "globalSearch": {
+    "search": "搜索",
+    "placeholder": "搜索资产... (host=\"api\" && tech=\"nginx\")",
+    "noResults": "未找到结果",
+    "searchFor": "搜索",
+    "recent": "最近搜索",
+    "quickSearch": "快捷搜索",
+    "hint": "支持 FOFA 风格语法",
+    "toSearch": "搜索"
   },
   "errors": {
     "unknown": "操作失败，请稍后重试",

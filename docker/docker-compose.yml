@@ -8,9 +8,13 @@
 
 services:
   # PostgreSQL（可选，使用远程数据库时不启动）
+  # 使用自定义镜像，预装 pg_ivm 扩展
   postgres:
     profiles: ["local-db"]
-    image: postgres:15
+    build:
+      context: ./postgres
+      dockerfile: Dockerfile
+    image: ${DOCKER_USER:-yyhuni}/xingrin-postgres:${IMAGE_TAG:?IMAGE_TAG is required}
     restart: always
     environment:
       POSTGRES_DB: ${DB_NAME}
@@ -21,6 +25,9 @@ services:
       - ./postgres/init-user-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh
     ports:
       - "${DB_PORT}:5432"
+    command: >
+      postgres
+      -c shared_preload_libraries=pg_ivm
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
       interval: 5s
