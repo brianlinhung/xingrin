@@ -78,7 +78,8 @@ def _run_scans_parallel(
     enabled_tools: dict,
     domain_name: str,
     result_dir: Path,
-    scan_id: int
+    scan_id: int,
+    provider_config_path: str = None
 ) -> tuple[list, list, list]:
     """
     并行运行所有启用的子域名扫描工具
@@ -88,6 +89,7 @@ def _run_scans_parallel(
         domain_name: 目标域名
         result_dir: 结果输出目录
         scan_id: 扫描任务 ID（用于记录日志）
+        provider_config_path: Provider 配置文件路径（可选，用于 subfinder）
         
     Returns:
         tuple: (result_files, failed_tools, successful_tool_names)
@@ -112,13 +114,19 @@ def _run_scans_parallel(
         
         # 1.2 构建完整命令（变量替换）
         try:
+            command_params = {
+                'domain': domain_name,      # 对应 {domain}
+                'output_file': output_file  # 对应 {output_file}
+            }
+            
+            # 如果是 subfinder 且有 provider_config，添加到参数
+            if tool_name == 'subfinder' and provider_config_path:
+                command_params['provider_config'] = provider_config_path
+            
             command = build_scan_command(
                 tool_name=tool_name,
                 scan_type='subdomain_discovery',
-                command_params={
-                    'domain': domain_name,      # 对应 {domain}
-                    'output_file': output_file  # 对应 {output_file}
-                },
+                command_params=command_params,
                 tool_config=tool_config
             )
         except Exception as e:
@@ -440,6 +448,19 @@ def subdomain_discovery_flow(
         failed_tools = []
         successful_tool_names = []
         
+        # ==================== 生成 Provider 配置文件 ====================
+        # 为 subfinder 生成第三方数据源配置
+        provider_config_path = None
+        try:
+            from apps.scan.services.subfinder_provider_config_service import SubfinderProviderConfigService
+            provider_config_service = SubfinderProviderConfigService()
+            provider_config_path = provider_config_service.generate(str(result_dir))
+            if provider_config_path:
+                logger.info(f"Provider 配置文件已生成: {provider_config_path}")
+                user_log(scan_id, "subdomain_discovery", "Provider config generated for subfinder")
+        except Exception as e:
+            logger.warning(f"生成 Provider 配置文件失败: {e}")
+        
         # ==================== Stage 1: 被动收集（并行）====================
         if enabled_passive_tools:
             logger.info("=" * 40)
@@ -451,7 +472,8 @@ def subdomain_discovery_flow(
                 enabled_tools=enabled_passive_tools,
                 domain_name=domain_name,
                 result_dir=result_dir,
-                scan_id=scan_id
+                scan_id=scan_id,
+                provider_config_path=provider_config_path
             )
             all_result_files.extend(result_files)
             failed_tools.extend(stage1_failed)

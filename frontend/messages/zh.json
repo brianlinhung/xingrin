@@ -319,6 +319,7 @@
     "workers": "扫描节点",
     "systemLogs": "系统日志",
     "notifications": "通知设置",
+    "apiKeys": "API 密钥",
     "help": "获取帮助",
     "feedback": "反馈建议"
   },
@@ -1688,6 +1689,12 @@
       },
       "connection": {
         "error": "通知连接错误: {message}"
+      }
+    },
+    "apiKeys": {
+      "settings": {
+        "success": "API 密钥配置已保存",
+        "error": "保存 API 密钥配置失败"
       }
     },
     "tool": {

@@ -133,4 +133,18 @@ class Migration(migrations.Migration):
                 'indexes': [models.Index(fields=['scan', 'created_at'], name='scan_log_scan_id_e8c8f5_idx')],
             },
         ),
+        migrations.CreateModel(
+            name='SubfinderProviderSettings',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('providers', models.JSONField(default=dict, help_text='各 Provider 的 API Key 配置')),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
+            ],
+            options={
+                'verbose_name': 'Subfinder Provider 配置',
+                'verbose_name_plural': 'Subfinder Provider 配置',
+                'db_table': 'subfinder_provider_settings',
+            },
+        ),
     ]

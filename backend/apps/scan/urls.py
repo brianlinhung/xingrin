@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import ScanViewSet, ScheduledScanViewSet, ScanLogListView
+from .views import ScanViewSet, ScheduledScanViewSet, ScanLogListView, SubfinderProviderSettingsView
 from .notifications.views import notification_callback
 from apps.asset.views import (
     SubdomainSnapshotViewSet, WebsiteSnapshotViewSet, DirectorySnapshotViewSet,
@@ -31,6 +31,8 @@ urlpatterns = [
     path('', include(router.urls)),
     # Worker 回调 API
     path('callbacks/notification/', notification_callback, name='notification-callback'),
+    # API Key 配置
+    path('settings/api-keys/', SubfinderProviderSettingsView.as_view(), name='subfinder-provider-settings'),
     # 扫描日志 API
     path('scans/<int:scan_id>/logs/', ScanLogListView.as_view(), name='scan-logs-list'),
     # 嵌套路由：/api/scans/{scan_pk}/xxx/

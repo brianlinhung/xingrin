@@ -319,6 +319,7 @@
     "workers": "Workers",
     "systemLogs": "System Logs",
     "notifications": "Notifications",
+    "apiKeys": "API Keys",
     "help": "Get Help",
     "feedback": "Feedback"
   },
@@ -1688,6 +1689,12 @@
       },
       "connection": {
         "error": "Notification connection error: {message}"
+      }
+    },
+    "apiKeys": {
+      "settings": {
+        "success": "API key settings saved",
+        "error": "Failed to save API key settings"
       }
     },
     "tool": {

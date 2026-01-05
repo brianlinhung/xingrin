@@ -13,12 +13,14 @@ SCAN_TOOLS_BASE_PATH = getattr(settings, 'SCAN_TOOLS_BASE_PATH', '/usr/local/bin
 
 SUBDOMAIN_DISCOVERY_COMMANDS = {
     'subfinder': {
-        # 默认使用所有数据源（更全面，略慢），并始终开启递归
-        # -all       使用所有数据源
-        # -recursive 对支持递归的源启用递归枚举（默认开启）
-        'base': "subfinder -d {domain} -all -recursive -o '{output_file}' -silent",
+        # 使用所有数据源（包括付费源，只要配置了 API key）
+        # -all       使用所有数据源（slow 但全面）
+        # -v         显示详细输出，包括使用的数据源（调试用）
+        # 注意：不要加 -recursive，它会排除不支持递归的源（如 fofa）
+        'base': "subfinder -d {domain} -all -o '{output_file}' -v",
         'optional': {
             'threads': '-t {threads}',              # 控制并发 goroutine 数
+            'provider_config': "-pc '{provider_config}'",  # Provider 配置文件路径
         }
     },
     

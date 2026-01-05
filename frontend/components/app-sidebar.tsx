@@ -17,6 +17,7 @@ import {
   IconBug, // Vulnerability icon
   IconMessageReport, // Feedback icon
   IconSearch, // Search icon
+  IconKey, // API Key icon
 } from "@tabler/icons-react"
 // Import internationalization hook
 import { useTranslations } from 'next-intl'
@@ -167,6 +168,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       name: t('notifications'),
       url: "/settings/notifications/",
       icon: IconSettings,
+    },
+    {
+      name: t('apiKeys'),
+      url: "/settings/api-keys/",
+      icon: IconKey,
     },
   ]
 
