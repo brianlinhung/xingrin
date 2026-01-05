@@ -14,6 +14,11 @@ from .csv_utils import (
     create_csv_export_response,
     UTF8_BOM,
 )
+from .blacklist_filter import (
+    BlacklistFilter,
+    detect_rule_type,
+    extract_host,
+)
 
 __all__ = [
     'deduplicate_for_bulk',
@@ -27,4 +32,7 @@ __all__ = [
     'format_datetime',
     'create_csv_export_response',
     'UTF8_BOM',
+    'BlacklistFilter',
+    'detect_rule_type',
+    'extract_host',
 ]

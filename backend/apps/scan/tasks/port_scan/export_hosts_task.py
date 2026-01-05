@@ -1,7 +1,7 @@
 """
-导出扫描目标到 TXT 文件的 Task
+导出主机列表到 TXT 文件的 Task
 
-使用 TargetExportService.export_targets() 统一处理导出逻辑
+使用 TargetExportService.export_hosts() 统一处理导出逻辑
 
 根据 Target 类型决定导出内容：
 - DOMAIN: 从 Subdomain 表导出子域名
@@ -11,19 +11,19 @@
 import logging
 from prefect import task
 
-from apps.scan.services import TargetExportService, BlacklistService
+from apps.scan.services.target_export_service import create_export_service
 
 logger = logging.getLogger(__name__)
 
 
-@task(name="export_scan_targets")
-def export_scan_targets_task(
+@task(name="export_hosts")
+def export_hosts_task(
     target_id: int,
     output_file: str,
     batch_size: int = 1000
 ) -> dict:
     """
-    导出扫描目标到 TXT 文件
+    导出主机列表到 TXT 文件
     
     根据 Target 类型自动决定导出内容：
     - DOMAIN: 从 Subdomain 表导出子域名（流式处理，支持 10万+ 域名）
@@ -47,11 +47,10 @@ def export_scan_targets_task(
         ValueError: Target 不存在
         IOError: 文件写入失败
     """
-    # 使用 TargetExportService 处理导出
-    blacklist_service = BlacklistService()
-    export_service = TargetExportService(blacklist_service=blacklist_service)
+    # 使用工厂函数创建导出服务
+    export_service = create_export_service(target_id)
     
-    result = export_service.export_targets(
+    result = export_service.export_hosts(
         target_id=target_id,
         output_path=output_file,
         batch_size=batch_size

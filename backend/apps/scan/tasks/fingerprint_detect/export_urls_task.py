@@ -10,7 +10,7 @@ import logging
 from prefect import task
 
 from apps.asset.models import WebSite
-from apps.scan.services import TargetExportService, BlacklistService
+from apps.scan.services.target_export_service import create_export_service
 
 logger = logging.getLogger(__name__)
 
@@ -46,9 +46,8 @@ def export_urls_for_fingerprint_task(
     # 构建数据源 queryset（Task 层决定数据源）
     queryset = WebSite.objects.filter(target_id=target_id).values_list('url', flat=True)
     
-    # 使用 TargetExportService 处理导出
-    blacklist_service = BlacklistService()
-    export_service = TargetExportService(blacklist_service=blacklist_service)
+    # 使用工厂函数创建导出服务
+    export_service = create_export_service(target_id)
     
     result = export_service.export_urls(
         target_id=target_id,

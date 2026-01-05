@@ -10,13 +10,30 @@
 import ipaddress
 import logging
 from pathlib import Path
-from typing import Dict, Any, Optional, Iterator
+from typing import Dict, Any, Optional, List
 
 from django.db.models import QuerySet
 
-from .blacklist_service import BlacklistService
+from apps.common.utils import BlacklistFilter
 
 logger = logging.getLogger(__name__)
+
+
+def create_export_service(target_id: int) -> 'TargetExportService':
+    """
+    工厂函数：创建带黑名单过滤的导出服务
+    
+    Args:
+        target_id: 目标 ID，用于加载黑名单规则
+        
+    Returns:
+        TargetExportService: 配置好黑名单过滤器的导出服务实例
+    """
+    from apps.common.services import BlacklistService
+    
+    rules = BlacklistService().get_rules(target_id)
+    blacklist_filter = BlacklistFilter(rules)
+    return TargetExportService(blacklist_filter=blacklist_filter)
 
 
 class TargetExportService:
@@ -24,23 +41,27 @@ class TargetExportService:
     目标导出服务 - 提供统一的目标提取和文件导出功能
     
     使用方式：
-        # Task 层决定数据源
-        queryset = WebSite.objects.filter(target_id=target_id).values_list('url', flat=True)
+        from apps.common.services import BlacklistService
+        from apps.common.utils import BlacklistFilter
+        
+        # 获取规则并创建过滤器
+        blacklist_service = BlacklistService()
+        rules = blacklist_service.get_rules(target_id)
+        blacklist_filter = BlacklistFilter(rules)
         
         # 使用导出服务
-        blacklist_service = BlacklistService()
-        export_service = TargetExportService(blacklist_service=blacklist_service)
+        export_service = TargetExportService(blacklist_filter=blacklist_filter)
         result = export_service.export_urls(target_id, output_path, queryset)
     """
     
-    def __init__(self, blacklist_service: Optional[BlacklistService] = None):
+    def __init__(self, blacklist_filter: Optional[BlacklistFilter] = None):
         """
         初始化导出服务
         
         Args:
-            blacklist_service: 黑名单过滤服务，None 表示禁用过滤
+            blacklist_filter: 黑名单过滤器，None 表示禁用过滤
         """
-        self.blacklist_service = blacklist_service
+        self.blacklist_filter = blacklist_filter
     
     def export_urls(
         self,
@@ -79,19 +100,15 @@ class TargetExportService:
         
         logger.info("开始导出 URL - target_id=%s, output=%s", target_id, output_path)
         
-        # 应用黑名单过滤（数据库层面）
-        if self.blacklist_service:
-            # 注意：queryset 应该是原始 queryset，不是 values_list
-            # 这里假设 Task 层传入的是 values_list，需要在 Task 层处理过滤
-            pass
-        
         total_count = 0
+        filtered_count = 0
         try:
             with open(output_file, 'w', encoding='utf-8', buffering=8192) as f:
                 for url in queryset.iterator(chunk_size=batch_size):
                     if url:
-                        # Python 层面黑名单过滤
-                        if self.blacklist_service and not self.blacklist_service.filter_url(url):
+                        # 黑名单过滤
+                        if self.blacklist_filter and not self.blacklist_filter.is_allowed(url):
+                            filtered_count += 1
                             continue
                         f.write(f"{url}\n")
                         total_count += 1
@@ -101,6 +118,9 @@ class TargetExportService:
         except IOError as e:
             logger.error("文件写入失败: %s - %s", output_path, e)
             raise
+        
+        if filtered_count > 0:
+            logger.info("黑名单过滤: 过滤 %d 个 URL", filtered_count)
         
         # 默认值回退模式
         if total_count == 0:
@@ -206,18 +226,18 @@ class TargetExportService:
     
     def _should_write_url(self, url: str) -> bool:
         """检查 URL 是否应该写入（通过黑名单过滤）"""
-        if self.blacklist_service:
-            return self.blacklist_service.filter_url(url)
+        if self.blacklist_filter:
+            return self.blacklist_filter.is_allowed(url)
         return True
 
-    def export_targets(
+    def export_hosts(
         self,
         target_id: int,
         output_path: str,
         batch_size: int = 1000
     ) -> Dict[str, Any]:
         """
-        域名/IP 导出函数（用于端口扫描）
+        主机列表导出函数（用于端口扫描）
         
         根据 Target 类型选择导出逻辑：
         - DOMAIN: 从 Subdomain 表流式导出子域名
@@ -255,7 +275,7 @@ class TargetExportService:
         target_name = target.name
         
         logger.info(
-            "开始导出扫描目标 - Target ID: %d, Name: %s, Type: %s, 输出文件: %s",
+            "开始导出主机列表 - Target ID: %d, Name: %s, Type: %s, 输出文件: %s",
             target_id, target_name, target_type, output_path
         )
         
@@ -277,7 +297,7 @@ class TargetExportService:
             raise ValueError(f"不支持的目标类型: {target_type}")
         
         logger.info(
-            "✓ 扫描目标导出完成 - 类型: %s, 总数: %d, 文件: %s",
+            "✓ 主机列表导出完成 - 类型: %s, 总数: %d, 文件: %s",
             type_desc, total_count, output_path
         )
         
@@ -295,7 +315,7 @@ class TargetExportService:
         output_path: Path,
         batch_size: int
     ) -> int:
-        """导出域名类型目标的子域名"""
+        """导出域名类型目标的根域名 + 子域名"""
         from apps.asset.services.asset.subdomain_service import SubdomainService
         
         subdomain_service = SubdomainService()
@@ -305,22 +325,26 @@ class TargetExportService:
         )
         
         total_count = 0
+        written_domains = set()  # 去重（子域名表可能已包含根域名）
+        
         with open(output_path, 'w', encoding='utf-8', buffering=8192) as f:
+            # 1. 先写入根域名
+            if self._should_write_target(target_name):
+                f.write(f"{target_name}\n")
+                written_domains.add(target_name)
+                total_count += 1
+            
+            # 2. 再写入子域名（跳过已写入的根域名）
             for domain_name in domain_iterator:
+                if domain_name in written_domains:
+                    continue
                 if self._should_write_target(domain_name):
                     f.write(f"{domain_name}\n")
+                    written_domains.add(domain_name)
                     total_count += 1
                     
                     if total_count % 10000 == 0:
                         logger.info("已导出 %d 个域名...", total_count)
-        
-        # 默认值模式：如果没有子域名，使用根域名
-        if total_count == 0:
-            logger.info("采用默认域名：%s (target_id=%d)", target_name, target_id)
-            if self._should_write_target(target_name):
-                with open(output_path, 'w', encoding='utf-8') as f:
-                    f.write(f"{target_name}\n")
-                total_count = 1
         
         return total_count
     
@@ -359,6 +383,6 @@ class TargetExportService:
     
     def _should_write_target(self, target: str) -> bool:
         """检查目标是否应该写入（通过黑名单过滤）"""
-        if self.blacklist_service:
-            return self.blacklist_service.filter_url(target)
+        if self.blacklist_filter:
+            return self.blacklist_filter.is_allowed(target)
         return True

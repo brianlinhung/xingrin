@@ -17,7 +17,6 @@ from .scan_state_service import ScanStateService
 from .scan_control_service import ScanControlService
 from .scan_stats_service import ScanStatsService
 from .scheduled_scan_service import ScheduledScanService
-from .blacklist_service import BlacklistService
 from .target_export_service import TargetExportService
 
 __all__ = [
@@ -27,7 +26,6 @@ __all__ = [
     'ScanControlService',
     'ScanStatsService',
     'ScheduledScanService',
-    'BlacklistService',      # 黑名单过滤服务
     'TargetExportService',   # 目标导出服务
 ]
 

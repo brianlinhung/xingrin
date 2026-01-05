@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Callable
 from prefect import flow
 from apps.scan.tasks.port_scan import (
-    export_scan_targets_task,
+    export_hosts_task,
     run_and_stream_save_ports_task
 )
 from apps.scan.handlers.scan_flow_handlers import (
@@ -157,9 +157,9 @@ def _parse_port_count(tool_config: dict) -> int:
 
 
 
-def _export_scan_targets(target_id: int, port_scan_dir: Path) -> tuple[str, int, str]:
+def _export_hosts(target_id: int, port_scan_dir: Path) -> tuple[str, int, str]:
     """
-    导出扫描目标到文件
+    导出主机列表到文件
     
     根据 Target 类型自动决定导出内容：
     - DOMAIN: 从 Subdomain 表导出子域名
@@ -171,31 +171,31 @@ def _export_scan_targets(target_id: int, port_scan_dir: Path) -> tuple[str, int,
         port_scan_dir: 端口扫描目录
         
     Returns:
-        tuple: (targets_file, target_count, target_type)
+        tuple: (hosts_file, host_count, target_type)
     """
-    logger.info("Step 1: 导出扫描目标列表")
+    logger.info("Step 1: 导出主机列表")
     
-    targets_file = str(port_scan_dir / 'targets.txt')
-    export_result = export_scan_targets_task(
+    hosts_file = str(port_scan_dir / 'hosts.txt')
+    export_result = export_hosts_task(
         target_id=target_id,
-        output_file=targets_file,
+        output_file=hosts_file,
         batch_size=1000  # 每次读取 1000 条，优化内存占用
     )
     
-    target_count = export_result['total_count']
+    host_count = export_result['total_count']
     target_type = export_result.get('target_type', 'unknown')
     
     logger.info(
-        "✓ 扫描目标导出完成 - 类型: %s, 文件: %s, 数量: %d",
+        "✓ 主机列表导出完成 - 类型: %s, 文件: %s, 数量: %d",
         target_type,
         export_result['output_file'],
-        target_count
+        host_count
     )
     
-    if target_count == 0:
-        logger.warning("目标下没有可扫描的地址，无法执行端口扫描")
+    if host_count == 0:
+        logger.warning("目标下没有可扫描的主机，无法执行端口扫描")
     
-    return export_result['output_file'], target_count, target_type
+    return export_result['output_file'], host_count, target_type
 
 
 def _run_scans_sequentially(
@@ -382,8 +382,8 @@ def port_scan_flow(
             'scan_id': int,
             'target': str,
             'scan_workspace_dir': str,
-            'domains_file': str,
-            'domain_count': int,
+            'hosts_file': str,
+            'host_count': int,
             'processed_records': int,
             'executed_tasks': list,
             'tool_stats': {
@@ -432,22 +432,22 @@ def port_scan_flow(
         from apps.scan.utils import setup_scan_directory
         port_scan_dir = setup_scan_directory(scan_workspace_dir, 'port_scan')
         
-        # Step 1: 导出扫描目标列表到文件（根据 Target 类型自动决定内容）
-        targets_file, target_count, target_type = _export_scan_targets(target_id, port_scan_dir)
+        # Step 1: 导出主机列表到文件（根据 Target 类型自动决定内容）
+        hosts_file, host_count, target_type = _export_hosts(target_id, port_scan_dir)
         
-        if target_count == 0:
-            logger.warning("跳过端口扫描：没有目标可扫描 - Scan ID: %s", scan_id)
-            user_log(scan_id, "port_scan", "Skipped: no targets to scan", "warning")
+        if host_count == 0:
+            logger.warning("跳过端口扫描：没有主机可扫描 - Scan ID: %s", scan_id)
+            user_log(scan_id, "port_scan", "Skipped: no hosts to scan", "warning")
             return {
                 'success': True,
                 'scan_id': scan_id,
                 'target': target_name,
                 'scan_workspace_dir': scan_workspace_dir,
-                'targets_file': targets_file,
-                'target_count': 0,
+                'hosts_file': hosts_file,
+                'host_count': 0,
                 'target_type': target_type,
                 'processed_records': 0,
-                'executed_tasks': ['export_scan_targets'],
+                'executed_tasks': ['export_hosts'],
                 'tool_stats': {
                     'total': 0,
                     'successful': 0,
@@ -469,7 +469,7 @@ def port_scan_flow(
         logger.info("Step 3: 串行执行扫描工具")
         tool_stats, processed_records, successful_tool_names, failed_tools = _run_scans_sequentially(
             enabled_tools=enabled_tools,
-            domains_file=targets_file,  # 现在是 targets_file，兼容原参数名
+            domains_file=hosts_file,
             port_scan_dir=port_scan_dir,
             scan_id=scan_id,
             target_id=target_id,
@@ -481,7 +481,7 @@ def port_scan_flow(
         user_log(scan_id, "port_scan", f"port_scan completed: found {processed_records} ports")
         
         # 动态生成已执行的任务列表
-        executed_tasks = ['export_scan_targets', 'parse_config']
+        executed_tasks = ['export_hosts', 'parse_config']
         executed_tasks.extend([f'run_and_stream_save_ports ({tool})' for tool in tool_stats.keys()])
         
         return {
@@ -489,8 +489,8 @@ def port_scan_flow(
             'scan_id': scan_id,
             'target': target_name,
             'scan_workspace_dir': scan_workspace_dir,
-            'targets_file': targets_file,
-            'target_count': target_count,
+            'hosts_file': hosts_file,
+            'host_count': host_count,
             'target_type': target_type,
             'processed_records': processed_records,
             'executed_tasks': executed_tasks,
@@ -499,8 +499,8 @@ def port_scan_flow(
                 'successful': len(successful_tool_names),
                 'failed': len(failed_tools),
                 'successful_tools': successful_tool_names,
-                'failed_tools': failed_tools,  # [{'tool': 'naabu_active', 'reason': '超时'}]
-                'details': tool_stats  # 详细结果（保留向后兼容）
+                'failed_tools': failed_tools,
+                'details': tool_stats
             }
         }
 

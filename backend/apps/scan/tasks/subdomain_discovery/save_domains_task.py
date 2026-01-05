@@ -111,6 +111,7 @@ def save_domains_task(
                     continue
                 
                 # 只有通过验证的域名才添加到批次和计数
+                # 注意：不在此处过滤黑名单，最大化资产发现
                 batch.append(domain)
                 total_domains += 1
                 

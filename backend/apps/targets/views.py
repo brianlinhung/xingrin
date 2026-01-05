@@ -11,6 +11,8 @@ from .services.target_service import TargetService
 from .services.organization_service import OrganizationService
 from apps.common.pagination import BasePagination
 from apps.common.response_helpers import success_response
+from apps.common.models import BlacklistRule
+from apps.common.serializers import TargetBlacklistRuleSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -405,3 +407,48 @@ class TargetViewSet(viewsets.ModelViewSet):
     # GET /api/targets/{id}/ip-addresses/ -> HostPortMappingViewSet
     # GET /api/targets/{id}/ip-addresses/export/ -> HostPortMappingViewSet.export
     # GET /api/targets/{id}/vulnerabilities/ -> VulnerabilityViewSet
+
+    # ==================== 黑名单管理 ====================
+    
+    @action(detail=True, methods=['get', 'put'], url_path='blacklist')
+    def blacklist(self, request, pk=None):
+        """
+        Target 黑名单规则管理
+        
+        GET /api/targets/{id}/blacklist/ - 获取 Target 黑名单列表
+        PUT /api/targets/{id}/blacklist/ - 全量替换规则（文本框保存场景）
+        
+        设计说明：
+        - 使用 PUT 全量替换模式，适合"文本框每行一个规则"的前端场景
+        - 用户编辑文本框 -> 点击保存 -> 后端全量替换
+        
+        架构：MVS 模式
+        - View: 参数验证、响应格式化
+        - Service: 业务逻辑（BlacklistService）
+        - Model: 数据持久化（BlacklistRule）
+        """
+        from apps.common.services import BlacklistService
+        
+        target = self.get_object()
+        blacklist_service = BlacklistService()
+        
+        if request.method == 'GET':
+            # 获取 Target 的黑名单规则
+            rules = blacklist_service.get_target_rules(target.id)
+            patterns = list(rules.values_list('pattern', flat=True))
+            return success_response(data={'patterns': patterns})
+        
+        elif request.method == 'PUT':
+            # 全量替换
+            patterns = request.data.get('patterns', [])
+            
+            if not isinstance(patterns, list):
+                return Response(
+                    {'error': {'code': 'VALIDATION_ERROR', 'message': 'patterns 必须是数组'}},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # 调用 Service 层全量替换
+            result = blacklist_service.replace_target_rules(target, patterns)
+            
+            return success_response(data=result)

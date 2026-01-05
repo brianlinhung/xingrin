@@ -14,7 +14,9 @@ from pathlib import Path
 from prefect import task
 
 from apps.asset.services import HostPortMappingService
-from apps.scan.services import TargetExportService, BlacklistService
+from apps.scan.services.target_export_service import create_export_service
+from apps.common.services import BlacklistService
+from apps.common.utils import BlacklistFilter
 
 logger = logging.getLogger(__name__)
 
@@ -80,8 +82,8 @@ def export_site_urls_task(
     output_path = Path(output_file)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     
-    # 初始化黑名单服务
-    blacklist_service = BlacklistService()
+    # 获取规则并创建过滤器
+    blacklist_filter = BlacklistFilter(BlacklistService().get_rules(target_id))
     
     # 直接查询 HostPortMapping 表，按 host 排序
     service = HostPortMappingService()
@@ -100,11 +102,14 @@ def export_site_urls_task(
             host = assoc['host']
             port = assoc['port']
             
+            # 先校验 host，通过了再生成 URL
+            if not blacklist_filter.is_allowed(host):
+                continue
+            
             # 根据端口号生成URL
             for url in _generate_urls_from_port(host, port):
-                if blacklist_service.filter_url(url):
-                    f.write(f"{url}\n")
-                    total_urls += 1
+                f.write(f"{url}\n")
+                total_urls += 1
             
             if association_count % 1000 == 0:
                 logger.info("已处理 %d 条关联，生成 %d 个URL...", association_count, total_urls)
@@ -114,9 +119,9 @@ def export_site_urls_task(
         association_count, total_urls, str(output_path)
     )
     
-    # 默认值回退模式：使用 TargetExportService
+    # 默认值回退模式：使用工厂函数创建导出服务
     if total_urls == 0:
-        export_service = TargetExportService(blacklist_service=blacklist_service)
+        export_service = create_export_service(target_id)
         total_urls = export_service._generate_default_urls(target_id, output_path)
     
     return {
