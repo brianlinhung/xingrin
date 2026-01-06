@@ -320,6 +320,7 @@
     "systemLogs": "系统日志",
     "notifications": "通知设置",
     "apiKeys": "API 密钥",
+    "globalBlacklist": "全局黑名单",
     "help": "获取帮助",
     "feedback": "反馈建议"
   },
@@ -2053,7 +2054,7 @@
             "cidr": "匹配 IP 网段范围",
             "cidrShort": "CIDR"
           },
-          "placeholder": "输入规则，每行一个",
+          "placeholder": "输入规则，每行一个\n\n示例：\n*.gov\n*.edu\n*cdn*\n192.168.0.0/16\n10.0.0.1",
           "save": "保存规则"
         },
         "scheduledScans": {
@@ -2137,6 +2138,31 @@
     "nav": {
       "scanEngine": "扫描引擎",
       "wordlists": "字典管理"
+    },
+    "settings": {
+      "blacklist": {
+        "title": "全局黑名单",
+        "description": "配置全局黑名单规则，扫描时将自动排除匹配的资产",
+        "loadError": "加载黑名单规则失败",
+        "card": {
+          "title": "黑名单规则",
+          "description": "这些规则将应用于所有目标的扫描任务。如需为特定目标配置黑名单，请前往目标设置页面。"
+        },
+        "rules": {
+          "title": "支持的规则类型",
+          "domain": "域名",
+          "keyword": "关键词",
+          "ip": "IP",
+          "cidr": "CIDR"
+        },
+        "scopeHint": "全局规则对所有目标生效。目标级规则可在「目标 → 设置」中单独配置。",
+        "placeholder": "输入规则，每行一个\n\n示例：\n*.gov\n*.edu\n*cdn*\n192.168.0.0/16\n10.0.0.1",
+        "save": "保存规则",
+        "toast": {
+          "saveSuccess": "黑名单规则已保存",
+          "saveError": "保存黑名单规则失败"
+        }
+      }
     }
   },
   "metadata": {

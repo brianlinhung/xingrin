@@ -320,6 +320,7 @@
     "systemLogs": "System Logs",
     "notifications": "Notifications",
     "apiKeys": "API Keys",
+    "globalBlacklist": "Global Blacklist",
     "help": "Get Help",
     "feedback": "Feedback"
   },
@@ -2053,7 +2054,7 @@
             "cidr": "Matches IP range",
             "cidrShort": "CIDR"
           },
-          "placeholder": "Enter rules, one per line",
+          "placeholder": "Enter rules, one per line\n\nExamples:\n*.gov\n*.edu\n*cdn*\n192.168.0.0/16\n10.0.0.1",
           "save": "Save Rules"
         },
         "scheduledScans": {
@@ -2137,6 +2138,31 @@
     "nav": {
       "scanEngine": "Scan Engine",
       "wordlists": "Wordlist Management"
+    },
+    "settings": {
+      "blacklist": {
+        "title": "Global Blacklist",
+        "description": "Configure global blacklist rules. Matching assets will be automatically excluded during scans.",
+        "loadError": "Failed to load blacklist rules",
+        "card": {
+          "title": "Blacklist Rules",
+          "description": "These rules apply to all target scans. To configure blacklist for a specific target, go to the target settings page."
+        },
+        "rules": {
+          "title": "Supported rule types",
+          "domain": "Domain",
+          "keyword": "Keyword",
+          "ip": "IP",
+          "cidr": "CIDR"
+        },
+        "scopeHint": "Global rules apply to all targets. Target-level rules can be configured in Target → Settings.",
+        "placeholder": "Enter rules, one per line\n\nExamples:\n*.gov\n*.edu\n*cdn*\n192.168.0.0/16\n10.0.0.1",
+        "save": "Save Rules",
+        "toast": {
+          "saveSuccess": "Blacklist rules saved",
+          "saveError": "Failed to save blacklist rules"
+        }
+      }
     }
   },
   "metadata": {

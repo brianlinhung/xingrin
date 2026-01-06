@@ -18,6 +18,7 @@ import {
   IconMessageReport, // Feedback icon
   IconSearch, // Search icon
   IconKey, // API Key icon
+  IconBan, // Blacklist icon
 } from "@tabler/icons-react"
 // Import internationalization hook
 import { useTranslations } from 'next-intl'
@@ -173,6 +174,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       name: t('apiKeys'),
       url: "/settings/api-keys/",
       icon: IconKey,
+    },
+    {
+      name: t('globalBlacklist'),
+      url: "/settings/blacklist/",
+      icon: IconBan,
     },
   ]
 
