@@ -139,7 +139,7 @@ class BaseFingerprintViewSet(viewsets.ModelViewSet):
         POST /api/engine/fingerprints/{type}/import_file/
         
         请求格式：multipart/form-data
-        - file: JSON 文件
+        - file: JSON 文件（支持标准 JSON 和 JSONL 格式）
         
         返回：同 batch_create
         """
@@ -148,9 +148,12 @@ class BaseFingerprintViewSet(viewsets.ModelViewSet):
             raise ValidationError('缺少文件')
         
         try:
-            json_data = json.load(file)
+            content = file.read().decode('utf-8')
+            json_data = self._parse_json_content(content)
         except json.JSONDecodeError as e:
             raise ValidationError(f'无效的 JSON 格式: {e}')
+        except UnicodeDecodeError as e:
+            raise ValidationError(f'文件编码错误: {e}')
         
         fingerprints = self.parse_import_data(json_data)
         if not fingerprints:
@@ -158,6 +161,41 @@ class BaseFingerprintViewSet(viewsets.ModelViewSet):
         
         result = self.get_service().batch_create_fingerprints(fingerprints)
         return success_response(data=result, status_code=status.HTTP_201_CREATED)
+    
+    def _parse_json_content(self, content: str):
+        """
+        解析 JSON 内容，支持标准 JSON 和 JSONL 格式
+        
+        Args:
+            content: 文件内容字符串
+            
+        Returns:
+            解析后的数据（list 或 dict）
+        """
+        content = content.strip()
+        
+        # 尝试标准 JSON 解析
+        try:
+            return json.loads(content)
+        except json.JSONDecodeError:
+            pass
+        
+        # 尝试 JSONL 格式（每行一个 JSON 对象）
+        lines = content.split('\n')
+        result = []
+        for i, line in enumerate(lines):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                result.append(json.loads(line))
+            except json.JSONDecodeError as e:
+                raise json.JSONDecodeError(f'第 {i + 1} 行解析失败: {e.msg}', e.doc, e.pos)
+        
+        if not result:
+            raise json.JSONDecodeError('文件为空或格式无效', content, 0)
+        
+        return result
     
     @action(detail=False, methods=['post'], url_path='bulk-delete')
     def bulk_delete(self, request):

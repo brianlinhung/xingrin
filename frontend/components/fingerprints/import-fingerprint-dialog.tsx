@@ -238,15 +238,39 @@ export function ImportFingerprintDialog({
       // Frontend basic validation for JSON files
       try {
         const text = await file.text()
-        const json = JSON.parse(text)
+        let json: any
+
+        // Try standard JSON first
+        try {
+          json = JSON.parse(text)
+        } catch {
+          // If standard JSON fails, try JSONL format (for goby)
+          if (fingerprintType === "goby") {
+            const lines = text.trim().split('\n').filter(line => line.trim())
+            if (lines.length === 0) {
+              toast.error(t("import.emptyData"))
+              return
+            }
+            // Parse each line as JSON
+            json = lines.map((line, index) => {
+              try {
+                return JSON.parse(line)
+              } catch {
+                throw new Error(`Line ${index + 1}: Invalid JSON`)
+              }
+            })
+          } else {
+            throw new Error("Invalid JSON")
+          }
+        }
 
         const validation = config.validate(json)
         if (!validation.valid) {
           toast.error(validation.error)
           return
         }
-      } catch (e) {
-        toast.error(tToast("invalidJsonFile"))
+      } catch (e: any) {
+        toast.error(e.message || tToast("invalidJsonFile"))
         return
       }
     }
