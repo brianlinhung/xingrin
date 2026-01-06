@@ -182,3 +182,11 @@ export {
   getMockNotificationSettings,
   updateMockNotificationSettings,
 } from './data/notification-settings'
+
+// Blacklist
+export {
+  getMockGlobalBlacklist,
+  updateMockGlobalBlacklist,
+  getMockTargetBlacklist,
+  updateMockTargetBlacklist,
+} from './data/blacklist'
