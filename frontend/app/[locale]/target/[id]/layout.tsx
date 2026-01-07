@@ -3,7 +3,7 @@
 import React from "react"
 import { usePathname, useParams } from "next/navigation"
 import Link from "next/link"
-import { Target } from "lucide-react"
+import { Target, LayoutDashboard, Package, Image, ShieldAlert, Settings } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
@@ -165,12 +165,14 @@ export default function TargetLayout({
         <Tabs value={getPrimaryTab()}>
           <TabsList>
             <TabsTrigger value="overview" asChild>
-              <Link href={primaryPaths.overview} className="flex items-center gap-0.5">
+              <Link href={primaryPaths.overview} className="flex items-center gap-1.5">
+                <LayoutDashboard className="h-4 w-4" />
                 {t("tabs.overview")}
               </Link>
             </TabsTrigger>
             <TabsTrigger value="assets" asChild>
-              <Link href={primaryPaths.assets} className="flex items-center gap-0.5">
+              <Link href={primaryPaths.assets} className="flex items-center gap-1.5">
+                <Package className="h-4 w-4" />
                 {t("tabs.assets")}
                 {totalAssets > 0 && (
                   <Badge variant="secondary" className="ml-1.5 h-5 min-w-5 rounded-full px-1.5 text-xs">
@@ -180,7 +182,8 @@ export default function TargetLayout({
               </Link>
             </TabsTrigger>
             <TabsTrigger value="screenshots" asChild>
-              <Link href={primaryPaths.screenshots} className="flex items-center gap-0.5">
+              <Link href={primaryPaths.screenshots} className="flex items-center gap-1.5">
+                <Image className="h-4 w-4" />
                 {t("tabs.screenshots")}
                 {counts.screenshots > 0 && (
                   <Badge variant="secondary" className="ml-1.5 h-5 min-w-5 rounded-full px-1.5 text-xs">
@@ -190,7 +193,8 @@ export default function TargetLayout({
               </Link>
             </TabsTrigger>
             <TabsTrigger value="vulnerabilities" asChild>
-              <Link href={primaryPaths.vulnerabilities} className="flex items-center gap-0.5">
+              <Link href={primaryPaths.vulnerabilities} className="flex items-center gap-1.5">
+                <ShieldAlert className="h-4 w-4" />
                 {t("tabs.vulnerabilities")}
                 {counts.vulnerabilities > 0 && (
                   <Badge variant="secondary" className="ml-1.5 h-5 min-w-5 rounded-full px-1.5 text-xs">
@@ -200,7 +204,8 @@ export default function TargetLayout({
               </Link>
             </TabsTrigger>
             <TabsTrigger value="settings" asChild>
-              <Link href={primaryPaths.settings} className="flex items-center gap-0.5">
+              <Link href={primaryPaths.settings} className="flex items-center gap-1.5">
+                <Settings className="h-4 w-4" />
                 {t("tabs.settings")}
               </Link>
             </TabsTrigger>
