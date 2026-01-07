@@ -173,7 +173,10 @@
       "selectAll": "Select all",
       "selectRow": "Select row",
       "website": "Website",
-      "description": "Description"
+      "description": "Description",
+      "processing": "Processing...",
+      "confirmDelete": "Confirm Delete",
+      "deleteConfirmMessage": "Are you sure you want to delete {count} selected items? This action cannot be undone."
     },
     "yamlEditor": {
       "syntaxError": "Syntax Error",
@@ -1456,8 +1459,9 @@
     "copied": "Copied",
     "copyFailed": "Copy failed",
     "downloadFailed": "Download failed",
-    "deletedScanRecord": "Deleted scan record: {name}",
+    "deleteSuccess": "Deleted successfully: {count} items",
     "deleteFailed": "Delete failed, please retry",
+    "deletedScanRecord": "Deleted scan record: {name}",
     "stoppedScan": "Stopped scan task: {name}",
     "stopFailed": "Stop failed, please retry",
     "bulkDeleteSuccess": "Deleted {count} scan records",

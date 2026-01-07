@@ -10,6 +10,7 @@ import { createEndpointColumns } from "./endpoints-columns"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { DataTableSkeleton } from "@/components/ui/data-table-skeleton"
 import { BulkAddUrlsDialog } from "@/components/common/bulk-add-urls-dialog"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { getDateLocale } from "@/lib/date-utils"
 import type { TargetType } from "@/lib/url-validator"
 import {
@@ -41,6 +42,8 @@ export function EndpointsDetailView({
   const [endpointToDelete, setEndpointToDelete] = useState<Endpoint | null>(null)
   const [selectedEndpoints, setSelectedEndpoints] = useState<Endpoint[]>([])
   const [bulkAddDialogOpen, setBulkAddDialogOpen] = useState(false)
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Pagination state management
   const [pagination, setPagination] = useState({
@@ -280,6 +283,26 @@ export function EndpointsDetailView({
     URL.revokeObjectURL(url)
   }
 
+  // Handle bulk delete
+  const handleBulkDelete = async () => {
+    if (selectedEndpoints.length === 0) return
+    
+    setIsDeleting(true)
+    try {
+      const ids = selectedEndpoints.map(e => e.id)
+      const result = await EndpointService.bulkDelete(ids)
+      toast.success(tToast("deleteSuccess", { count: result.deletedCount }))
+      setSelectedEndpoints([])
+      setBulkDeleteDialogOpen(false)
+      refetch()
+    } catch (error) {
+      console.error("Failed to delete endpoints", error)
+      toast.error(tToast("deleteFailed"))
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   // Error state
   if (error) {
     return (
@@ -327,6 +350,7 @@ export function EndpointsDetailView({
         onSelectionChange={handleSelectionChange}
         onDownloadAll={handleDownloadAll}
         onDownloadSelected={handleDownloadSelected}
+        onBulkDelete={targetId ? () => setBulkDeleteDialogOpen(true) : undefined}
         onBulkAdd={targetId ? () => setBulkAddDialogOpen(true) : undefined}
       />
 
@@ -343,7 +367,18 @@ export function EndpointsDetailView({
         />
       )}
 
-      {/* Delete confirmation dialog */}
+      {/* Bulk delete confirmation dialog */}
+      <ConfirmDialog
+        open={bulkDeleteDialogOpen}
+        onOpenChange={setBulkDeleteDialogOpen}
+        title={tConfirm("deleteTitle")}
+        description={tCommon("actions.deleteConfirmMessage", { count: selectedEndpoints.length })}
+        onConfirm={handleBulkDelete}
+        loading={isDeleting}
+        variant="destructive"
+      />
+
+      {/* Single delete confirmation dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

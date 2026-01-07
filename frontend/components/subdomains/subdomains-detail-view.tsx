@@ -14,8 +14,10 @@ import { createSubdomainColumns } from "./subdomains-columns"
 import { DataTableSkeleton } from "@/components/ui/data-table-skeleton"
 import { SubdomainService } from "@/services/subdomain.service"
 import { BulkAddSubdomainsDialog } from "./bulk-add-subdomains-dialog"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { getDateLocale } from "@/lib/date-utils"
 import type { Subdomain } from "@/types/subdomain.types"
+import { toast } from "sonner"
 
 /**
  * Subdomain detail view component
@@ -31,11 +33,14 @@ export function SubdomainsDetailView({
   scanId?: number
 }) {
   const [selectedSubdomains, setSelectedSubdomains] = useState<Subdomain[]>([])
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Internationalization
   const tColumns = useTranslations("columns")
   const tCommon = useTranslations("common")
   const tSubdomains = useTranslations("subdomains")
+  const tToast = useTranslations("toast")
   const locale = useLocale()
 
   // Build translation object
@@ -215,6 +220,26 @@ export function SubdomainsDetailView({
     URL.revokeObjectURL(url)
   }
 
+  // Handle bulk delete
+  const handleBulkDelete = async () => {
+    if (selectedSubdomains.length === 0) return
+    
+    setIsDeleting(true)
+    try {
+      const ids = selectedSubdomains.map(s => s.id)
+      const result = await SubdomainService.bulkDeleteSubdomains(ids)
+      toast.success(tToast("deleteSuccess", { count: result.deletedCount }))
+      setSelectedSubdomains([])
+      setDeleteDialogOpen(false)
+      refetch()
+    } catch (error) {
+      console.error("Failed to delete subdomains", error)
+      toast.error(tToast("deleteFailed"))
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   // Create column definitions
   const subdomainColumns = useMemo(
     () =>
@@ -279,6 +304,7 @@ export function SubdomainsDetailView({
         isSearching={isSearching}
         onDownloadAll={handleDownloadAll}
         onDownloadSelected={handleDownloadSelected}
+        onBulkDelete={targetId ? () => setDeleteDialogOpen(true) : undefined}
         pagination={pagination}
         setPagination={setPagination}
         paginationInfo={{
@@ -301,6 +327,17 @@ export function SubdomainsDetailView({
           onSuccess={() => refetch()}
         />
       )}
+
+      {/* Delete confirmation dialog */}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title={tCommon("actions.confirmDelete")}
+        description={tCommon("actions.deleteConfirmMessage", { count: selectedSubdomains.length })}
+        onConfirm={handleBulkDelete}
+        loading={isDeleting}
+        variant="destructive"
+      />
     </>
   )
 }

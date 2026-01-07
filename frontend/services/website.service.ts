@@ -6,11 +6,27 @@ export interface BulkCreateWebsitesResponse {
   createdCount: number
 }
 
+// Bulk delete response type
+export interface BulkDeleteResponse {
+  deletedCount: number
+}
+
 /**
  * Website related API service
  * All frontend website interface calls should be centralized here
  */
 export class WebsiteService {
+  /**
+   * Bulk delete websites
+   * POST /api/assets/websites/bulk-delete/
+   */
+  static async bulkDelete(ids: number[]): Promise<BulkDeleteResponse> {
+    const response = await api.post<BulkDeleteResponse>(
+      `/assets/websites/bulk-delete/`,
+      { ids }
+    )
+    return response.data
+  }
   /**
    * Bulk create websites (bind to target)
    * POST /api/targets/{target_id}/websites/bulk-create/

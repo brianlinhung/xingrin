@@ -1,7 +1,25 @@
 import { api } from "@/lib/api-client"
 import type { GetIPAddressesParams, GetIPAddressesResponse } from "@/types/ip-address.types"
 
+// Bulk delete response type
+export interface BulkDeleteResponse {
+  deletedCount: number
+}
+
 export class IPAddressService {
+  /**
+   * Bulk delete IP addresses
+   * POST /api/assets/ip-addresses/bulk-delete/
+   * Note: IP addresses are aggregated, so we pass IP strings instead of IDs
+   */
+  static async bulkDelete(ips: string[]): Promise<BulkDeleteResponse> {
+    const response = await api.post<BulkDeleteResponse>(
+      `/assets/ip-addresses/bulk-delete/`,
+      { ips }
+    )
+    return response.data
+  }
+
   static async getTargetIPAddresses(
     targetId: number,
     params?: GetIPAddressesParams

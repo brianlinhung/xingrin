@@ -6,8 +6,25 @@ export interface BulkCreateDirectoriesResponse {
   createdCount: number
 }
 
+// Bulk delete response type
+export interface BulkDeleteResponse {
+  deletedCount: number
+}
+
 /** Directory related API service */
 export class DirectoryService {
+  /**
+   * Bulk delete directories
+   * POST /api/assets/directories/bulk-delete/
+   */
+  static async bulkDelete(ids: number[]): Promise<BulkDeleteResponse> {
+    const response = await api.post<BulkDeleteResponse>(
+      `/assets/directories/bulk-delete/`,
+      { ids }
+    )
+    return response.data
+  }
+
   /**
    * Bulk create directories (bind to target)
    * POST /api/targets/{target_id}/directories/bulk-create/

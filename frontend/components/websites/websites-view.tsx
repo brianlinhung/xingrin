@@ -11,6 +11,7 @@ import { useTargetWebSites, useScanWebSites } from "@/hooks/use-websites"
 import { useTarget } from "@/hooks/use-targets"
 import { WebsiteService } from "@/services/website.service"
 import { BulkAddUrlsDialog } from "@/components/common/bulk-add-urls-dialog"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { getDateLocale } from "@/lib/date-utils"
 import type { TargetType } from "@/lib/url-validator"
 import type { WebSite } from "@/types/website.types"
@@ -29,6 +30,8 @@ export function WebSitesView({
   })
   const [selectedWebSites, setSelectedWebSites] = useState<WebSite[]>([])
   const [bulkAddDialogOpen, setBulkAddDialogOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const [filterQuery, setFilterQuery] = useState("")
   const [isSearching, setIsSearching] = useState(false)
@@ -251,6 +254,26 @@ export function WebSitesView({
     URL.revokeObjectURL(url)
   }
 
+  // Handle bulk delete
+  const handleBulkDelete = async () => {
+    if (selectedWebSites.length === 0) return
+    
+    setIsDeleting(true)
+    try {
+      const ids = selectedWebSites.map(w => w.id)
+      const result = await WebsiteService.bulkDelete(ids)
+      toast.success(tToast("deleteSuccess", { count: result.deletedCount }))
+      setSelectedWebSites([])
+      setDeleteDialogOpen(false)
+      refetch()
+    } catch (error) {
+      console.error("Failed to delete websites", error)
+      toast.error(tToast("deleteFailed"))
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
@@ -291,6 +314,7 @@ export function WebSitesView({
         onSelectionChange={handleSelectionChange}
         onDownloadAll={handleDownloadAll}
         onDownloadSelected={handleDownloadSelected}
+        onBulkDelete={targetId ? () => setDeleteDialogOpen(true) : undefined}
         onBulkAdd={targetId ? () => setBulkAddDialogOpen(true) : undefined}
       />
 
@@ -306,6 +330,17 @@ export function WebSitesView({
           onSuccess={() => refetch()}
         />
       )}
+
+      {/* Delete confirmation dialog */}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title={tCommon("actions.confirmDelete")}
+        description={tCommon("actions.deleteConfirmMessage", { count: selectedWebSites.length })}
+        onConfirm={handleBulkDelete}
+        loading={isDeleting}
+        variant="destructive"
+      />
     </>
   )
 }

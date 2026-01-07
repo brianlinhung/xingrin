@@ -11,6 +11,7 @@ import { useTargetDirectories, useScanDirectories } from "@/hooks/use-directorie
 import { useTarget } from "@/hooks/use-targets"
 import { DirectoryService } from "@/services/directory.service"
 import { BulkAddUrlsDialog } from "@/components/common/bulk-add-urls-dialog"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { getDateLocale } from "@/lib/date-utils"
 import type { TargetType } from "@/lib/url-validator"
 import type { Directory } from "@/types/directory.types"
@@ -29,6 +30,8 @@ export function DirectoriesView({
   })
   const [selectedDirectories, setSelectedDirectories] = useState<Directory[]>([])
   const [bulkAddDialogOpen, setBulkAddDialogOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const [filterQuery, setFilterQuery] = useState("")
   const [isSearching, setIsSearching] = useState(false)
@@ -240,6 +243,26 @@ export function DirectoriesView({
     URL.revokeObjectURL(url)
   }
 
+  // Handle bulk delete
+  const handleBulkDelete = async () => {
+    if (selectedDirectories.length === 0) return
+    
+    setIsDeleting(true)
+    try {
+      const ids = selectedDirectories.map(d => d.id)
+      const result = await DirectoryService.bulkDelete(ids)
+      toast.success(tToast("deleteSuccess", { count: result.deletedCount }))
+      setSelectedDirectories([])
+      setDeleteDialogOpen(false)
+      refetch()
+    } catch (error) {
+      console.error("Failed to delete directories", error)
+      toast.error(tToast("deleteFailed"))
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
@@ -280,6 +303,7 @@ export function DirectoriesView({
         onSelectionChange={handleSelectionChange}
         onDownloadAll={handleDownloadAll}
         onDownloadSelected={handleDownloadSelected}
+        onBulkDelete={targetId ? () => setDeleteDialogOpen(true) : undefined}
         onBulkAdd={targetId ? () => setBulkAddDialogOpen(true) : undefined}
       />
 
@@ -295,6 +319,17 @@ export function DirectoriesView({
           onSuccess={() => refetch()}
         />
       )}
+
+      {/* Delete confirmation dialog */}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title={tCommon("actions.confirmDelete")}
+        description={tCommon("actions.deleteConfirmMessage", { count: selectedDirectories.length })}
+        onConfirm={handleBulkDelete}
+        loading={isDeleting}
+        variant="destructive"
+      />
     </>
   )
 }

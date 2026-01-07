@@ -173,7 +173,10 @@
       "selectAll": "全选",
       "selectRow": "选择行",
       "website": "官网",
-      "description": "描述"
+      "description": "描述",
+      "processing": "处理中...",
+      "confirmDelete": "确认删除",
+      "deleteConfirmMessage": "确定要删除选中的 {count} 条记录吗？此操作不可撤销。"
     },
     "yamlEditor": {
       "syntaxError": "语法错误",
@@ -1456,8 +1459,9 @@
     "copied": "已复制",
     "copyFailed": "复制失败",
     "downloadFailed": "下载失败",
-    "deletedScanRecord": "已删除扫描记录: {name}",
+    "deleteSuccess": "删除成功：{count} 条",
     "deleteFailed": "删除失败，请重试",
+    "deletedScanRecord": "已删除扫描记录: {name}",
     "stoppedScan": "已停止扫描任务: {name}",
     "stopFailed": "停止失败，请重试",
     "bulkDeleteSuccess": "已删除 {count} 个扫描记录",

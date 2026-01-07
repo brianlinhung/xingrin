@@ -260,6 +260,35 @@ class SubdomainViewSet(viewsets.ModelViewSet):
             field_formatters=formatters
         )
 
+    @action(detail=False, methods=['post'], url_path='bulk-delete')
+    def bulk_delete(self, request, **kwargs):
+        """批量删除子域名
+        
+        POST /api/assets/subdomains/bulk-delete/
+        
+        请求体: {"ids": [1, 2, 3]}
+        响应: {"deletedCount": 3}
+        """
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message='ids is required and must be a list',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            from ..models import Subdomain
+            deleted_count, _ = Subdomain.objects.filter(id__in=ids).delete()
+            return success_response(data={'deletedCount': deleted_count})
+        except Exception as e:
+            logger.exception("批量删除子域名失败")
+            return error_response(
+                code=ErrorCodes.SERVER_ERROR,
+                message='Failed to delete subdomains',
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 
 class WebSiteViewSet(viewsets.ModelViewSet):
     """站点管理 ViewSet
@@ -393,6 +422,35 @@ class WebSiteViewSet(viewsets.ModelViewSet):
             field_formatters=formatters
         )
 
+    @action(detail=False, methods=['post'], url_path='bulk-delete')
+    def bulk_delete(self, request, **kwargs):
+        """批量删除网站
+        
+        POST /api/assets/websites/bulk-delete/
+        
+        请求体: {"ids": [1, 2, 3]}
+        响应: {"deletedCount": 3}
+        """
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message='ids is required and must be a list',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            from ..models import WebSite
+            deleted_count, _ = WebSite.objects.filter(id__in=ids).delete()
+            return success_response(data={'deletedCount': deleted_count})
+        except Exception as e:
+            logger.exception("批量删除网站失败")
+            return error_response(
+                code=ErrorCodes.SERVER_ERROR,
+                message='Failed to delete websites',
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 
 class DirectoryViewSet(viewsets.ModelViewSet):
     """目录管理 ViewSet
@@ -520,6 +578,35 @@ class DirectoryViewSet(viewsets.ModelViewSet):
             filename=f"target-{target_pk}-directories.csv",
             field_formatters=formatters
         )
+
+    @action(detail=False, methods=['post'], url_path='bulk-delete')
+    def bulk_delete(self, request, **kwargs):
+        """批量删除目录
+        
+        POST /api/assets/directories/bulk-delete/
+        
+        请求体: {"ids": [1, 2, 3]}
+        响应: {"deletedCount": 3}
+        """
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message='ids is required and must be a list',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            from ..models import Directory
+            deleted_count, _ = Directory.objects.filter(id__in=ids).delete()
+            return success_response(data={'deletedCount': deleted_count})
+        except Exception as e:
+            logger.exception("批量删除目录失败")
+            return error_response(
+                code=ErrorCodes.SERVER_ERROR,
+                message='Failed to delete directories',
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class EndpointViewSet(viewsets.ModelViewSet):
@@ -655,6 +742,35 @@ class EndpointViewSet(viewsets.ModelViewSet):
             field_formatters=formatters
         )
 
+    @action(detail=False, methods=['post'], url_path='bulk-delete')
+    def bulk_delete(self, request, **kwargs):
+        """批量删除端点
+        
+        POST /api/assets/endpoints/bulk-delete/
+        
+        请求体: {"ids": [1, 2, 3]}
+        响应: {"deletedCount": 3}
+        """
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message='ids is required and must be a list',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            from ..models import Endpoint
+            deleted_count, _ = Endpoint.objects.filter(id__in=ids).delete()
+            return success_response(data={'deletedCount': deleted_count})
+        except Exception as e:
+            logger.exception("批量删除端点失败")
+            return error_response(
+                code=ErrorCodes.SERVER_ERROR,
+                message='Failed to delete endpoints',
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 
 class HostPortMappingViewSet(viewsets.ModelViewSet):
     """主机端口映射管理 ViewSet（IP 地址聚合视图）
@@ -727,6 +843,38 @@ class HostPortMappingViewSet(viewsets.ModelViewSet):
             filename=f"target-{target_pk}-ip-addresses.csv",
             field_formatters=formatters
         )
+
+    @action(detail=False, methods=['post'], url_path='bulk-delete')
+    def bulk_delete(self, request, **kwargs):
+        """批量删除 IP 地址映射
+        
+        POST /api/assets/ip-addresses/bulk-delete/
+        
+        请求体: {"ips": ["192.168.1.1", "10.0.0.1"]}
+        响应: {"deletedCount": 3}
+        
+        注意：由于 IP 地址是聚合显示的，删除时传入 IP 列表，
+        会删除该 IP 下的所有 host:port 映射记录
+        """
+        ips = request.data.get('ips', [])
+        if not ips or not isinstance(ips, list):
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message='ips is required and must be a list',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            from ..models import HostPortMapping
+            deleted_count, _ = HostPortMapping.objects.filter(ip__in=ips).delete()
+            return success_response(data={'deletedCount': deleted_count})
+        except Exception as e:
+            logger.exception("批量删除 IP 地址映射失败")
+            return error_response(
+                code=ErrorCodes.SERVER_ERROR,
+                message='Failed to delete ip addresses',
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class VulnerabilityViewSet(viewsets.ModelViewSet):

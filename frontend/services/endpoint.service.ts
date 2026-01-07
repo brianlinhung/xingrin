@@ -16,7 +16,24 @@ export interface BulkCreateEndpointsResponse {
   createdCount: number
 }
 
+// Bulk delete response type
+export interface BulkDeleteResponse {
+  deletedCount: number
+}
+
 export class EndpointService {
+
+  /**
+   * Bulk delete endpoints
+   * POST /api/assets/endpoints/bulk-delete/
+   */
+  static async bulkDelete(ids: number[]): Promise<BulkDeleteResponse> {
+    const response = await api.post<BulkDeleteResponse>(
+      `/assets/endpoints/bulk-delete/`,
+      { ids }
+    )
+    return response.data
+  }
 
   /**
    * Bulk create endpoints (bind to target)

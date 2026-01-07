@@ -12,16 +12,19 @@ from .views import (
     AssetStatisticsViewSet,
     AssetSearchView,
     AssetSearchExportView,
+    EndpointViewSet,
+    HostPortMappingViewSet,
 )
 
 # 创建 DRF 路由器
 router = DefaultRouter()
 
 # 注册 ViewSet
-# 注意：IPAddress 模型已被重构为 HostPortMapping，相关路由已移除
 router.register(r'subdomains', SubdomainViewSet, basename='subdomain')
 router.register(r'websites', WebSiteViewSet, basename='website')
 router.register(r'directories', DirectoryViewSet, basename='directory')
+router.register(r'endpoints', EndpointViewSet, basename='endpoint')
+router.register(r'ip-addresses', HostPortMappingViewSet, basename='ip-address')
 router.register(r'vulnerabilities', VulnerabilityViewSet, basename='vulnerability')
 router.register(r'statistics', AssetStatisticsViewSet, basename='asset-statistics')
 

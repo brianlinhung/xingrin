@@ -36,6 +36,7 @@ interface EndpointsDataTableProps<TData extends { id: number | string }, TValue>
   onAddNew?: () => void
   addButtonText?: string
   onSelectionChange?: (selectedRows: TData[]) => void
+  onBulkDelete?: () => void
   pagination?: { pageIndex: number; pageSize: number }
   onPaginationChange?: (pagination: { pageIndex: number; pageSize: number }) => void
   totalCount?: number
@@ -54,6 +55,7 @@ export function EndpointsDataTable<TData extends { id: number | string }, TValue
   onAddNew,
   addButtonText = "Add",
   onSelectionChange,
+  onBulkDelete,
   pagination: externalPagination,
   onPaginationChange,
   totalCount,
@@ -135,7 +137,8 @@ export function EndpointsDataTable<TData extends { id: number | string }, TValue
       // Selection
       onSelectionChange={onSelectionChange}
       // Bulk operations
-      showBulkDelete={false}
+      onBulkDelete={onBulkDelete}
+      bulkDeleteLabel="Delete"
       onAddNew={onAddNew}
       addButtonLabel={addButtonText}
       // Bulk add button

@@ -8,6 +8,7 @@ import { createIPAddressColumns } from "./ip-addresses-columns"
 import { DataTableSkeleton } from "@/components/ui/data-table-skeleton"
 import { Button } from "@/components/ui/button"
 import { useTargetIPAddresses, useScanIPAddresses } from "@/hooks/use-ip-addresses"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { getDateLocale } from "@/lib/date-utils"
 import type { IPAddress } from "@/types/ip-address.types"
 import { IPAddressService } from "@/services/ip-address.service"
@@ -26,6 +27,8 @@ export function IPAddressesView({
   })
   const [selectedIPAddresses, setSelectedIPAddresses] = useState<IPAddress[]>([])
   const [filterQuery, setFilterQuery] = useState("")
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Internationalization
   const tColumns = useTranslations("columns")
@@ -215,6 +218,27 @@ export function IPAddressesView({
     URL.revokeObjectURL(url)
   }
 
+  // Handle bulk delete
+  const handleBulkDelete = async () => {
+    if (selectedIPAddresses.length === 0) return
+    
+    setIsDeleting(true)
+    try {
+      // IP addresses are aggregated, pass IP strings instead of IDs
+      const ips = selectedIPAddresses.map(ip => ip.ip)
+      const result = await IPAddressService.bulkDelete(ips)
+      toast.success(tToast("deleteSuccess", { count: result.deletedCount }))
+      setSelectedIPAddresses([])
+      setDeleteDialogOpen(false)
+      refetch()
+    } catch (error) {
+      console.error("Failed to delete IP addresses", error)
+      toast.error(tToast("deleteFailed"))
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
@@ -253,6 +277,18 @@ export function IPAddressesView({
         onSelectionChange={handleSelectionChange}
         onDownloadAll={handleDownloadAll}
         onDownloadSelected={handleDownloadSelected}
+        onBulkDelete={targetId ? () => setDeleteDialogOpen(true) : undefined}
+      />
+
+      {/* Delete confirmation dialog */}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title={tCommon("actions.confirmDelete")}
+        description={tCommon("actions.deleteConfirmMessage", { count: selectedIPAddresses.length })}
+        onConfirm={handleBulkDelete}
+        loading={isDeleting}
+        variant="destructive"
       />
     </>
   )
