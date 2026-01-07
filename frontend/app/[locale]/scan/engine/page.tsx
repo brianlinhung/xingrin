@@ -34,6 +34,7 @@ const FEATURE_LIST = [
   { key: "site_scan" },
   { key: "fingerprint_detect" },
   { key: "directory_scan" },
+  { key: "screenshot" },
   { key: "url_fetch" },
   { key: "vuln_scan" },
 ] as const
@@ -48,6 +49,7 @@ function parseEngineFeatures(engine: ScanEngine): Record<FeatureKey, boolean> {
     site_scan: false,
     fingerprint_detect: false,
     directory_scan: false,
+    screenshot: false,
     url_fetch: false,
     vuln_scan: false,
   }
@@ -64,6 +66,7 @@ function parseEngineFeatures(engine: ScanEngine): Record<FeatureKey, boolean> {
       site_scan: !!config.site_scan,
       fingerprint_detect: !!config.fingerprint_detect,
       directory_scan: !!config.directory_scan,
+      screenshot: !!config.screenshot,
       url_fetch: !!config.url_fetch,
       vuln_scan: !!config.vuln_scan,
     }

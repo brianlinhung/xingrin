@@ -165,12 +165,12 @@ def _run_scans_sequentially(
     for tool_name, tool_config in enabled_tools.items():
         # 1. 构建完整命令（变量替换）
         try:
+            command_params = {'url_file': urls_file}
+            
             command = build_scan_command(
                 tool_name=tool_name,
                 scan_type='site_scan',
-                command_params={
-                    'url_file': urls_file
-                },
+                command_params=command_params,
                 tool_config=tool_config
             )
         except Exception as e:

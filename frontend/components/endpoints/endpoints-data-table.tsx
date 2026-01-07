@@ -138,7 +138,7 @@ export function EndpointsDataTable<TData extends { id: number | string }, TValue
       onSelectionChange={onSelectionChange}
       // Bulk operations
       onBulkDelete={onBulkDelete}
-      bulkDeleteLabel="Delete"
+      bulkDeleteLabel={tActions("delete")}
       onAddNew={onAddNew}
       addButtonLabel={addButtonText}
       // Bulk add button

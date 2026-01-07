@@ -96,6 +96,7 @@ site_scan:
     httpx:
       enabled: true
       timeout: auto         # Auto calculate
+      # screenshot: true    # Enable site screenshot (requires Chromium)
 
 
 # ==================== Directory Scan ====================

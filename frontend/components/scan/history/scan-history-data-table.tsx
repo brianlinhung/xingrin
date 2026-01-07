@@ -55,6 +55,7 @@ export function ScanHistoryDataTable({
 }: ScanHistoryDataTableProps) {
   const t = useTranslations("common.status")
   const tScan = useTranslations("scan.history")
+  const tActions = useTranslations("common.actions")
   
   // Search local state
   const [localSearchValue, setLocalSearchValue] = React.useState(searchValue || "")
@@ -91,7 +92,7 @@ export function ScanHistoryDataTable({
       onSelectionChange={onSelectionChange}
       // Bulk operations
       onBulkDelete={onBulkDelete}
-      bulkDeleteLabel="Delete"
+      bulkDeleteLabel={tActions("delete")}
       onAddNew={onAddNew}
       addButtonLabel={addButtonText || tScan("title")}
       // Toolbar

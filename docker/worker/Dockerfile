@@ -60,7 +60,27 @@ RUN apt-get update && apt-get install -y \
     masscan \
     libpcap-dev \
     ca-certificates \
+    fonts-liberation \
+    libnss3 \
+    libxss1 \
+    libasound2t64 \
     && rm -rf /var/lib/apt/lists/*
+
+# 安装 Chromium（通过 Playwright 安装，支持 ARM64 和 AMD64）
+# Ubuntu 24.04 的 chromium-browser 是 snap 过渡包，Docker 中不可用
+RUN pip install playwright --break-system-packages && \
+    playwright install chromium && \
+    playwright install-deps chromium && \
+    rm -rf /var/lib/apt/lists/*
+
+# 设置 Chrome 路径供 httpx 等工具使用（Playwright 安装位置）
+ENV CHROME_PATH=/root/.cache/ms-playwright/chromium-*/chrome-linux/chrome
+# 创建软链接确保 httpx 的 -system-chrome 能找到浏览器
+RUN CHROME_BIN=$(find /root/.cache/ms-playwright -name chrome -type f 2>/dev/null | head -1) && \
+    ln -sf "$CHROME_BIN" /usr/bin/chromium-browser && \
+    ln -sf "$CHROME_BIN" /usr/bin/chromium && \
+    ln -sf "$CHROME_BIN" /usr/bin/chrome && \
+    ln -sf "$CHROME_BIN" /usr/bin/google-chrome-stable
 
 # 建立 python 软链接
 RUN ln -s /usr/bin/python3 /usr/bin/python

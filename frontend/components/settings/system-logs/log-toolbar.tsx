@@ -2,6 +2,7 @@
 
 import { useMemo } from "react"
 import { useTranslations } from "next-intl"
+import { FileText, Search } from "lucide-react"
 
 import {
   Select,
@@ -12,30 +13,36 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 import type { LogFile } from "@/types/system-log.types"
 
-const LINE_OPTIONS = [100, 200, 500, 1000, 5000] as const
+const LINE_OPTIONS = [100, 200, 500, 1000, 5000, 10000] as const
+
+export type LogLevel = "all" | "DEBUG" | "INFO" | "WARN" | "ERROR"
+export const LOG_LEVELS: LogLevel[] = ["all", "DEBUG", "INFO", "WARN", "ERROR"]
 
 interface LogToolbarProps {
   files: LogFile[]
   selectedFile: string
   lines: number
-  autoRefresh: boolean
+  searchQuery: string
+  logLevel: LogLevel
   onFileChange: (filename: string) => void
   onLinesChange: (lines: number) => void
-  onAutoRefreshChange: (enabled: boolean) => void
+  onSearchChange: (query: string) => void
+  onLogLevelChange: (level: LogLevel) => void
 }
 
 export function LogToolbar({
   files,
   selectedFile,
   lines,
-  autoRefresh,
+  searchQuery,
+  logLevel,
   onFileChange,
   onLinesChange,
-  onAutoRefreshChange,
+  onSearchChange,
+  onLogLevelChange,
 }: LogToolbarProps) {
   const t = useTranslations("settings.systemLogs")
 
@@ -49,76 +56,75 @@ export function LogToolbar({
   }, [files])
 
   return (
-    <div className="flex items-center gap-4 flex-wrap">
+    <div className="flex items-center gap-3 flex-wrap">
       {/* 日志文件选择 */}
-      <div className="flex items-center gap-2">
-        <Label className="text-sm text-muted-foreground whitespace-nowrap">
-          {t("toolbar.logFile")}
-        </Label>
-        <Select value={selectedFile} onValueChange={onFileChange}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder={t("toolbar.selectFile")} />
-          </SelectTrigger>
-          <SelectContent>
-            {groupedFiles.systemLogs.length > 0 && (
-              <SelectGroup>
-                <SelectLabel>{t("toolbar.systemLogsGroup")}</SelectLabel>
-                {groupedFiles.systemLogs.map((file) => (
-                  <SelectItem key={file.filename} value={file.filename}>
-                    {file.filename}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            )}
-            {groupedFiles.containerLogs.length > 0 && (
-              <SelectGroup>
-                <SelectLabel>{t("toolbar.containerLogsGroup")}</SelectLabel>
-                {groupedFiles.containerLogs.map((file) => (
-                  <SelectItem key={file.filename} value={file.filename}>
-                    {file.filename}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            )}
-          </SelectContent>
-        </Select>
-      </div>
+      <Select value={selectedFile} onValueChange={onFileChange}>
+        <SelectTrigger className="w-[200px]">
+          <FileText className="h-4 w-4 text-muted-foreground" />
+          <SelectValue placeholder={t("toolbar.selectFile")} />
+        </SelectTrigger>
+        <SelectContent>
+          {groupedFiles.systemLogs.length > 0 && (
+            <SelectGroup>
+              <SelectLabel>{t("toolbar.systemLogsGroup")}</SelectLabel>
+              {groupedFiles.systemLogs.map((file) => (
+                <SelectItem key={file.filename} value={file.filename}>
+                  {file.filename}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          )}
+          {groupedFiles.containerLogs.length > 0 && (
+            <SelectGroup>
+              <SelectLabel>{t("toolbar.containerLogsGroup")}</SelectLabel>
+              {groupedFiles.containerLogs.map((file) => (
+                <SelectItem key={file.filename} value={file.filename}>
+                  {file.filename}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          )}
+        </SelectContent>
+      </Select>
 
       {/* 行数选择 */}
-      <div className="flex items-center gap-2">
-        <Label className="text-sm text-muted-foreground whitespace-nowrap">
-          {t("toolbar.lines")}
-        </Label>
-        <Select value={String(lines)} onValueChange={(v) => onLinesChange(Number(v))}>
-          <SelectTrigger className="w-[100px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {LINE_OPTIONS.map((option) => (
-              <SelectItem key={option} value={String(option)}>
-                {option}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <Select value={String(lines)} onValueChange={(v) => onLinesChange(Number(v))}>
+        <SelectTrigger className="w-[110px]">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {LINE_OPTIONS.map((option) => (
+            <SelectItem key={option} value={String(option)}>
+              {option} {t("toolbar.linesUnit")}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-      {/* 自动刷新开关 */}
-      <div className="flex items-center gap-2">
-        <Switch
-          id="auto-refresh"
-          checked={autoRefresh}
-          onCheckedChange={onAutoRefreshChange}
+      {/* 日志级别筛选 */}
+      <Select value={logLevel} onValueChange={(v) => onLogLevelChange(v as LogLevel)}>
+        <SelectTrigger className="w-[100px]">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {LOG_LEVELS.map((level) => (
+            <SelectItem key={level} value={level}>
+              {level === "all" ? t("toolbar.levelAll") : level}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      {/* 搜索框 - 居中并扩展 */}
+      <div className="relative flex-1 min-w-[280px] max-w-[500px]">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          type="text"
+          placeholder={t("toolbar.searchPlaceholder")}
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="w-full pl-9 h-9"
         />
-        <Label
-          htmlFor="auto-refresh"
-          className="text-sm text-muted-foreground cursor-pointer flex items-center gap-1.5"
-        >
-          {t("toolbar.autoRefresh")}
-          {autoRefresh && (
-            <span className="size-2 rounded-full bg-green-500 animate-pulse" />
-          )}
-        </Label>
       </div>
     </div>
   )

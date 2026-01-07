@@ -54,6 +54,7 @@ export function IPAddressesDataTable({
 }: IPAddressesDataTableProps) {
   const t = useTranslations("common.status")
   const tDownload = useTranslations("common.download")
+  const tActions = useTranslations("common.actions")
   
   // Smart search handler
   const handleSmartSearch = (rawQuery: string) => {
@@ -98,7 +99,7 @@ export function IPAddressesDataTable({
       onSelectionChange={onSelectionChange}
       // Bulk operations
       onBulkDelete={onBulkDelete}
-      bulkDeleteLabel="Delete"
+      bulkDeleteLabel={tActions("delete")}
       showAddButton={false}
       // Download
       downloadOptions={downloadOptions.length > 0 ? downloadOptions : undefined}

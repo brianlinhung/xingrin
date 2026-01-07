@@ -1225,3 +1225,162 @@ class VulnerabilitySnapshotViewSet(viewsets.ModelViewSet):
         if scan_pk:
             return self.service.get_by_scan(scan_pk, filter_query=filter_query)
         return self.service.get_all(filter_query=filter_query)
+
+
+# ==================== 截图 ViewSet ====================
+
+class ScreenshotViewSet(viewsets.ModelViewSet):
+    """截图资产 ViewSet
+    
+    支持两种访问方式：
+    1. 嵌套路由：GET /api/targets/{target_pk}/screenshots/
+    2. 独立路由：GET /api/screenshots/（全局查询）
+    
+    支持智能过滤语法（filter 参数）：
+    - url="example"      URL 模糊匹配
+    """
+    
+    from ..serializers import ScreenshotListSerializer
+    
+    serializer_class = ScreenshotListSerializer
+    pagination_class = BasePagination
+    filter_backends = [filters.OrderingFilter]
+    ordering = ['-created_at']
+    
+    def get_queryset(self):
+        """根据是否有 target_pk 参数决定查询范围"""
+        from ..models import Screenshot
+        
+        target_pk = self.kwargs.get('target_pk')
+        filter_query = self.request.query_params.get('filter', None)
+        
+        queryset = Screenshot.objects.all()
+        if target_pk:
+            queryset = queryset.filter(target_id=target_pk)
+        
+        if filter_query:
+            # 简单的 URL 模糊匹配
+            queryset = queryset.filter(url__icontains=filter_query)
+        
+        return queryset.order_by('-created_at')
+    
+    @action(detail=True, methods=['get'], url_path='image')
+    def image(self, request, pk=None, **kwargs):
+        """获取截图图片
+        
+        GET /api/assets/screenshots/{id}/image/
+        
+        返回 WebP 格式的图片二进制数据
+        """
+        from django.http import HttpResponse
+        from ..models import Screenshot
+        
+        try:
+            screenshot = Screenshot.objects.get(pk=pk)
+            if not screenshot.image:
+                return error_response(
+                    code=ErrorCodes.NOT_FOUND,
+                    message='Screenshot image not found',
+                    status_code=status.HTTP_404_NOT_FOUND
+                )
+            
+            response = HttpResponse(screenshot.image, content_type='image/webp')
+            response['Content-Disposition'] = f'inline; filename="screenshot_{pk}.webp"'
+            return response
+        except Screenshot.DoesNotExist:
+            return error_response(
+                code=ErrorCodes.NOT_FOUND,
+                message='Screenshot not found',
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+    
+    @action(detail=False, methods=['post'], url_path='bulk-delete')
+    def bulk_delete(self, request, **kwargs):
+        """批量删除截图
+        
+        POST /api/assets/screenshots/bulk-delete/
+        
+        请求体: {"ids": [1, 2, 3]}
+        响应: {"deletedCount": 3}
+        """
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return error_response(
+                code=ErrorCodes.VALIDATION_ERROR,
+                message='ids is required and must be a list',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            from ..models import Screenshot
+            deleted_count, _ = Screenshot.objects.filter(id__in=ids).delete()
+            return success_response(data={'deletedCount': deleted_count})
+        except Exception as e:
+            logger.exception("批量删除截图失败")
+            return error_response(
+                code=ErrorCodes.SERVER_ERROR,
+                message='Failed to delete screenshots',
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class ScreenshotSnapshotViewSet(viewsets.ModelViewSet):
+    """截图快照 ViewSet - 嵌套路由：GET /api/scans/{scan_pk}/screenshots/
+    
+    支持智能过滤语法（filter 参数）：
+    - url="example"      URL 模糊匹配
+    """
+    
+    from ..serializers import ScreenshotSnapshotListSerializer
+    
+    serializer_class = ScreenshotSnapshotListSerializer
+    pagination_class = BasePagination
+    filter_backends = [filters.OrderingFilter]
+    ordering = ['-created_at']
+    
+    def get_queryset(self):
+        """根据 scan_pk 参数查询"""
+        from ..models import ScreenshotSnapshot
+        
+        scan_pk = self.kwargs.get('scan_pk')
+        filter_query = self.request.query_params.get('filter', None)
+        
+        queryset = ScreenshotSnapshot.objects.all()
+        if scan_pk:
+            queryset = queryset.filter(scan_id=scan_pk)
+        
+        if filter_query:
+            # 简单的 URL 模糊匹配
+            queryset = queryset.filter(url__icontains=filter_query)
+        
+        return queryset.order_by('-created_at')
+    
+    @action(detail=True, methods=['get'], url_path='image')
+    def image(self, request, pk=None, **kwargs):
+        """获取截图快照图片
+        
+        GET /api/scans/{scan_pk}/screenshots/{id}/image/
+        
+        返回 WebP 格式的图片二进制数据
+        """
+        from django.http import HttpResponse
+        from ..models import ScreenshotSnapshot
+        
+        try:
+            screenshot = ScreenshotSnapshot.objects.get(pk=pk)
+            if not screenshot.image:
+                return error_response(
+                    code=ErrorCodes.NOT_FOUND,
+                    message='Screenshot image not found',
+                    status_code=status.HTTP_404_NOT_FOUND
+                )
+            
+            response = HttpResponse(screenshot.image, content_type='image/webp')
+            response['Content-Disposition'] = f'inline; filename="screenshot_snapshot_{pk}.webp"'
+            return response
+        except ScreenshotSnapshot.DoesNotExist:
+            return error_response(
+                code=ErrorCodes.NOT_FOUND,
+                message='Screenshot snapshot not found',
+                status_code=status.HTTP_404_NOT_FOUND
+            )

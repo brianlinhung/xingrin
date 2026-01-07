@@ -171,6 +171,7 @@
       "snapshot": "Snapshot",
       "openMenu": "Open menu",
       "selectAll": "Select all",
+      "deselectAll": "Deselect all",
       "selectRow": "Select row",
       "website": "Website",
       "description": "Description",
@@ -767,7 +768,8 @@
         "fingerprint_detect": "Fingerprint Detection",
         "directory_scan": "Directory Scan",
         "url_fetch": "URL Fetch",
-        "vuln_scan": "Vulnerability Scan"
+        "vuln_scan": "Vulnerability Scan",
+        "screenshot": "Screenshot"
       }
     },
     "scheduled": {
@@ -896,6 +898,7 @@
         "site_scan": "Site Scan",
         "fingerprint_detect": "Fingerprint Detection",
         "directory_scan": "Directory Scan",
+        "screenshot": "Screenshot",
         "url_fetch": "URL Fetch",
         "vuln_scan": "Vulnerability Scan"
       },
@@ -1405,6 +1408,10 @@
         "logFile": "Log",
         "selectFile": "Select log file",
         "lines": "Lines",
+        "linesUnit": "lines",
+        "searchPlaceholder": "Search logs...",
+        "download": "Download",
+        "levelAll": "All Levels",
         "autoRefresh": "Auto Refresh",
         "systemLogsGroup": "System Logs",
         "containerLogsGroup": "Container Logs"
@@ -2023,6 +2030,16 @@
         "description": "Common tool operations"
       }
     },
+    "screenshots": {
+      "filterPlaceholder": "Filter by URL...",
+      "loadError": "Failed to load screenshots",
+      "noResults": "No screenshots match your filter",
+      "lightboxTitle": "Screenshot Preview",
+      "empty": {
+        "title": "No Screenshots",
+        "description": "Screenshots will appear here after running a site scan with screenshot enabled."
+      }
+    },
     "targetDetail": {
       "noDescription": "No description",
       "breadcrumb": {
@@ -2039,6 +2056,7 @@
       "tabs": {
         "overview": "Overview",
         "assets": "Assets",
+        "screenshots": "Screenshots",
         "vulnerabilities": "Vulnerabilities",
         "settings": "Settings"
       },

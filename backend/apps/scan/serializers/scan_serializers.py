@@ -51,6 +51,7 @@ class ScanHistorySerializer(serializers.ModelSerializer):
             'endpoints': obj.cached_endpoints_count or 0,
             'ips': obj.cached_ips_count or 0,
             'directories': obj.cached_directories_count or 0,
+            'screenshots': obj.cached_screenshots_count or 0,
         }
         summary['vulnerabilities'] = {
             'total': obj.cached_vulns_total or 0,

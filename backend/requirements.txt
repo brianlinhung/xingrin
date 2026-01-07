@@ -41,6 +41,8 @@ pytest-django==4.7.0
 
 # 工具库
 python-dateutil==2.9.0
+Pillow>=10.0.0  # 图像处理（截图服务）
+playwright>=1.40.0  # 浏览器自动化（截图服务）
 pytz==2024.1
 validators==0.22.0
 PyYAML==6.0.1

@@ -58,6 +58,7 @@ export function VulnerabilitiesDataTable({
 }: VulnerabilitiesDataTableProps) {
   const t = useTranslations("common.status")
   const tDownload = useTranslations("common.download")
+  const tActions = useTranslations("common.actions")
   
   // Handle smart filter search
   const handleFilterSearch = (rawQuery: string) => {
@@ -102,7 +103,7 @@ export function VulnerabilitiesDataTable({
       onSelectionChange={onSelectionChange}
       // Bulk operations
       onBulkDelete={onBulkDelete}
-      bulkDeleteLabel="Delete"
+      bulkDeleteLabel={tActions("delete")}
       showAddButton={false}
       // Download
       downloadOptions={downloadOptions.length > 0 ? downloadOptions : undefined}

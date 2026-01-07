@@ -125,7 +125,7 @@ export function SubdomainsDataTable({
       onSelectionChange={onSelectionChange}
       // Bulk operations
       onBulkDelete={onBulkDelete}
-      bulkDeleteLabel="Delete"
+      bulkDeleteLabel={tActions("delete")}
       // Add button
       onAddNew={onAddNew}
       addButtonLabel={addButtonText}

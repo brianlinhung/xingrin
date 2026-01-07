@@ -12,7 +12,7 @@
 import ipaddress
 import logging
 from pathlib import Path
-from typing import Dict, Any, Optional, List, Callable
+from typing import Dict, Any, Optional, List, Iterator, Tuple, Callable
 
 from django.db.models import QuerySet
 
@@ -46,6 +46,203 @@ def create_export_service(target_id: int) -> 'TargetExportService':
     return TargetExportService(blacklist_filter=blacklist_filter)
 
 
+def _iter_default_urls_from_target(
+    target_id: int,
+    blacklist_filter: Optional[BlacklistFilter] = None
+) -> Iterator[str]:
+    """
+    内部生成器：从 Target 本身生成默认 URL
+    
+    根据 Target 类型生成 URL：
+    - DOMAIN: http(s)://domain
+    - IP: http(s)://ip
+    - CIDR: 展开为所有 IP 的 http(s)://ip
+    - URL: 直接使用目标 URL
+    
+    Args:
+        target_id: 目标 ID
+        blacklist_filter: 黑名单过滤器
+        
+    Yields:
+        str: URL
+    """
+    from apps.targets.services import TargetService
+    from apps.targets.models import Target
+    
+    target_service = TargetService()
+    target = target_service.get_target(target_id)
+    
+    if not target:
+        logger.warning("Target ID %d 不存在，无法生成默认 URL", target_id)
+        return
+    
+    target_name = target.name
+    target_type = target.type
+    
+    # 根据 Target 类型生成 URL
+    if target_type == Target.TargetType.DOMAIN:
+        urls = [f"http://{target_name}", f"https://{target_name}"]
+    elif target_type == Target.TargetType.IP:
+        urls = [f"http://{target_name}", f"https://{target_name}"]
+    elif target_type == Target.TargetType.CIDR:
+        try:
+            network = ipaddress.ip_network(target_name, strict=False)
+            urls = []
+            for ip in network.hosts():
+                urls.extend([f"http://{ip}", f"https://{ip}"])
+            # /32 或 /128 特殊处理
+            if not urls:
+                ip = str(network.network_address)
+                urls = [f"http://{ip}", f"https://{ip}"]
+        except ValueError as e:
+            logger.error("CIDR 解析失败: %s - %s", target_name, e)
+            return
+    elif target_type == Target.TargetType.URL:
+        urls = [target_name]
+    else:
+        logger.warning("不支持的 Target 类型: %s", target_type)
+        return
+    
+    # 过滤并产出
+    for url in urls:
+        if blacklist_filter and not blacklist_filter.is_allowed(url):
+            continue
+        yield url
+
+
+def _iter_urls_with_fallback(
+    target_id: int,
+    sources: List[str],
+    blacklist_filter: Optional[BlacklistFilter] = None,
+    batch_size: int = 1000,
+    tried_sources: Optional[List[str]] = None
+) -> Iterator[Tuple[str, str]]:
+    """
+    内部生成器：流式产出 URL（带回退链）
+    
+    按 sources 顺序尝试每个数据源，直到有数据返回。
+    
+    回退逻辑：
+    - 数据源有数据且通过过滤 → 产出 URL，停止回退
+    - 数据源有数据但全被过滤 → 不回退，停止（避免意外暴露）
+    - 数据源为空 → 继续尝试下一个
+    
+    Args:
+        target_id: 目标 ID
+        sources: 数据源优先级列表
+        blacklist_filter: 黑名单过滤器
+        batch_size: 批次大小
+        tried_sources: 可选，用于记录尝试过的数据源（外部传入列表，会被修改）
+        
+    Yields:
+        Tuple[str, str]: (url, source) - URL 和来源标识
+    """
+    from apps.asset.models import Endpoint, WebSite
+    
+    for source in sources:
+        if tried_sources is not None:
+            tried_sources.append(source)
+        
+        has_output = False  # 是否有输出（通过过滤的）
+        has_raw_data = False  # 是否有原始数据（过滤前）
+        
+        if source == DataSource.DEFAULT:
+            # 默认 URL 生成（从 Target 本身构造，复用共用生成器）
+            for url in _iter_default_urls_from_target(target_id, blacklist_filter):
+                has_raw_data = True
+                has_output = True
+                yield url, source
+            
+            # 检查是否有原始数据（需要单独判断，因为生成器可能被过滤后为空）
+            if not has_raw_data:
+                # 再次检查 Target 是否存在
+                from apps.targets.services import TargetService
+                target = TargetService().get_target(target_id)
+                has_raw_data = target is not None
+            
+            if has_raw_data:
+                if not has_output:
+                    logger.info("%s 有数据但全被黑名单过滤，不回退", source)
+                return
+            continue
+        
+        # 构建对应数据源的 queryset
+        if source == DataSource.ENDPOINT:
+            queryset = Endpoint.objects.filter(target_id=target_id).values_list('url', flat=True)
+        elif source == DataSource.WEBSITE:
+            queryset = WebSite.objects.filter(target_id=target_id).values_list('url', flat=True)
+        else:
+            logger.warning("未知的数据源类型: %s，跳过", source)
+            continue
+        
+        for url in queryset.iterator(chunk_size=batch_size):
+            if url:
+                has_raw_data = True
+                if blacklist_filter and not blacklist_filter.is_allowed(url):
+                    continue
+                has_output = True
+                yield url, source
+        
+        # 有原始数据就停止（不管是否被过滤）
+        if has_raw_data:
+            if not has_output:
+                logger.info("%s 有数据但全被黑名单过滤，不回退", source)
+            return
+        
+        logger.info("%s 为空，尝试下一个数据源", source)
+
+
+def get_urls_with_fallback(
+    target_id: int,
+    sources: List[str],
+    batch_size: int = 1000
+) -> Dict[str, Any]:
+    """
+    带回退链的 URL 获取用例函数（返回列表）
+    
+    按 sources 顺序尝试每个数据源，直到有数据返回。
+    
+    Args:
+        target_id: 目标 ID
+        sources: 数据源优先级列表，如 ["website", "endpoint", "default"]
+        batch_size: 批次大小
+        
+    Returns:
+        dict: {
+            'success': bool,
+            'urls': List[str],
+            'total_count': int,
+            'source': str,  # 实际使用的数据源
+            'tried_sources': List[str],  # 尝试过的数据源
+        }
+    """
+    from apps.common.services import BlacklistService
+    
+    rules = BlacklistService().get_rules(target_id)
+    blacklist_filter = BlacklistFilter(rules)
+    
+    urls = []
+    actual_source = 'none'
+    tried_sources = []
+    
+    for url, source in _iter_urls_with_fallback(target_id, sources, blacklist_filter, batch_size, tried_sources):
+        urls.append(url)
+        actual_source = source
+    
+    if urls:
+        logger.info("从 %s 获取 %d 条 URL", actual_source, len(urls))
+    else:
+        logger.warning("所有数据源都为空，无法获取 URL")
+    
+    return {
+        'success': True,
+        'urls': urls,
+        'total_count': len(urls),
+        'source': actual_source,
+        'tried_sources': tried_sources,
+    }
+
+
 def export_urls_with_fallback(
     target_id: int,
     output_file: str,
@@ -53,16 +250,10 @@ def export_urls_with_fallback(
     batch_size: int = 1000
 ) -> Dict[str, Any]:
     """
-    带回退链的 URL 导出用例函数
+    带回退链的 URL 导出用例函数（写入文件）
     
     按 sources 顺序尝试每个数据源，直到有数据返回。
-    
-    回退逻辑：
-    1. 遍历 sources 列表
-    2. 对每个 source 构建 queryset 并调用 export_urls()
-    3. 如果 total_count > 0，返回
-    4. 如果 queryset_count > 0 但 total_count == 0（全被黑名单过滤），不回退
-    5. 如果 source == "default"，调用 generate_default_urls()
+    流式写入，内存占用 O(1)。
     
     Args:
         target_id: 目标 ID
@@ -79,76 +270,37 @@ def export_urls_with_fallback(
             'tried_sources': List[str],  # 尝试过的数据源
         }
     """
-    from apps.asset.models import Endpoint, WebSite
+    from apps.common.services import BlacklistService
     
-    export_service = create_export_service(target_id)
+    rules = BlacklistService().get_rules(target_id)
+    blacklist_filter = BlacklistFilter(rules)
+    
+    output_path = Path(output_file)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    total_count = 0
+    actual_source = 'none'
     tried_sources = []
     
-    for source in sources:
-        tried_sources.append(source)
-        
-        if source == DataSource.DEFAULT:
-            # 默认 URL 生成
-            result = export_service.generate_default_urls(target_id, output_file)
-            return {
-                'success': result['success'],
-                'output_file': result['output_file'],
-                'total_count': result['total_count'],
-                'source': DataSource.DEFAULT,
-                'tried_sources': tried_sources,
-            }
-        
-        # 构建对应数据源的 queryset
-        if source == DataSource.ENDPOINT:
-            queryset = Endpoint.objects.filter(target_id=target_id).values_list('url', flat=True)
-        elif source == DataSource.WEBSITE:
-            queryset = WebSite.objects.filter(target_id=target_id).values_list('url', flat=True)
-        else:
-            logger.warning("未知的数据源类型: %s，跳过", source)
-            continue
-        
-        result = export_service.export_urls(
-            target_id=target_id,
-            output_path=output_file,
-            queryset=queryset,
-            batch_size=batch_size
-        )
-        
-        # 有数据写入，返回
-        if result['total_count'] > 0:
-            logger.info("从 %s 导出 %d 条 URL", source, result['total_count'])
-            return {
-                'success': result['success'],
-                'output_file': result['output_file'],
-                'total_count': result['total_count'],
-                'source': source,
-                'tried_sources': tried_sources,
-            }
-        
-        # 数据存在但全被黑名单过滤，不回退
-        if result['queryset_count'] > 0:
-            logger.info(
-                "%s 有 %d 条数据，但全被黑名单过滤（filtered=%d），不回退",
-                source, result['queryset_count'], result['filtered_count']
-            )
-            return {
-                'success': result['success'],
-                'output_file': result['output_file'],
-                'total_count': 0,
-                'source': source,
-                'tried_sources': tried_sources,
-            }
-        
-        # 数据源为空，继续尝试下一个
-        logger.info("%s 为空，尝试下一个数据源", source)
+    with open(output_path, 'w', encoding='utf-8', buffering=8192) as f:
+        for url, source in _iter_urls_with_fallback(target_id, sources, blacklist_filter, batch_size, tried_sources):
+            f.write(f"{url}\n")
+            total_count += 1
+            actual_source = source
+            
+            if total_count % 10000 == 0:
+                logger.info("已导出 %d 个 URL...", total_count)
     
-    # 所有数据源都为空
-    logger.warning("所有数据源都为空，无法导出 URL")
+    if total_count > 0:
+        logger.info("从 %s 导出 %d 条 URL 到 %s", actual_source, total_count, output_file)
+    else:
+        logger.warning("所有数据源都为空，无法导出 URL")
+    
     return {
         'success': True,
-        'output_file': output_file,
-        'total_count': 0,
-        'source': 'none',
+        'output_file': str(output_path),
+        'total_count': total_count,
+        'source': actual_source,
         'tried_sources': tried_sources,
     }
 
@@ -281,78 +433,20 @@ class TargetExportService:
                 'total_count': int,
             }
         """
-        from apps.targets.services import TargetService
-        from apps.targets.models import Target
-        
         output_file = Path(output_path)
         output_file.parent.mkdir(parents=True, exist_ok=True)
         
-        target_service = TargetService()
-        target = target_service.get_target(target_id)
-        
-        if not target:
-            logger.warning("Target ID %d 不存在，无法生成默认 URL", target_id)
-            return {
-                'success': True,
-                'output_file': str(output_file),
-                'total_count': 0,
-            }
-        
-        target_name = target.name
-        target_type = target.type
-        
-        logger.info("生成默认 URL：Target 类型=%s, 名称=%s", target_type, target_name)
+        logger.info("生成默认 URL - target_id=%d", target_id)
         
         total_urls = 0
         
         with open(output_file, 'w', encoding='utf-8', buffering=8192) as f:
-            if target_type == Target.TargetType.DOMAIN:
-                urls = [f"http://{target_name}", f"https://{target_name}"]
-                for url in urls:
-                    if self._should_write_url(url):
-                        f.write(f"{url}\n")
-                        total_urls += 1
-                        
-            elif target_type == Target.TargetType.IP:
-                urls = [f"http://{target_name}", f"https://{target_name}"]
-                for url in urls:
-                    if self._should_write_url(url):
-                        f.write(f"{url}\n")
-                        total_urls += 1
-                        
-            elif target_type == Target.TargetType.CIDR:
-                try:
-                    network = ipaddress.ip_network(target_name, strict=False)
-                    
-                    for ip in network.hosts():
-                        urls = [f"http://{ip}", f"https://{ip}"]
-                        for url in urls:
-                            if self._should_write_url(url):
-                                f.write(f"{url}\n")
-                                total_urls += 1
-                        
-                        if total_urls % 10000 == 0:
-                            logger.info("已生成 %d 个 URL...", total_urls)
-                    
-                    # /32 或 /128 特殊处理
-                    if total_urls == 0:
-                        ip = str(network.network_address)
-                        urls = [f"http://{ip}", f"https://{ip}"]
-                        for url in urls:
-                            if self._should_write_url(url):
-                                f.write(f"{url}\n")
-                                total_urls += 1
-                                
-                except ValueError as e:
-                    logger.error("CIDR 解析失败: %s - %s", target_name, e)
-                    raise ValueError(f"无效的 CIDR: {target_name}") from e
-                    
-            elif target_type == Target.TargetType.URL:
-                if self._should_write_url(target_name):
-                    f.write(f"{target_name}\n")
-                    total_urls = 1
-            else:
-                logger.warning("不支持的 Target 类型: %s", target_type)
+            for url in _iter_default_urls_from_target(target_id, self.blacklist_filter):
+                f.write(f"{url}\n")
+                total_urls += 1
+                
+                if total_urls % 10000 == 0:
+                    logger.info("已生成 %d 个 URL...", total_urls)
         
         logger.info("✓ 默认 URL 生成完成 - 数量: %d", total_urls)
         
@@ -361,12 +455,6 @@ class TargetExportService:
             'output_file': str(output_file),
             'total_count': total_urls,
         }
-    
-    def _should_write_url(self, url: str) -> bool:
-        """检查 URL 是否应该写入（通过黑名单过滤）"""
-        if self.blacklist_filter:
-            return self.blacklist_filter.is_allowed(url)
-        return True
 
     def export_hosts(
         self,

@@ -3,7 +3,8 @@ from rest_framework.routers import DefaultRouter
 from .views import OrganizationViewSet, TargetViewSet
 from apps.asset.views import (
     SubdomainViewSet, WebSiteViewSet, DirectoryViewSet,
-    EndpointViewSet, HostPortMappingViewSet, VulnerabilityViewSet
+    EndpointViewSet, HostPortMappingViewSet, VulnerabilityViewSet,
+    ScreenshotViewSet
 )
 
 # 创建路由器
@@ -29,6 +30,8 @@ target_endpoints_bulk_create = EndpointViewSet.as_view({'post': 'bulk_create'})
 target_ip_addresses_list = HostPortMappingViewSet.as_view({'get': 'list'})
 target_ip_addresses_export = HostPortMappingViewSet.as_view({'get': 'export'})
 target_vulnerabilities_list = VulnerabilityViewSet.as_view({'get': 'list'})
+target_screenshots_list = ScreenshotViewSet.as_view({'get': 'list'})
+target_screenshots_bulk_delete = ScreenshotViewSet.as_view({'post': 'bulk_delete'})
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -48,4 +51,6 @@ urlpatterns = [
     path('targets/<int:target_pk>/ip-addresses/', target_ip_addresses_list, name='target-ip-addresses-list'),
     path('targets/<int:target_pk>/ip-addresses/export/', target_ip_addresses_export, name='target-ip-addresses-export'),
     path('targets/<int:target_pk>/vulnerabilities/', target_vulnerabilities_list, name='target-vulnerabilities-list'),
+    path('targets/<int:target_pk>/screenshots/', target_screenshots_list, name='target-screenshots-list'),
+    path('targets/<int:target_pk>/screenshots/bulk-delete/', target_screenshots_bulk_delete, name='target-screenshots-bulk-delete'),
 ]

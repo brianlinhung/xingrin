@@ -101,6 +101,16 @@ directory_scan:
       match-codes: 200,201,301,302,401,403  # 匹配的 HTTP 状态码
       # rate: 0                           # 每秒请求数（默认 0 不限制）
 
+screenshot:
+  # ==================== 网站截图 ====================
+  # 使用 Playwright 对网站进行截图，保存为 WebP 格式
+  # 在 Stage 2 与 url_fetch、directory_scan 并行执行
+  tools:
+    playwright:
+      enabled: true
+      concurrency: 5                        # 并发截图数（默认 5）
+      url_sources: [websites]               # URL 来源，当前对website截图，还可以用 [websites, endpoints]
+
 url_fetch:
   # ==================== URL 获取 ====================
   tools:

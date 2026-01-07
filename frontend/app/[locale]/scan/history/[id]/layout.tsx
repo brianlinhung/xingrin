@@ -24,6 +24,7 @@ export default function ScanHistoryLayout({
     if (pathname.includes("/endpoints")) return "endpoints"
     if (pathname.includes("/websites")) return "websites"
     if (pathname.includes("/directories")) return "directories"
+    if (pathname.includes("/screenshots")) return "screenshots"
     if (pathname.includes("/vulnerabilities")) return "vulnerabilities"
     if (pathname.includes("/ip-addresses")) return "ip-addresses"
     return ""
@@ -35,6 +36,7 @@ export default function ScanHistoryLayout({
     endpoints: `${basePath}/endpoints/`,
     websites: `${basePath}/websites/`,
     directories: `${basePath}/directories/`,
+    screenshots: `${basePath}/screenshots/`,
     vulnerabilities: `${basePath}/vulnerabilities/`,
     "ip-addresses": `${basePath}/ip-addresses/`,
   }
@@ -45,6 +47,7 @@ export default function ScanHistoryLayout({
     endpoints: scanData?.summary?.endpoints || 0,
     websites: scanData?.summary?.websites || 0,
     directories: scanData?.summary?.directories || 0,
+    screenshots: scanData?.summary?.screenshots || 0,
     vulnerabilities: scanData?.summary?.vulnerabilities?.total || 0,
     "ip-addresses": scanData?.summary?.ips || 0,
   }
@@ -110,6 +113,16 @@ export default function ScanHistoryLayout({
                 {counts.directories > 0 && (
                   <Badge variant="secondary" className="ml-1.5 h-5 min-w-5 rounded-full px-1.5 text-xs">
                     {counts.directories}
+                  </Badge>
+                )}
+              </Link>
+            </TabsTrigger>
+            <TabsTrigger value="screenshots" asChild>
+              <Link href={tabPaths.screenshots} className="flex items-center gap-0.5">
+                Screenshots
+                {counts.screenshots > 0 && (
+                  <Badge variant="secondary" className="ml-1.5 h-5 min-w-5 rounded-full px-1.5 text-xs">
+                    {counts.screenshots}
                   </Badge>
                 )}
               </Link>

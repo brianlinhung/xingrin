@@ -54,10 +54,10 @@ flowchart TB
     TARGET --> SUBLIST3R
     TARGET --> ASSETFINDER
     
-    subgraph STAGE2["Stage 2: Analysis Parallel"]
+    subgraph STAGE2["Stage 2: URL Collection Parallel"]
         direction TB
         
-        subgraph URL["URL Collection"]
+        subgraph URL["URL Fetch"]
             direction TB
             WAYMORE[waymore<br/>Historical URLs]
             KATANA[katana<br/>Crawler]
@@ -78,7 +78,15 @@ flowchart TB
     XINGFINGER --> KATANA
     XINGFINGER --> FFUF
     
-    subgraph STAGE3["Stage 3: Vulnerability Sequential"]
+    subgraph STAGE3["Stage 3: Screenshot Sequential"]
+        direction TB
+        SCREENSHOT[Playwright<br/>Page Screenshot]
+    end
+    
+    HTTPX2 --> SCREENSHOT
+    FFUF --> SCREENSHOT
+    
+    subgraph STAGE4["Stage 4: Vulnerability Sequential"]
         direction TB
         
         subgraph VULN["Vulnerability Scan"]
@@ -88,12 +96,11 @@ flowchart TB
         end
     end
     
-    HTTPX2 --> DALFOX
-    HTTPX2 --> NUCLEI
+    SCREENSHOT --> DALFOX
+    SCREENSHOT --> NUCLEI
     
     DALFOX --> FINISH
     NUCLEI --> FINISH
-    FFUF --> FINISH
     
     FINISH[Scan Complete]
     
@@ -109,9 +116,14 @@ flowchart TB
 
 ```python
 # backend/apps/scan/configs/command_templates.py
+# Stage 1: 资产发现 - 子域名 → 端口 → 站点探测 → 指纹识别
+# Stage 2: URL 收集 - URL 获取 + 目录扫描（并行）
+# Stage 3: 截图 - 在 URL 收集完成后执行，捕获更多发现的页面
+# Stage 4: 漏洞扫描 - 最后执行
 EXECUTION_STAGES = [
     {'mode': 'sequential', 'flows': ['subdomain_discovery', 'port_scan', 'site_scan', 'fingerprint_detect']},
     {'mode': 'parallel', 'flows': ['url_fetch', 'directory_scan']},
+    {'mode': 'sequential', 'flows': ['screenshot']},
     {'mode': 'sequential', 'flows': ['vuln_scan']},
 ]
 ```
@@ -126,4 +138,5 @@ EXECUTION_STAGES = [
 | fingerprint_detect | xingfinger | WebSite.tech（更新） |
 | url_fetch | waymore, katana, uro, httpx | Endpoint |
 | directory_scan | ffuf | Directory |
+| screenshot | Playwright | Screenshot |
 | vuln_scan | dalfox, nuclei | Vulnerability |

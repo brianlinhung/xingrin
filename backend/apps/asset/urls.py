@@ -14,6 +14,7 @@ from .views import (
     AssetSearchExportView,
     EndpointViewSet,
     HostPortMappingViewSet,
+    ScreenshotViewSet,
 )
 
 # 创建 DRF 路由器
@@ -26,6 +27,7 @@ router.register(r'directories', DirectoryViewSet, basename='directory')
 router.register(r'endpoints', EndpointViewSet, basename='endpoint')
 router.register(r'ip-addresses', HostPortMappingViewSet, basename='ip-address')
 router.register(r'vulnerabilities', VulnerabilityViewSet, basename='vulnerability')
+router.register(r'screenshots', ScreenshotViewSet, basename='screenshot')
 router.register(r'statistics', AssetStatisticsViewSet, basename='asset-statistics')
 
 urlpatterns = [

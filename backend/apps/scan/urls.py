@@ -4,7 +4,8 @@ from .views import ScanViewSet, ScheduledScanViewSet, ScanLogListView, Subfinder
 from .notifications.views import notification_callback
 from apps.asset.views import (
     SubdomainSnapshotViewSet, WebsiteSnapshotViewSet, DirectorySnapshotViewSet,
-    EndpointSnapshotViewSet, HostPortMappingSnapshotViewSet, VulnerabilitySnapshotViewSet
+    EndpointSnapshotViewSet, HostPortMappingSnapshotViewSet, VulnerabilitySnapshotViewSet,
+    ScreenshotSnapshotViewSet
 )
 
 # 创建路由器
@@ -26,6 +27,8 @@ scan_endpoints_export = EndpointSnapshotViewSet.as_view({'get': 'export'})
 scan_ip_addresses_list = HostPortMappingSnapshotViewSet.as_view({'get': 'list'})
 scan_ip_addresses_export = HostPortMappingSnapshotViewSet.as_view({'get': 'export'})
 scan_vulnerabilities_list = VulnerabilitySnapshotViewSet.as_view({'get': 'list'})
+scan_screenshots_list = ScreenshotSnapshotViewSet.as_view({'get': 'list'})
+scan_screenshots_image = ScreenshotSnapshotViewSet.as_view({'get': 'image'})
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -47,5 +50,7 @@ urlpatterns = [
     path('scans/<int:scan_pk>/ip-addresses/', scan_ip_addresses_list, name='scan-ip-addresses-list'),
     path('scans/<int:scan_pk>/ip-addresses/export/', scan_ip_addresses_export, name='scan-ip-addresses-export'),
     path('scans/<int:scan_pk>/vulnerabilities/', scan_vulnerabilities_list, name='scan-vulnerabilities-list'),
+    path('scans/<int:scan_pk>/screenshots/', scan_screenshots_list, name='scan-screenshots-list'),
+    path('scans/<int:scan_pk>/screenshots/<int:pk>/image/', scan_screenshots_image, name='scan-screenshots-image'),
 ]
 

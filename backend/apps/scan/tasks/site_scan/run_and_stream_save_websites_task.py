@@ -341,11 +341,12 @@ def _save_batch(
             )
             
             snapshot_items.append(snapshot_dto)
+                    
         except Exception as e:
             logger.error("处理记录失败: %s，错误: %s", record.url, e)
             continue
     
-    # ========== Step 3: 保存快照并同步到资产表（通过快照 Service）==========
+    # ========== Step 2: 保存快照并同步到资产表（通过快照 Service）==========
     if snapshot_items:
         services.snapshot.save_and_sync(snapshot_items)
     

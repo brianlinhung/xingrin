@@ -20,6 +20,12 @@ from .snapshot_models import (
     VulnerabilitySnapshot,
 )
 
+# 截图模型
+from .screenshot_models import (
+    Screenshot,
+    ScreenshotSnapshot,
+)
+
 # 统计模型
 from .statistics_models import AssetStatistics, StatisticsHistory
 
@@ -39,6 +45,9 @@ __all__ = [
     'HostPortMappingSnapshot',
     'EndpointSnapshot',
     'VulnerabilitySnapshot',
+    # 截图模型
+    'Screenshot',
+    'ScreenshotSnapshot',
     # 统计模型
     'AssetStatistics',
     'StatisticsHistory',

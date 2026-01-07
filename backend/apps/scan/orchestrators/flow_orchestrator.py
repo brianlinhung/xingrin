@@ -147,10 +147,10 @@ class FlowOrchestrator:
                     return True
             return False
         
-        # 其他扫描类型：检查 tools
+        # 其他扫描类型（包括 screenshot）：检查 tools
         tools = scan_config.get('tools', {})
         for tool_config in tools.values():
-            if tool_config.get('enabled', False):
+            if isinstance(tool_config, dict) and tool_config.get('enabled', False):
                 return True
                 
         return False
@@ -221,6 +221,10 @@ class FlowOrchestrator:
         elif scan_type == 'vuln_scan':
             from apps.scan.flows.vuln_scan import vuln_scan_flow
             return vuln_scan_flow
+        
+        elif scan_type == 'screenshot':
+            from apps.scan.flows.screenshot_flow import screenshot_flow
+            return screenshot_flow
         
         else:
             logger.warning(f"未实现的扫描类型: {scan_type}")

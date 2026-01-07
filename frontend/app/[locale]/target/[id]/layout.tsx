@@ -34,6 +34,7 @@ export default function TargetLayout({
   // Get primary navigation active tab
   const getPrimaryTab = () => {
     if (pathname.includes("/overview")) return "overview"
+    if (pathname.includes("/screenshots")) return "screenshots"
     if (pathname.includes("/vulnerabilities")) return "vulnerabilities"
     if (pathname.includes("/settings")) return "settings"
     // All asset pages fall under "assets"
@@ -67,6 +68,7 @@ export default function TargetLayout({
   const primaryPaths = {
     overview: `${basePath}/overview/`,
     assets: `${basePath}/websites/`, // Default to websites when clicking assets
+    screenshots: `${basePath}/screenshots/`,
     vulnerabilities: `${basePath}/vulnerabilities/`,
     settings: `${basePath}/settings/`,
   }
@@ -87,6 +89,7 @@ export default function TargetLayout({
     directories: (target as any)?.summary?.directories || 0,
     vulnerabilities: (target as any)?.summary?.vulnerabilities?.total || 0,
     "ip-addresses": (target as any)?.summary?.ips || 0,
+    screenshots: (target as any)?.summary?.screenshots || 0,
   }
 
   // Calculate total assets count
@@ -172,6 +175,16 @@ export default function TargetLayout({
                 {totalAssets > 0 && (
                   <Badge variant="secondary" className="ml-1.5 h-5 min-w-5 rounded-full px-1.5 text-xs">
                     {totalAssets}
+                  </Badge>
+                )}
+              </Link>
+            </TabsTrigger>
+            <TabsTrigger value="screenshots" asChild>
+              <Link href={primaryPaths.screenshots} className="flex items-center gap-0.5">
+                {t("tabs.screenshots")}
+                {counts.screenshots > 0 && (
+                  <Badge variant="secondary" className="ml-1.5 h-5 min-w-5 rounded-full px-1.5 text-xs">
+                    {counts.screenshots}
                   </Badge>
                 )}
               </Link>

@@ -171,6 +171,7 @@
       "snapshot": "快照",
       "openMenu": "打开菜单",
       "selectAll": "全选",
+      "deselectAll": "取消全选",
       "selectRow": "选择行",
       "website": "官网",
       "description": "描述",
@@ -767,7 +768,8 @@
         "fingerprint_detect": "指纹识别",
         "directory_scan": "目录扫描",
         "url_fetch": "URL 抓取",
-        "vuln_scan": "漏洞扫描"
+        "vuln_scan": "漏洞扫描",
+        "screenshot": "截图"
       }
     },
     "scheduled": {
@@ -896,6 +898,7 @@
         "site_scan": "站点扫描",
         "fingerprint_detect": "指纹识别",
         "directory_scan": "目录扫描",
+        "screenshot": "网站截图",
         "url_fetch": "URL 抓取",
         "vuln_scan": "漏洞扫描"
       },
@@ -1405,6 +1408,10 @@
         "logFile": "日志",
         "selectFile": "选择日志文件",
         "lines": "行数",
+        "linesUnit": "行",
+        "searchPlaceholder": "搜索日志...",
+        "download": "下载",
+        "levelAll": "全部级别",
         "autoRefresh": "自动刷新",
         "systemLogsGroup": "系统日志",
         "containerLogsGroup": "容器日志"
@@ -2023,6 +2030,16 @@
         "description": "常用的工具操作"
       }
     },
+    "screenshots": {
+      "filterPlaceholder": "按 URL 过滤...",
+      "loadError": "加载截图失败",
+      "noResults": "没有匹配的截图",
+      "lightboxTitle": "截图预览",
+      "empty": {
+        "title": "暂无截图",
+        "description": "启用截图功能进行站点扫描后，截图将显示在这里。"
+      }
+    },
     "targetDetail": {
       "noDescription": "暂无描述",
       "breadcrumb": {
@@ -2039,6 +2056,7 @@
       "tabs": {
         "overview": "概览",
         "assets": "资产",
+        "screenshots": "截图",
         "vulnerabilities": "漏洞",
         "settings": "设置"
       },

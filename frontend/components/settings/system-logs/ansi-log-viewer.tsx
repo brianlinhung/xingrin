@@ -2,10 +2,13 @@
 
 import { useMemo, useRef, useEffect } from "react"
 import AnsiToHtml from "ansi-to-html"
+import type { LogLevel } from "./log-toolbar"
 
 interface AnsiLogViewerProps {
   content: string
   className?: string
+  searchQuery?: string
+  logLevel?: LogLevel
 }
 
 // 日志级别颜色配置
@@ -79,7 +82,102 @@ function colorizeLogContent(content: string): string {
     .join("\n")
 }
 
-export function AnsiLogViewer({ content, className }: AnsiLogViewerProps) {
+// 高亮搜索关键词
+function highlightSearch(html: string, query: string): string {
+  if (!query.trim()) return html
+  
+  // 转义正则特殊字符
+  const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+  const regex = new RegExp(`(${escapedQuery})`, "gi")
+  
+  // 在标签外的文本中高亮关键词
+  return html.replace(/(<[^>]+>)|([^<]+)/g, (match, tag, text) => {
+    if (tag) return tag
+    if (text) {
+      return text.replace(regex, '<mark style="background:#fbbf24;color:#1e1e1e;border-radius:2px;padding:0 2px">$1</mark>')
+    }
+    return match
+  })
+}
+
+// 多种日志格式的级别提取正则
+const LOG_LEVEL_PATTERNS = [
+  // 标准格式: [2026-01-07 12:00:00] [INFO]
+  /^\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\] \[(DEBUG|INFO|WARNING|WARN|ERROR|CRITICAL)\]/i,
+  // Prefect 格式: 12:01:50.419 | WARNING | prefect
+  /^[\d:.]+\s+\|\s+(DEBUG|INFO|WARNING|WARN|ERROR|CRITICAL)\s+\|/i,
+  // 简单格式: [INFO] message 或 INFO: message
+  /^(?:\[)?(DEBUG|INFO|WARNING|WARN|ERROR|CRITICAL)(?:\])?[:\s]/i,
+  // Python logging 格式: INFO - message
+  /^(DEBUG|INFO|WARNING|WARN|ERROR|CRITICAL)\s+-\s+/i,
+]
+
+// 新日志条目起始模式（无级别但表示新条目开始）
+const NEW_ENTRY_PATTERNS = [
+  /^\[\d+\/\d+\]/, // [1/4], [2/4] 等步骤标记
+  /^\[CONFIG\]/i, // [CONFIG] 配置信息
+  /^\[诊断\]/, // [诊断] 诊断信息
+  /^={10,}$/, // ============ 分隔线
+  /^\[\d{4}-\d{2}-\d{2}/, // 时间戳开头 [2026-01-07...
+  /^\d{2}:\d{2}:\d{2}/, // 时间开头 12:01:50...
+  /^\/[\w/]+\.py:\d+:/, // Python 文件路径 /path/file.py:123:
+]
+
+// 从行中提取日志级别
+function extractLogLevel(line: string): string | null {
+  for (const pattern of LOG_LEVEL_PATTERNS) {
+    const match = line.match(pattern)
+    if (match) {
+      return match[1].toUpperCase()
+    }
+  }
+  return null
+}
+
+// 检测是否是新日志条目的起始（无级别）
+function isNewEntryStart(line: string): boolean {
+  return NEW_ENTRY_PATTERNS.some((pattern) => pattern.test(line))
+}
+
+// 级别标准化
+function normalizeLevel(l: string): string {
+  const upper = l.toUpperCase()
+  if (upper === "WARNING") return "WARN"
+  if (upper === "CRITICAL") return "ERROR"
+  return upper
+}
+
+// 根据级别筛选日志行
+// 支持多行日志：非标准格式的行会跟随前一个标准日志行的级别
+function filterByLevel(content: string, level: LogLevel): string {
+  if (level === "all") return content
+  
+  const targetLevel = normalizeLevel(level)
+  const lines = content.split("\n")
+  const result: string[] = []
+  // 默认隐藏，直到遇到第一个匹配目标级别的日志行
+  let currentBlockVisible = false
+  
+  for (const line of lines) {
+    const extractedLevel = extractLogLevel(line)
+    if (extractedLevel) {
+      // 这是一个新的日志条目，精确匹配级别
+      const lineLevel = normalizeLevel(extractedLevel)
+      currentBlockVisible = lineLevel === targetLevel
+    } else if (isNewEntryStart(line)) {
+      // 无级别但是新条目开始，隐藏
+      currentBlockVisible = false
+    }
+    // 非标准行跟随前一个日志条目的可见性
+    if (currentBlockVisible) {
+      result.push(line)
+    }
+  }
+  
+  return result.join("\n")
+}
+
+export function AnsiLogViewer({ content, className, searchQuery = "", logLevel = "all" }: AnsiLogViewerProps) {
   const containerRef = useRef<HTMLPreElement>(null)
   const isAtBottomRef = useRef(true)  // 跟踪用户是否在底部
 
@@ -88,14 +186,21 @@ export function AnsiLogViewer({ content, className }: AnsiLogViewerProps) {
   const htmlContent = useMemo(() => {
     if (!content) return ""
     
+    // 先按级别筛选
+    const filteredContent = filterByLevel(content, logLevel)
+    
+    let result: string
     // 如果包含 ANSI 颜色码，直接转换
-    if (hasAnsiCodes(content)) {
-      return ansiConverter.toHtml(content)
+    if (hasAnsiCodes(filteredContent)) {
+      result = ansiConverter.toHtml(filteredContent)
+    } else {
+      // 否则解析日志级别添加颜色
+      result = colorizeLogContent(filteredContent)
     }
     
-    // 否则解析日志级别添加颜色
-    return colorizeLogContent(content)
-  }, [content])
+    // 应用搜索高亮
+    return highlightSearch(result, searchQuery)
+  }, [content, searchQuery, logLevel])
 
   // 监听滚动事件，检测用户是否在底部
   useEffect(() => {

@@ -7,6 +7,7 @@ from .models.snapshot_models import (
     EndpointSnapshot,
     VulnerabilitySnapshot,
 )
+from .models.screenshot_models import Screenshot, ScreenshotSnapshot
 
 
 # 注意：IPAddress 和 Port 模型已被重构为 HostPortMapping
@@ -289,4 +290,24 @@ class EndpointSnapshotSerializer(serializers.ModelSerializer):
             'gfPatterns',
             'created_at',
         ]
+        read_only_fields = fields
+
+
+# ==================== 截图序列化器 ====================
+
+class ScreenshotListSerializer(serializers.ModelSerializer):
+    """截图资产列表序列化器（不包含 image 字段）"""
+    
+    class Meta:
+        model = Screenshot
+        fields = ['id', 'url', 'status_code', 'created_at', 'updated_at']
+        read_only_fields = fields
+
+
+class ScreenshotSnapshotListSerializer(serializers.ModelSerializer):
+    """截图快照列表序列化器（不包含 image 字段）"""
+    
+    class Meta:
+        model = ScreenshotSnapshot
+        fields = ['id', 'url', 'status_code', 'created_at']
         read_only_fields = fields

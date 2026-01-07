@@ -119,6 +119,7 @@ class TargetDetailSerializer(serializers.ModelSerializer):
         - endpoints: 端点数量
         - ips: IP地址数量
         - directories: 目录数量
+        - screenshots: 截图数量
         - vulnerabilities: 漏洞统计（暂时返回 0，待后续实现）
         
         性能说明：
@@ -134,6 +135,7 @@ class TargetDetailSerializer(serializers.ModelSerializer):
         endpoints_count = obj.endpoints.count()
         ips_count = obj.host_port_mappings.values('ip').distinct().count()
         directories_count = obj.directories.count()
+        screenshots_count = obj.screenshots.count()
 
         # 漏洞统计：按目标维度实时统计 Vulnerability 资产表
         vuln_qs = obj.vulnerabilities.all()
@@ -159,6 +161,7 @@ class TargetDetailSerializer(serializers.ModelSerializer):
             'endpoints': endpoints_count,
             'ips': ips_count,
             'directories': directories_count,
+            'screenshots': screenshots_count,
             'vulnerabilities': {
                 'total': total,
                 **severity_stats,

@@ -263,11 +263,16 @@ COMMAND_TEMPLATES = {
     'directory_scan': DIRECTORY_SCAN_COMMANDS,
     'url_fetch': URL_FETCH_COMMANDS,
     'vuln_scan': VULN_SCAN_COMMANDS,
+    'screenshot': {},  # 使用 Python 原生库（Playwright），无命令模板
 }
 
 # ==================== 扫描类型配置 ====================
 
 # 执行阶段定义（按顺序执行）
+# Stage 1: 资产发现 - 子域名 → 端口 → 站点探测 → 指纹识别
+# Stage 2: URL 收集 - URL 获取 + 目录扫描（并行）
+# Stage 3: 截图 - 在 URL 收集完成后执行，捕获更多发现的页面
+# Stage 4: 漏洞扫描 - 最后执行
 EXECUTION_STAGES = [
     {
         'mode': 'sequential',
@@ -276,6 +281,10 @@ EXECUTION_STAGES = [
     {
         'mode': 'parallel',
         'flows': ['url_fetch', 'directory_scan']
+    },
+    {
+        'mode': 'sequential',
+        'flows': ['screenshot']
     },
     {
         'mode': 'sequential',

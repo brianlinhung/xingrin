@@ -111,7 +111,7 @@ export function WebSitesDataTable({
       onSelectionChange={onSelectionChange}
       // Bulk operations
       onBulkDelete={onBulkDelete}
-      bulkDeleteLabel="Delete"
+      bulkDeleteLabel={tActions("delete")}
       showAddButton={false}
       // Bulk add button
       onBulkAdd={onBulkAdd}

@@ -114,7 +114,7 @@ export function DirectoriesDataTable({
       onSelectionChange={handleSelectionChange}
       // Bulk operations
       onBulkDelete={onBulkDelete}
-      bulkDeleteLabel="Delete"
+      bulkDeleteLabel={tActions("delete")}
       showAddButton={false}
       // Bulk add button
       onBulkAdd={onBulkAdd}
