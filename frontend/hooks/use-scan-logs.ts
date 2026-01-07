@@ -83,16 +83,18 @@ export function useScanLogs({
     return () => {
       isMounted.current = false
     }
-  }, [scanId, enabled])
+  }, [scanId, enabled, fetchLogs])
   
   // 轮询
   useEffect(() => {
     if (!enabled) return
-    
+    // pollingInterval <= 0 表示禁用轮询（避免 setInterval(0) 导致高频请求/卡顿）
+    if (!pollingInterval || pollingInterval <= 0) return
+
     const interval = setInterval(() => {
-      fetchLogs(true)  // 增量查询
+      fetchLogs(true) // 增量查询
     }, pollingInterval)
-    
+
     return () => clearInterval(interval)
   }, [enabled, pollingInterval, fetchLogs])
   

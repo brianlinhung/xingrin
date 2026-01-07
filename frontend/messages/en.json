@@ -747,9 +747,11 @@
         "assetsTitle": "Discovered Assets",
         "vulnerabilitiesTitle": "Vulnerabilities",
         "stagesTitle": "Scan Progress",
+        "stagesCompleted": "completed",
         "logsTitle": "Scan Logs",
         "noStages": "No stage progress available",
         "totalFound": "total found",
+        "totalVulns": "{count} total",
         "viewAll": "View All",
         "cards": {
           "websites": "Websites",

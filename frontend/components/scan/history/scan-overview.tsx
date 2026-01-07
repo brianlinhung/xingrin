@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useState } from "react"
 import Link from "next/link"
 import { useTranslations, useLocale } from "next-intl"
 import {
@@ -9,7 +9,6 @@ import {
   Server,
   Link2,
   FolderOpen,
-  ShieldAlert,
   AlertTriangle,
   Clock,
   Calendar,
@@ -18,7 +17,6 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
-  PlayCircle,
   Cpu,
   HardDrive,
 } from "lucide-react"
@@ -30,7 +28,9 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
 import { useScan } from "@/hooks/use-scans"
 import { useScanLogs } from "@/hooks/use-scan-logs"
 import { ScanLogList } from "@/components/scan/scan-log-list"
@@ -93,11 +93,14 @@ export function ScanOverview({ scanId }: ScanOverviewProps) {
   // Check if scan is running (for log polling)
   const isRunning = scan?.status === 'running' || scan?.status === 'initiated'
   
+  // Auto-refresh state (default: on when running)
+  const [autoRefresh, setAutoRefresh] = useState(true)
+  
   // Logs hook
   const { logs, loading: logsLoading } = useScanLogs({
     scanId,
     enabled: !!scan,
-    pollingInterval: isRunning ? 3000 : 0,
+    pollingInterval: isRunning && autoRefresh ? 3000 : 0,
   })
 
   // Format date helper
@@ -233,7 +236,7 @@ export function ScanOverview({ scanId }: ScanOverviewProps) {
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6 flex-1 min-h-0">
       {/* Scan info + Status */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-6 text-sm text-muted-foreground">
@@ -299,126 +302,140 @@ export function ScanOverview({ scanId }: ScanOverviewProps) {
         </div>
       </div>
 
-      {/* Vulnerability + Stage Progress - Two columns */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {/* Vulnerability Statistics Card */}
-        <Link href={`/scan/history/${scanId}/vulnerabilities/`} className="block">
-          <Card className="h-full hover:border-primary/50 transition-colors cursor-pointer">
+      {/* Stage Progress + Logs - Left-Right Split Layout */}
+      <div className="grid gap-4 md:grid-cols-[280px_1fr] flex-1 min-h-0">
+        {/* Left Column: Stage Progress + Vulnerability Stats */}
+        <div className="flex flex-col gap-4 min-h-0">
+          {/* Stage Progress */}
+          <Card className="flex-1 min-h-0">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <div className="flex items-center gap-2">
-                <ShieldAlert className="h-4 w-4 text-muted-foreground" />
-                <CardTitle className="text-sm font-medium">{t("vulnerabilitiesTitle")}</CardTitle>
-              </div>
-              <Button variant="ghost" size="sm" className="h-7 text-xs">
-                {t("viewAll")}
-                <ChevronRight className="h-3 w-3 ml-1" />
-              </Button>
+              <CardTitle className="text-sm font-medium">{t("stagesTitle")}</CardTitle>
+              {scan.stageProgress && (
+                <span className="text-xs text-muted-foreground">
+                  {Object.values(scan.stageProgress).filter((p: any) => p.status === "completed").length}/
+                  {Object.keys(scan.stageProgress).length} {t("stagesCompleted")}
+                </span>
+              )}
             </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Total count */}
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold">{vulnSummary.total}</span>
-                <span className="text-sm text-muted-foreground">{t("totalFound")}</span>
-              </div>
-
-              {/* Severity breakdown */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-red-500" />
-                  <span className="text-sm text-muted-foreground">{t("severity.critical")}</span>
-                  <span className="text-sm font-medium ml-auto">{vulnSummary.critical}</span>
+            <CardContent className="pt-0 flex flex-col flex-1 min-h-0">
+              {scan.stageProgress && Object.keys(scan.stageProgress).length > 0 ? (
+                <div className="space-y-1 flex-1 min-h-0 overflow-y-auto pr-1">
+                  {Object.entries(scan.stageProgress)
+                    .sort(([, a], [, b]) => ((a as any).order ?? 0) - ((b as any).order ?? 0))
+                    .map(([stageName, progress]) => {
+                      const stageProgress = progress as any
+                      const isRunning = stageProgress.status === "running"
+                      return (
+                        <div
+                          key={stageName}
+                          className={cn(
+                            "flex items-center justify-between py-2 rounded-md transition-colors text-sm",
+                            isRunning && "bg-[#d29922]/10 border border-[#d29922]/30",
+                            stageProgress.status === "completed" && "text-muted-foreground",
+                            stageProgress.status === "failed" && "bg-[#da3633]/10 text-[#da3633]",
+                            stageProgress.status === "cancelled" && "text-muted-foreground",
+                          )}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <StageStatusIcon status={stageProgress.status} />
+                            <span className={cn("truncate", isRunning && "font-medium text-foreground")}>
+                              {tProgress(`stages.${stageName}`)}
+                            </span>
+                            {isRunning && (
+                              <span className="text-[10px] text-[#d29922] shrink-0">←</span>
+                            )}
+                          </div>
+                          <span className="text-xs text-muted-foreground font-mono shrink-0 ml-2">
+                            {stageProgress.status === "completed" && stageProgress.duration
+                              ? formatStageDuration(stageProgress.duration)
+                              : stageProgress.status === "running"
+                                ? tProgress("stage_running")
+                                : stageProgress.status === "pending"
+                                  ? "--"
+                                  : ""}
+                          </span>
+                        </div>
+                      )
+                    })}
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-orange-500" />
-                  <span className="text-sm text-muted-foreground">{t("severity.high")}</span>
-                  <span className="text-sm font-medium ml-auto">{vulnSummary.high}</span>
+              ) : (
+                <div className="text-sm text-muted-foreground text-center py-4">
+                  {t("noStages")}
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                  <span className="text-sm text-muted-foreground">{t("severity.medium")}</span>
-                  <span className="text-sm font-medium ml-auto">{vulnSummary.medium}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-blue-500" />
-                  <span className="text-sm text-muted-foreground">{t("severity.low")}</span>
-                  <span className="text-sm font-medium ml-auto">{vulnSummary.low}</span>
-                </div>
-              </div>
+              )}
             </CardContent>
           </Card>
-        </Link>
 
-        {/* Stage Progress Card */}
-        <Card className="h-full">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <div className="flex items-center gap-2">
-              <Loader2 className="h-4 w-4 text-muted-foreground" />
-              <CardTitle className="text-sm font-medium">{t("stagesTitle")}</CardTitle>
+          {/* Vulnerability Stats - Compact */}
+          <Link href={`/scan/history/${scanId}/vulnerabilities/`} className="block">
+            <Card className="hover:border-primary/50 transition-colors cursor-pointer">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t("vulnerabilitiesTitle")}</CardTitle>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                    <span className="text-sm font-medium">{vulnSummary.critical}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-orange-500" />
+                    <span className="text-sm font-medium">{vulnSummary.high}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
+                    <span className="text-sm font-medium">{vulnSummary.medium}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                    <span className="text-sm font-medium">{vulnSummary.low}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground ml-auto">
+                    {t("totalVulns", { count: vulnSummary.total })}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
+
+        {/* Right Column: Logs */}
+        <div className="flex flex-col min-h-0 rounded-lg overflow-hidden border">
+          <div className="flex-1 min-h-0">
+            <ScanLogList logs={logs} loading={logsLoading} />
+          </div>
+          {/* Bottom status bar */}
+          <div className="flex items-center justify-between px-4 py-2 bg-muted/50 border-t text-xs text-muted-foreground shrink-0">
+            <div className="flex items-center gap-3">
+              <span>{t("logsTitle")}</span>
+              <Separator orientation="vertical" className="h-3" />
+              <span>{logs.length} 条记录</span>
+              {isRunning && autoRefresh && (
+                <>
+                  <Separator orientation="vertical" className="h-3" />
+                  <span className="flex items-center gap-1.5">
+                    <span className="size-1.5 rounded-full bg-green-500 animate-pulse" />
+                    每 3 秒刷新
+                  </span>
+                </>
+              )}
             </div>
-          </CardHeader>
-          <CardContent>
-            {scan.stageProgress && Object.keys(scan.stageProgress).length > 0 ? (
-              <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                {Object.entries(scan.stageProgress)
-                  .sort(([, a], [, b]) => ((a as any).order ?? 0) - ((b as any).order ?? 0))
-                  .map(([stageName, progress]) => {
-                    const stageProgress = progress as any
-                    return (
-                      <div
-                        key={stageName}
-                        className={cn(
-                          "flex items-center justify-between py-2 px-3 rounded-lg transition-colors",
-                          stageProgress.status === "running" && "bg-[#d29922]/10 border border-[#d29922]/20",
-                          stageProgress.status === "completed" && "bg-muted/50",
-                          stageProgress.status === "failed" && "bg-[#da3633]/10",
-                          stageProgress.status === "cancelled" && "bg-[#848d97]/10",
-                        )}
-                      >
-                        <div className="flex items-center gap-2">
-                          <StageStatusIcon status={stageProgress.status} />
-                          <span className="text-sm font-medium">{tProgress(`stages.${stageName}`)}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-right">
-                          {stageProgress.status === "running" && (
-                            <Badge variant="outline" className="bg-[#d29922]/10 text-[#d29922] border-[#d29922]/20 text-xs">
-                              {tProgress("stage_running")}
-                            </Badge>
-                          )}
-                          {stageProgress.status === "completed" && stageProgress.duration && (
-                            <span className="text-xs text-muted-foreground font-mono">
-                              {formatStageDuration(stageProgress.duration)}
-                            </span>
-                          )}
-                          {stageProgress.status === "pending" && (
-                            <span className="text-xs text-muted-foreground">{tProgress("stage_pending")}</span>
-                          )}
-                          {stageProgress.status === "failed" && (
-                            <Badge variant="outline" className="bg-[#da3633]/10 text-[#da3633] border-[#da3633]/20 text-xs">
-                              {tProgress("stage_failed")}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
-              </div>
-            ) : (
-              <div className="text-sm text-muted-foreground text-center py-4">
-                {t("noStages")}
+            {isRunning && (
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="log-auto-refresh"
+                  checked={autoRefresh}
+                  onCheckedChange={setAutoRefresh}
+                  className="scale-75"
+                />
+                <Label htmlFor="log-auto-refresh" className="text-xs cursor-pointer">
+                  自动刷新
+                </Label>
               </div>
             )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Scan Logs */}
-      <div>
-        <h3 className="text-lg font-semibold mb-4">{t("logsTitle")}</h3>
-        <Card>
-          <CardContent className="p-0">
-            <ScanLogList logs={logs} loading={logsLoading} />
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   )

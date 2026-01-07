@@ -103,7 +103,7 @@ export default function ScanHistoryLayout({
   }
 
   return (
-    <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+    <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 h-full">
       {/* Header: Page label + Scan info */}
       <div className="flex items-center gap-2 text-sm px-4 lg:px-6">
         <span className="text-muted-foreground">{t("breadcrumb.scanHistory")}</span>

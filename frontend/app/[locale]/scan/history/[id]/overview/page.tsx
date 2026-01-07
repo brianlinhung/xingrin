@@ -12,7 +12,7 @@ export default function ScanOverviewPage() {
   const scanId = Number(id)
 
   return (
-    <div className="px-4 lg:px-6">
+    <div className="flex-1 flex flex-col min-h-0 px-4 lg:px-6">
       <ScanOverview scanId={scanId} />
     </div>
   )

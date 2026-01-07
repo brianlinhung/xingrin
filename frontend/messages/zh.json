@@ -747,9 +747,11 @@
         "assetsTitle": "发现的资产",
         "vulnerabilitiesTitle": "漏洞统计",
         "stagesTitle": "扫描进度",
+        "stagesCompleted": "完成",
         "logsTitle": "扫描日志",
         "noStages": "暂无阶段进度",
         "totalFound": "个漏洞",
+        "totalVulns": "共 {count} 个",
         "viewAll": "查看全部",
         "cards": {
           "websites": "网站",
