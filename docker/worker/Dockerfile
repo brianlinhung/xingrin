@@ -70,6 +70,7 @@ RUN apt-get update && apt-get install -y \
 # Ubuntu 24.04 的 chromium-browser 是 snap 过渡包，Docker 中不可用
 RUN pip install playwright --break-system-packages && \
     playwright install chromium && \
+    apt-get update && \
     playwright install-deps chromium && \
     rm -rf /var/lib/apt/lists/*
 
