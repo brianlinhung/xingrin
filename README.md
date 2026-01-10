@@ -1,7 +1,7 @@
 <h1 align="center">XingRin - 星环</h1>
 
 <p align="center">
-  <b>🛡️ 攻击面管理平台 (ASM) | 自动化资产发现与漏洞扫描系统</b>
+  <b>攻击面管理平台 (ASM) | 自动化资产发现与漏洞扫描系统</b>
 </p>
 
 <p align="center">
@@ -12,29 +12,29 @@
 </p>
 
 <p align="center">
-  <a href="#-功能特性">功能特性</a> •
-  <a href="#-全局资产搜索">资产搜索</a> •
-  <a href="#-快速开始">快速开始</a> •
-  <a href="#-文档">文档</a> •
-  <a href="#-反馈与贡献">反馈与贡献</a>
+  <a href="#功能特性">功能特性</a> •
+  <a href="#全局资产搜索">资产搜索</a> •
+  <a href="#快速开始">快速开始</a> •
+  <a href="#文档">文档</a> •
+  <a href="#反馈与贡献">反馈与贡献</a>
 </p>
 
 <p align="center">
-  <sub>🔍 关键词: ASM | 攻击面管理 | 漏洞扫描 | 资产发现 | 资产搜索 | Bug Bounty | 渗透测试 | Nuclei | 子域名枚举 | EASM</sub>
+  <sub>关键词: ASM | 攻击面管理 | 漏洞扫描 | 资产发现 | 资产搜索 | Bug Bounty | 渗透测试 | Nuclei | 子域名枚举 | EASM</sub>
 </p>
 
 ---
 
-## 🌐 在线 Demo
+## 在线 Demo
 
  **[https://xingrin.vercel.app/](https://xingrin.vercel.app/)**
 
-> ⚠️ 仅用于 UI 展示，未接入后端数据库
+> 仅用于 UI 展示，未接入后端数据库
 
 ---
 
 <p align="center">
-  <b>🎨 现代化 UI </b>
+  <b>现代化 UI</b>
 </p>
 
 <p align="center">
@@ -44,45 +44,45 @@
   <img src="docs/screenshots/quantum-rose.png" alt="Quantum Rose" width="24%">
 </p>
 
-## 📚 文档
+## 文档
 
-- [📖 技术文档](./docs/README.md) - 技术文档导航（🚧 持续完善中）
-- [🚀 快速开始](./docs/quick-start.md) - 一键安装和部署指南
-- [🔄 版本管理](./docs/version-management.md) - Git Tag 驱动的自动化版本管理系统
-- [📦 Nuclei 模板架构](./docs/nuclei-template-architecture.md) - 模板仓库的存储与同步
-- [📖 字典文件架构](./docs/wordlist-architecture.md) - 字典文件的存储与同步
-- [🔍 扫描流程架构](./docs/scan-flow-architecture.md) - 完整扫描流程与工具编排
+- [技术文档](./docs/README.md) - 技术文档导航（持续完善中）
+- [快速开始](./docs/quick-start.md) - 一键安装和部署指南
+- [版本管理](./docs/version-management.md) - Git Tag 驱动的自动化版本管理系统
+- [Nuclei 模板架构](./docs/nuclei-template-architecture.md) - 模板仓库的存储与同步
+- [字典文件架构](./docs/wordlist-architecture.md) - 字典文件的存储与同步
+- [扫描流程架构](./docs/scan-flow-architecture.md) - 完整扫描流程与工具编排
 
 
 ---
 
-## ✨ 功能特性
+## 功能特性
 
 ### 扫描能力
 
 | 功能 | 状态 | 工具 | 说明 |
 |------|------|------|------|
-| 子域名扫描 | ✅ | Subfinder, Amass, PureDNS | 被动收集 + 主动爆破，聚合 50+ 数据源 |
-| 端口扫描 | ✅ | Naabu | 自定义端口范围 |
-| 站点发现 | ✅ | HTTPX | HTTP 探测，自动获取标题、状态码、技术栈 |
-| 指纹识别 | ✅ | XingFinger | 2.7W+ 指纹规则，多源指纹库 |
-| URL 收集 | ✅ | Waymore, Katana | 历史数据 + 主动爬取 |
-| 目录扫描 | ✅ | FFUF | 高速爆破，智能字典 |
-| 漏洞扫描 | ✅ | Nuclei, Dalfox | 9000+ POC 模板，XSS 检测 |
-| 站点截图 | ✅ | Playwright | WebP 高压缩存储 |
+| 子域名扫描 | 已完成 | Subfinder, Amass, PureDNS | 被动收集 + 主动爆破，聚合 50+ 数据源 |
+| 端口扫描 | 已完成 | Naabu | 自定义端口范围 |
+| 站点发现 | 已完成 | HTTPX | HTTP 探测，自动获取标题、状态码、技术栈 |
+| 指纹识别 | 已完成 | XingFinger | 2.7W+ 指纹规则，多源指纹库 |
+| URL 收集 | 已完成 | Waymore, Katana | 历史数据 + 主动爬取 |
+| 目录扫描 | 已完成 | FFUF | 高速爆破，智能字典 |
+| 漏洞扫描 | 已完成 | Nuclei, Dalfox | 9000+ POC 模板，XSS 检测 |
+| 站点截图 | 已完成 | Playwright | WebP 高压缩存储 |
 
 ### 平台能力
 
 | 功能 | 状态 | 说明 |
 |------|------|------|
-| 目标管理 | ✅ | 多层级组织，支持域名/IP 目标 |
-| 资产快照 | ✅ | 扫描结果对比，追踪资产变化 |
-| 黑名单过滤 | ✅ | 全局 + Target 级，支持通配符/CIDR |
-| 定时任务 | ✅ | Cron 表达式，自动化周期扫描 |
-| 分布式扫描 | ✅ | 多 Worker 节点，负载感知调度 |
-| 全局搜索 | ✅ | 表达式语法，多字段组合查询 |
-| 通知推送 | ✅ | 企业微信、Telegram、Discord |
-| API 密钥管理 | ✅ | 可视化配置各数据源 API Key |
+| 目标管理 | 已完成 | 多层级组织，支持域名/IP 目标 |
+| 资产快照 | 已完成 | 扫描结果对比，追踪资产变化 |
+| 黑名单过滤 | 已完成 | 全局 + Target 级，支持通配符/CIDR |
+| 定时任务 | 已完成 | Cron 表达式，自动化周期扫描 |
+| 分布式扫描 | 已完成 | 多 Worker 节点，负载感知调度 |
+| 全局搜索 | 已完成 | 表达式语法，多字段组合查询 |
+| 通知推送 | 已完成 | 企业微信、Telegram、Discord |
+| API 密钥管理 | 已完成 | 可视化配置各数据源 API Key |
 
 ### 扫描流程架构
 
@@ -136,7 +136,7 @@ flowchart LR
 
 详细说明请查看 [扫描流程架构文档](./docs/scan-flow-architecture.md)
 
-### 🖥️ 分布式架构
+### 分布式架构
 - **多节点扫描** - 支持部署多个 Worker 节点，横向扩展扫描能力
 - **本地节点** - 零配置，安装即自动注册本地 Docker Worker
 - **远程节点** - SSH 一键部署远程 VPS 作为扫描节点
@@ -181,7 +181,7 @@ flowchart TB
     W3 -.心跳上报.-> REDIS
 ```
 
-### 🔎 全局资产搜索
+### 全局资产搜索
 - **多类型搜索** - 支持 Website 和 Endpoint 两种资产类型
 - **表达式语法** - 支持 `=`（模糊）、`==`（精确）、`!=`（不等于）操作符
 - **逻辑组合** - 支持 `&&` (AND) 和 `||` (OR) 逻辑组合
@@ -205,14 +205,14 @@ host="admin" && tech="php" && status=="200"
 url="/api/v1" && status!="404"
 ```
 
-### 📊 可视化界面
+### 可视化界面
 - **数据统计** - 资产/漏洞统计仪表盘
 - **实时通知** - WebSocket 消息推送
 - **通知推送** - 实时企业微信，tg，discard消息推送服务
 
 ---
 
-## 📦 快速开始
+## 快速开始
 
 ### 环境要求
 
@@ -230,11 +230,11 @@ cd xingrin
 # 安装并启动（生产模式）
 sudo ./install.sh
 
-# 🇨🇳 中国大陆用户推荐使用镜像加速（第三方加速服务可能会失效，不保证长期可用）
+# 中国大陆用户推荐使用镜像加速（第三方加速服务可能会失效，不保证长期可用）
 sudo ./install.sh --mirror
 ```
 
-> **💡 --mirror 参数说明**
+> **--mirror 参数说明**
 > - 自动配置 Docker 镜像加速（国内镜像源）
 > - 加速 Git 仓库克隆（Nuclei 模板等）
 
@@ -259,17 +259,17 @@ sudo ./restart.sh
 sudo ./uninstall.sh
 ```
 
-## 🤝 反馈与贡献
+## 反馈与贡献
 
-- 💡 **发现 Bug，有新想法，比如UI设计，功能设计等** 欢迎点击右边链接进行提交建议 [Issue](https://github.com/yyhuni/xingrin/issues) 或者公众号私信
+- **发现 Bug，有新想法，比如UI设计，功能设计等** 欢迎点击右边链接进行提交建议 [Issue](https://github.com/yyhuni/xingrin/issues) 或者公众号私信
 
-## 📧 联系
+## 联系
 - 微信公众号: **塔罗安全学苑**
 - 微信群去公众号底下的菜单，有个交流群，点击就可以看到了，链接过期可以私信我拉你
 
 <img src="docs/wechat-qrcode.png" alt="微信公众号" width="200">
 
-### 🎁 关注公众号免费领取指纹库
+### 关注公众号免费领取指纹库
 
 | 指纹库 | 数量 |
 |--------|------|
@@ -278,9 +278,9 @@ sudo ./uninstall.sh
 | goby.json | 7,086 |
 | FingerprintHub.json | 3,147 |
 
-> 💡 关注公众号回复「指纹」即可获取
+> 关注公众号回复「指纹」即可获取
 
-## ☕ 赞助支持
+## 赞助支持
 
 如果这个项目对你有帮助，谢谢请我能喝杯蜜雪冰城，你的star和赞助是我免费更新的动力
 
@@ -289,14 +289,14 @@ sudo ./uninstall.sh
   <img src="docs/zfb_pay.jpg" alt="支付宝" width="200">
 </p>
 
-### 🙏 感谢以下赞助
+### 感谢以下赞助
 
 | 昵称 | 金额 |
 |------|------|
 | X（闭关中） | ¥88 |
 
 
-## ⚠️ 免责声明
+## 免责声明
 
 **重要：请在使用前仔细阅读**
 
@@ -311,30 +311,29 @@ sudo ./uninstall.sh
 - 遵守所在地区的法律法规
 - 承担因滥用产生的一切后果
 
-## 🌟 Star History
+## Star History
 
-如果这个项目对你有帮助，请给一个 ⭐ Star 支持一下！
+如果这个项目对你有帮助，请给一个 Star 支持一下！
 
 [![Star History Chart](https://api.star-history.com/svg?repos=yyhuni/xingrin&type=Date)](https://star-history.com/#yyhuni/xingrin&Date)
 
-## 📄 许可证
+## 许可证
 
 本项目采用 [GNU General Public License v3.0](LICENSE) 许可证。
 
 ### 允许的用途
 
-- ✅ 个人学习和研究
-- ✅ 商业和非商业使用
-- ✅ 修改和分发
-- ✅ 专利使用
-- ✅ 私人使用
+- 个人学习和研究
+- 商业和非商业使用
+- 修改和分发
+- 专利使用
+- 私人使用
 
 ### 义务和限制
 
-- 📋 **开源义务**：分发时必须提供源代码
-- 📋 **相同许可**：衍生作品必须使用相同许可证
-- 📋 **版权声明**：必须保留原始版权和许可证声明
-- ❌ **责任免除**：不提供任何担保
-- ❌ 未经授权的渗透测试
-- ❌ 任何违法行为
-
+- **开源义务**：分发时必须提供源代码
+- **相同许可**：衍生作品必须使用相同许可证
+- **版权声明**：必须保留原始版权和许可证声明
+- **责任免除**：不提供任何担保
+- 未经授权的渗透测试
+- 任何违法行为
