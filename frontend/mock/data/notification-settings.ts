@@ -9,6 +9,10 @@ export const mockNotificationSettings: NotificationSettings = {
     enabled: true,
     webhookUrl: 'https://discord.com/api/webhooks/1234567890/abcdefghijklmnop',
   },
+  wecom: {
+    enabled: false,
+    webhookUrl: '',
+  },
   categories: {
     scan: true,
     vulnerability: true,
@@ -30,6 +34,7 @@ export function updateMockNotificationSettings(
   return {
     message: 'Notification settings updated successfully',
     discord: mockNotificationSettings.discord,
+    wecom: mockNotificationSettings.wecom,
     categories: mockNotificationSettings.categories,
   }
 }
