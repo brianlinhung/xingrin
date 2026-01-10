@@ -55,9 +55,10 @@ function hasAnsiCodes(text: string): boolean {
 
 // 解析纯文本日志内容，为日志级别添加颜色
 function colorizeLogContent(content: string): string {
-  // 匹配日志格式: [时间] [级别] [模块:行号] 消息
-  // 例如: [2025-01-05 10:30:00] [INFO] [apps.scan:123] 消息内容
-  const logLineRegex = /^(\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\]) (\[(DEBUG|INFO|WARNING|WARN|ERROR|CRITICAL)\]) (.*)$/
+  // 匹配日志格式:
+  // 1) 系统日志: [2026-01-10 09:51:52] [INFO] [apps.scan.xxx:123] ...
+  // 2) 扫描日志: [09:50:37] [INFO] [subdomain_discovery] ...
+  const logLineRegex = /^(\[(?:\d{4}-\d{2}-\d{2} )?\d{2}:\d{2}:\d{2}\]) (\[(DEBUG|INFO|WARNING|WARN|ERROR|CRITICAL)\]) (.*)$/i
   
   return content
     .split("\n")
@@ -66,14 +67,15 @@ function colorizeLogContent(content: string): string {
       
       if (match) {
         const [, timestamp, levelBracket, level, rest] = match
-        const color = LOG_LEVEL_COLORS[level] || "#d4d4d4"
+        const levelUpper = level.toUpperCase()
+        const color = LOG_LEVEL_COLORS[levelUpper] || "#d4d4d4"
         // ansiConverter.toHtml 已经处理了 HTML 转义
         const escapedTimestamp = ansiConverter.toHtml(timestamp)
         const escapedLevelBracket = ansiConverter.toHtml(levelBracket)
         const escapedRest = ansiConverter.toHtml(rest)
         
         // 时间戳灰色，日志级别带颜色，其余默认色
-        return `<span style="color:#808080">${escapedTimestamp}</span> <span style="color:${color};font-weight:${level === "CRITICAL" ? "bold" : "normal"}">${escapedLevelBracket}</span> ${escapedRest}`
+        return `<span style="color:#808080">${escapedTimestamp}</span> <span style="color:${color};font-weight:${levelUpper === "CRITICAL" ? "bold" : "normal"}">${escapedLevelBracket}</span> ${escapedRest}`
       }
       
       // 非标准格式的行，也进行 HTML 转义
@@ -112,6 +114,8 @@ function highlightSearch(html: string, query: string): string {
 const LOG_LEVEL_PATTERNS = [
   // 标准格式: [2026-01-07 12:00:00] [INFO]
   /^\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\] \[(DEBUG|INFO|WARNING|WARN|ERROR|CRITICAL)\]/i,
+  // 扫描日志格式: [09:50:37] [INFO] [stage]
+  /^\[\d{2}:\d{2}:\d{2}\] \[(DEBUG|INFO|WARNING|WARN|ERROR|CRITICAL)\]/i,
   // Prefect 格式: 12:01:50.419 | WARNING | prefect
   /^[\d:.]+\s+\|\s+(DEBUG|INFO|WARNING|WARN|ERROR|CRITICAL)\s+\|/i,
   // 简单格式: [INFO] message 或 INFO: message
