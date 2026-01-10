@@ -1,4 +1,3 @@
-
 """
 站点扫描 Flow
 
@@ -11,23 +10,22 @@
 - 配置由 YAML 解析
 """
 
-# Django 环境初始化（导入即生效）
-from apps.common.prefect_django_setup import setup_django_for_prefect
-
+from datetime import datetime
 import logging
-import os
 import subprocess
-import time
 from pathlib import Path
-from typing import Callable
+
 from prefect import flow
-from apps.scan.tasks.site_scan import export_site_urls_task, run_and_stream_save_websites_task
+
+# Django 环境初始化（导入即生效，pylint: disable=unused-import）
+from apps.common.prefect_django_setup import setup_django_for_prefect  # noqa: F401
 from apps.scan.handlers.scan_flow_handlers import (
-    on_scan_flow_running,
     on_scan_flow_completed,
     on_scan_flow_failed,
+    on_scan_flow_running,
 )
-from apps.scan.utils import config_parser, build_scan_command, user_log
+from apps.scan.tasks.site_scan import export_site_urls_task, run_and_stream_save_websites_task
+from apps.scan.utils import build_scan_command, user_log, wait_for_system_load
 
 logger = logging.getLogger(__name__)
 
@@ -191,7 +189,6 @@ def _run_scans_sequentially(
             timeout = max(dynamic_timeout, config_timeout)
         
         # 2.1 生成日志文件路径（类似端口扫描）
-        from datetime import datetime
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         log_file = site_scan_dir / f"{tool_name}_{timestamp}.log"
         
@@ -233,7 +230,7 @@ def _run_scans_sequentially(
             )
             user_log(scan_id, "site_scan", f"{tool_name} completed: found {tool_created} websites")
             
-        except subprocess.TimeoutExpired as exc:
+        except subprocess.TimeoutExpired:
             # 超时异常单独处理
             reason = f"timeout after {timeout}s"
             failed_tools.append({'tool': tool_name, 'reason': reason})
@@ -368,6 +365,9 @@ def site_scan_flow(
         RuntimeError: 执行失败
     """
     try:
+        # 负载检查：等待系统资源充足
+        wait_for_system_load(context="site_scan_flow")
+
         logger.info(
             "="*60 + "\n" +
             "开始站点扫描\n" +

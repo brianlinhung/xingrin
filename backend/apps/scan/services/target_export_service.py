@@ -12,7 +12,7 @@
 import ipaddress
 import logging
 from pathlib import Path
-from typing import Dict, Any, Optional, List, Iterator, Tuple, Callable
+from typing import Dict, Any, Optional, List, Iterator, Tuple
 
 from django.db.models import QuerySet
 
@@ -485,8 +485,7 @@ class TargetExportService:
         """
         from apps.targets.services import TargetService
         from apps.targets.models import Target
-        from apps.asset.services.asset.subdomain_service import SubdomainService
-        
+
         output_file = Path(output_path)
         output_file.parent.mkdir(parents=True, exist_ok=True)
         

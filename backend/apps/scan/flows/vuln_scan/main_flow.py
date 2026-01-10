@@ -1,5 +1,6 @@
-from apps.common.prefect_django_setup import setup_django_for_prefect
-
+"""
+漏洞扫描主 Flow
+"""
 import logging
 from typing import Dict, Tuple
 
@@ -11,7 +12,7 @@ from apps.scan.handlers.scan_flow_handlers import (
     on_scan_flow_failed,
 )
 from apps.scan.configs.command_templates import get_command_template
-from apps.scan.utils import user_log
+from apps.scan.utils import user_log, wait_for_system_load
 from .endpoints_vuln_scan_flow import endpoints_vuln_scan_flow
 
 
@@ -62,6 +63,9 @@ def vuln_scan_flow(
     - nuclei: 通用漏洞扫描（流式保存，支持模板 commit hash 同步）
     """
     try:
+        # 负载检查：等待系统资源充足
+        wait_for_system_load(context="vuln_scan_flow")
+
         if scan_id is None:
             raise ValueError("scan_id 不能为空")
         if not target_name:

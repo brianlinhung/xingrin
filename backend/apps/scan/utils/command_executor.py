@@ -12,15 +12,17 @@
 
 import logging
 import os
-from django.conf import settings
 import re
 import signal
 import subprocess
 import threading
 import time
+from collections import deque
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional, Generator
+
+from django.conf import settings
 
 try:
     # 可选依赖：用于根据 CPU / 内存负载做动态并发控制
@@ -669,33 +671,68 @@ class CommandExecutor:
     
     def _read_log_tail(self, log_file: Path, max_lines: int = MAX_LOG_TAIL_LINES) -> str:
         """
-        读取日志文件的末尾部分
-        
+        读取日志文件的末尾部分（常量内存实现）
+
+        使用 seek 从文件末尾往前读取，避免将整个文件加载到内存。
+
         Args:
             log_file: 日志文件路径
             max_lines: 最大读取行数
-        
+
         Returns:
             日志内容（字符串），读取失败返回错误提示
         """
         if not log_file.exists():
             logger.debug("日志文件不存在: %s", log_file)
             return ""
-        
-        if log_file.stat().st_size == 0:
+
+        file_size = log_file.stat().st_size
+        if file_size == 0:
             logger.debug("日志文件为空: %s", log_file)
             return ""
-        
+
+        # 每次读取的块大小（8KB，足够容纳大多数日志行）
+        chunk_size = 8192
+
+        def decode_line(line_bytes: bytes) -> str:
+            """解码单行：优先 UTF-8，失败则降级 latin-1"""
+            try:
+                return line_bytes.decode('utf-8')
+            except UnicodeDecodeError:
+                return line_bytes.decode('latin-1', errors='replace')
+
         try:
-            with open(log_file, 'r', encoding='utf-8') as f:
-                lines = f.readlines()
-                return ''.join(lines[-max_lines:] if len(lines) > max_lines else lines)
-        except UnicodeDecodeError as e:
-            logger.warning("日志文件编码错误 (%s): %s", log_file, e)
-            return f"(无法读取日志文件: 编码错误 - {e})"
+            with open(log_file, 'rb') as f:
+                lines_found: deque[bytes] = deque()
+                remaining = b''
+                position = file_size
+
+                while position > 0 and len(lines_found) < max_lines:
+                    read_size = min(chunk_size, position)
+                    position -= read_size
+
+                    f.seek(position)
+                    chunk = f.read(read_size) + remaining
+                    parts = chunk.split(b'\n')
+
+                    # 最前面的部分可能不完整，留到下次处理
+                    remaining = parts[0]
+
+                    # 其余部分是完整的行（从后往前收集，用 appendleft 保持顺序）
+                    for part in reversed(parts[1:]):
+                        if len(lines_found) >= max_lines:
+                            break
+                        lines_found.appendleft(part)
+
+                # 处理文件开头的行
+                if remaining and len(lines_found) < max_lines:
+                    lines_found.appendleft(remaining)
+
+                return '\n'.join(decode_line(line) for line in lines_found)
+
         except PermissionError as e:
             logger.warning("日志文件权限不足 (%s): %s", log_file, e)
-            return f"(无法读取日志文件: 权限不足)"
+            return "(无法读取日志文件: 权限不足)"
         except IOError as e:
             logger.warning("日志文件读取IO错误 (%s): %s", log_file, e)
             return f"(无法读取日志文件: IO错误 - {e})"

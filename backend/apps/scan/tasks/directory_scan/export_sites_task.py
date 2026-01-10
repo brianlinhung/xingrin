@@ -16,7 +16,7 @@ from apps.scan.services.target_export_service import (
     export_urls_with_fallback,
     DataSource,
 )
-from apps.scan.providers import TargetProvider, DatabaseTargetProvider
+from apps.scan.providers import TargetProvider
 
 logger = logging.getLogger(__name__)
 

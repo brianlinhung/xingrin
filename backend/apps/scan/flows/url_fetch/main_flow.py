@@ -10,22 +10,18 @@ URL Fetch 主 Flow
 - 统一进行 httpx 验证（如果启用）
 """
 
-# Django 环境初始化
-from apps.common.prefect_django_setup import setup_django_for_prefect
-
 import logging
-import os
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 from prefect import flow
 
 from apps.scan.handlers.scan_flow_handlers import (
-    on_scan_flow_running,
     on_scan_flow_completed,
     on_scan_flow_failed,
+    on_scan_flow_running,
 )
-from apps.scan.utils import user_log
+from apps.scan.utils import user_log, wait_for_system_load
 
 from .domain_name_url_fetch_flow import domain_name_url_fetch_flow
 from .sites_url_fetch_flow import sites_url_fetch_flow
@@ -43,13 +39,10 @@ SITES_FILE_TOOLS = {'katana'}
 POST_PROCESS_TOOLS = {'uro', 'httpx'}
 
 
-
-
-
 def _classify_tools(enabled_tools: dict) -> tuple[dict, dict, dict, dict]:
     """
     将启用的工具按输入类型分类
-    
+
     Returns:
         tuple: (domain_name_tools, sites_file_tools, uro_config, httpx_config)
     """
@@ -76,23 +69,23 @@ def _classify_tools(enabled_tools: dict) -> tuple[dict, dict, dict, dict]:
 def _merge_and_deduplicate_urls(result_files: list, url_fetch_dir: Path) -> tuple[str, int]:
     """合并并去重 URL"""
     from apps.scan.tasks.url_fetch import merge_and_deduplicate_urls_task
-    
+
     merged_file = merge_and_deduplicate_urls_task(
         result_files=result_files,
         result_dir=str(url_fetch_dir)
     )
-    
+
     # 统计唯一 URL 数量
     unique_url_count = 0
     if Path(merged_file).exists():
-        with open(merged_file, 'r') as f:
+        with open(merged_file, 'r', encoding='utf-8') as f:
             unique_url_count = sum(1 for line in f if line.strip())
-    
+
     logger.info(
         "✓ URL 合并去重完成 - 合并文件: %s, 唯一 URL 数: %d",
         merged_file, unique_url_count
     )
-    
+
     return merged_file, unique_url_count
 
 
@@ -103,12 +96,12 @@ def _clean_urls_with_uro(
 ) -> tuple[str, int, int]:
     """使用 uro 清理合并后的 URL 列表"""
     from apps.scan.tasks.url_fetch import clean_urls_task
-    
+
     raw_timeout = uro_config.get('timeout', 60)
     whitelist = uro_config.get('whitelist')
     blacklist = uro_config.get('blacklist')
     filters = uro_config.get('filters')
-    
+
     # 计算超时时间
     if isinstance(raw_timeout, str) and raw_timeout == 'auto':
         timeout = calculate_timeout_by_line_count(
@@ -124,7 +117,7 @@ def _clean_urls_with_uro(
         except (TypeError, ValueError):
             logger.warning("uro timeout 配置无效(%s)，使用默认 60 秒", raw_timeout)
             timeout = 60
-    
+
     result = clean_urls_task(
         input_file=merged_file,
         output_dir=str(url_fetch_dir),
@@ -133,12 +126,12 @@ def _clean_urls_with_uro(
         blacklist=blacklist,
         filters=filters
     )
-    
+
     if result['success']:
         return result['output_file'], result['output_count'], result['removed_count']
-    else:
-        logger.warning("uro 清理失败: %s，使用原始合并文件", result.get('error', '未知错误'))
-        return merged_file, result['input_count'], 0
+
+    logger.warning("uro 清理失败: %s，使用原始合并文件", result.get('error', '未知错误'))
+    return merged_file, result['input_count'], 0
 
 
 def _validate_and_stream_save_urls(
@@ -151,25 +144,25 @@ def _validate_and_stream_save_urls(
     """使用 httpx 验证 URL 存活并流式保存到数据库"""
     from apps.scan.utils import build_scan_command
     from apps.scan.tasks.url_fetch import run_and_stream_save_urls_task
-    
+
     logger.info("开始使用 httpx 验证 URL 存活状态...")
-    
+
     # 统计待验证的 URL 数量
     try:
-        with open(merged_file, 'r') as f:
+        with open(merged_file, 'r', encoding='utf-8') as f:
             url_count = sum(1 for _ in f)
         logger.info("待验证 URL 数量: %d", url_count)
-    except Exception as e:
+    except OSError as e:
         logger.error("读取 URL 文件失败: %s", e)
         return 0
-    
+
     if url_count == 0:
         logger.warning("没有需要验证的 URL")
         return 0
-    
+
     # 构建 httpx 命令
     command_params = {'url_file': merged_file}
-    
+
     try:
         command = build_scan_command(
             tool_name='httpx',
@@ -177,21 +170,19 @@ def _validate_and_stream_save_urls(
             command_params=command_params,
             tool_config=httpx_config
         )
-    except Exception as e:
+    except (ValueError, KeyError) as e:
         logger.error("构建 httpx 命令失败: %s", e)
         logger.warning("降级处理：将直接保存所有 URL（不验证存活）")
         return _save_urls_to_database(merged_file, scan_id, target_id)
-    
+
     # 计算超时时间
     raw_timeout = httpx_config.get('timeout', 'auto')
-    timeout = 3600
     if isinstance(raw_timeout, str) and raw_timeout == 'auto':
         # 按 URL 行数计算超时时间：每行 3 秒，最小 60 秒
         timeout = max(60, url_count * 3)
         logger.info(
             "自动计算 httpx 超时时间(按行数，每行 3 秒，最小 60 秒): url_count=%d, timeout=%d 秒",
-            url_count,
-            timeout,
+            url_count, timeout
         )
     else:
         try:
@@ -199,49 +190,44 @@ def _validate_and_stream_save_urls(
         except (TypeError, ValueError):
             timeout = 3600
         logger.info("使用配置的 httpx 超时时间: %d 秒", timeout)
-    
+
     # 生成日志文件路径
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     log_file = url_fetch_dir / f"httpx_validation_{timestamp}.log"
-    
+
     # 流式执行
-    try:
-        result = run_and_stream_save_urls_task(
-            cmd=command,
-            tool_name='httpx',
-            scan_id=scan_id,
-            target_id=target_id,
-            cwd=str(url_fetch_dir),
-            shell=True,
-            timeout=timeout,
-            log_file=str(log_file)
-        )
-        
-        saved = result.get('saved_urls', 0)
-        logger.info(
-            "✓ httpx 验证完成 - 存活 URL: %d (%.1f%%)",
-            saved, (saved / url_count * 100) if url_count > 0 else 0
-        )
-        return saved
-        
-    except Exception as e:
-        logger.error("httpx 流式验证失败: %s", e, exc_info=True)
-        raise
+    result = run_and_stream_save_urls_task(
+        cmd=command,
+        tool_name='httpx',
+        scan_id=scan_id,
+        target_id=target_id,
+        cwd=str(url_fetch_dir),
+        shell=True,
+        timeout=timeout,
+        log_file=str(log_file)
+    )
+
+    saved = result.get('saved_urls', 0)
+    logger.info(
+        "✓ httpx 验证完成 - 存活 URL: %d (%.1f%%)",
+        saved, (saved / url_count * 100) if url_count > 0 else 0
+    )
+    return saved
 
 
 def _save_urls_to_database(merged_file: str, scan_id: int, target_id: int) -> int:
     """保存 URL 到数据库（不验证存活）"""
     from apps.scan.tasks.url_fetch import save_urls_task
-    
+
     result = save_urls_task(
         urls_file=merged_file,
         scan_id=scan_id,
         target_id=target_id
     )
-    
+
     saved_count = result.get('saved_urls', 0)
     logger.info("✓ URL 保存完成 - 保存数量: %d", saved_count)
-    
+
     return saved_count
 
 
@@ -261,7 +247,7 @@ def url_fetch_flow(
 ) -> dict:
     """
     URL 获取主 Flow
-    
+
     执行流程：
     1. 准备工作目录
     2. 按输入类型分类工具（domain_name / sites_file / 后处理）
@@ -271,36 +257,32 @@ def url_fetch_flow(
     4. 合并所有子 Flow 的结果并去重
     5. uro 去重（如果启用）
     6. httpx 验证（如果启用）
-    
+
     Args:
         scan_id: 扫描 ID
         target_name: 目标名称
         target_id: 目标 ID
         scan_workspace_dir: 扫描工作目录
         enabled_tools: 启用的工具配置
-        
+
     Returns:
         dict: 扫描结果
     """
     try:
+        # 负载检查：等待系统资源充足
+        wait_for_system_load(context="url_fetch_flow")
+
         logger.info(
-            "="*60 + "\n" +
-            "开始 URL 获取扫描\n" +
-            f"  Scan ID: {scan_id}\n" +
-            f"  Target: {target_name}\n" +
-            f"  Workspace: {scan_workspace_dir}\n" +
-            "="*60
+            "开始 URL 获取扫描 - Scan ID: %s, Target: %s, Workspace: %s",
+            scan_id, target_name, scan_workspace_dir
         )
-        
         user_log(scan_id, "url_fetch", "Starting URL fetch")
-        
+
         # Step 1: 准备工作目录
-        logger.info("Step 1: 准备工作目录")
         from apps.scan.utils import setup_scan_directory
         url_fetch_dir = setup_scan_directory(scan_workspace_dir, 'url_fetch')
-        
+
         # Step 2: 分类工具（按输入类型）
-        logger.info("Step 2: 分类工具")
         domain_name_tools, sites_file_tools, uro_config, httpx_config = _classify_tools(enabled_tools)
 
         logger.info(
@@ -317,15 +299,14 @@ def url_fetch_flow(
                 "URL Fetch 流程需要至少启用一个 URL 获取工具（如 waymore, katana）。"
                 "httpx 和 uro 仅用于后处理，不能单独使用。"
             )
-        
-        # Step 3: 并行执行子 Flow
+
+        # Step 3: 执行子 Flow
         all_result_files = []
         all_failed_tools = []
         all_successful_tools = []
-        
-        # 3a: 基于 domain_name（target_name） 的 URL 被动收集（如 waymore）
+
+        # 3a: 基于 domain_name 的 URL 被动收集（如 waymore）
         if domain_name_tools:
-            logger.info("Step 3a: 执行基于 domain_name 的 URL 被动收集子 Flow")
             tn_result = domain_name_url_fetch_flow(
                 scan_id=scan_id,
                 target_id=target_id,
@@ -336,10 +317,9 @@ def url_fetch_flow(
             all_result_files.extend(tn_result.get('result_files', []))
             all_failed_tools.extend(tn_result.get('failed_tools', []))
             all_successful_tools.extend(tn_result.get('successful_tools', []))
-        
+
         # 3b: 爬虫（以 sites_file 为输入）
         if sites_file_tools:
-            logger.info("Step 3b: 执行爬虫子 Flow")
             crawl_result = sites_url_fetch_flow(
                 scan_id=scan_id,
                 target_id=target_id,
@@ -350,12 +330,13 @@ def url_fetch_flow(
             all_result_files.extend(crawl_result.get('result_files', []))
             all_failed_tools.extend(crawl_result.get('failed_tools', []))
             all_successful_tools.extend(crawl_result.get('successful_tools', []))
-        
+
         # 检查是否有成功的工具
         if not all_result_files:
-            error_details = "; ".join([f"{f['tool']}: {f['reason']}" for f in all_failed_tools])
+            error_details = "; ".join([
+                "%s: %s" % (f['tool'], f['reason']) for f in all_failed_tools
+            ])
             logger.warning("所有 URL 获取工具均失败 - 目标: %s, 失败详情: %s", target_name, error_details)
-            # 返回空结果，不抛出异常，让扫描继续
             return {
                 'success': True,
                 'scan_id': scan_id,
@@ -366,31 +347,24 @@ def url_fetch_flow(
                 'successful_tools': [],
                 'message': '所有 URL 获取工具均无结果'
             }
-        
+
         # Step 4: 合并并去重 URL
-        logger.info("Step 4: 合并并去重 URL")
-        merged_file, unique_url_count = _merge_and_deduplicate_urls(
+        merged_file, _ = _merge_and_deduplicate_urls(
             result_files=all_result_files,
             url_fetch_dir=url_fetch_dir
         )
-        
+
         # Step 5: 使用 uro 清理 URL（如果启用）
         url_file_for_validation = merged_file
-        uro_removed_count = 0
-        
         if uro_config and uro_config.get('enabled', False):
-            logger.info("Step 5: 使用 uro 清理 URL")
-            url_file_for_validation, cleaned_count, uro_removed_count = _clean_urls_with_uro(
+            url_file_for_validation, _, _ = _clean_urls_with_uro(
                 merged_file=merged_file,
                 uro_config=uro_config,
                 url_fetch_dir=url_fetch_dir
             )
-        else:
-            logger.info("Step 5: 跳过 uro 清理（未启用）")
-        
+
         # Step 6: 使用 httpx 验证存活并保存（如果启用）
         if httpx_config and httpx_config.get('enabled', False):
-            logger.info("Step 6: 使用 httpx 验证 URL 存活并流式保存")
             saved_count = _validate_and_stream_save_urls(
                 merged_file=url_file_for_validation,
                 httpx_config=httpx_config,
@@ -399,17 +373,16 @@ def url_fetch_flow(
                 target_id=target_id
             )
         else:
-            logger.info("Step 6: 保存到数据库（未启用 httpx 验证）")
             saved_count = _save_urls_to_database(
                 merged_file=url_file_for_validation,
                 scan_id=scan_id,
                 target_id=target_id
             )
-        
+
         # 记录 Flow 完成
         logger.info("✓ URL 获取完成 - 保存 endpoints: %d", saved_count)
-        user_log(scan_id, "url_fetch", f"url_fetch completed: found {saved_count} endpoints")
-        
+        user_log(scan_id, "url_fetch", "url_fetch completed: found %d endpoints" % saved_count)
+
         # 构建已执行的任务列表
         executed_tasks = ['setup_directory', 'classify_tools']
         if domain_name_tools:
@@ -423,7 +396,7 @@ def url_fetch_flow(
             executed_tasks.append('httpx_validation_and_save')
         else:
             executed_tasks.append('save_urls')
-        
+
         return {
             'success': True,
             'scan_id': scan_id,
@@ -439,7 +412,7 @@ def url_fetch_flow(
                 'failed_tools': [f['tool'] for f in all_failed_tools]
             }
         }
-        
+
     except Exception as e:
         logger.error("URL 获取扫描失败: %s", e, exc_info=True)
         raise
